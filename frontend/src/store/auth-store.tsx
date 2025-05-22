@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import type { APIUser } from "../types/api";
 
 interface AuthContextProps {
-  auth: APIUser | null;
+  user: APIUser | null;
   login: (data: APIUser) => void;
   logout: () => void;
   isAuthenticated: boolean;
@@ -13,7 +13,7 @@ interface AuthContextProps {
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [auth, setAuth] = useState<APIUser | null>(null);
+  const [user, setUser] = useState<APIUser | null>(null);
 
   useEffect(() => {
     try {
@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const user = JSON.parse(userStr);
 
       if (user?.username && user?.id) {
-        setAuth({
+        setUser({
           token,
           message: "authenticated",
           user: {
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (err) {
       console.error("Erro ao carregar usuário:", err);
-      setAuth(null);
+      setUser(null);
     }
   }, []);
 
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      setAuth(data);
+      setUser(data);
     } catch (err) {
       console.error("Erro ao salvar login:", err);
       logout();
@@ -54,16 +54,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    setAuth(null);
+    setUser(null);
   };
 
   return (
     <AuthContext.Provider
       value={{
-        auth,
+        user,
         login,
         logout,
-        isAuthenticated: !!auth,
+        isAuthenticated: !!user && !!user.token,
       }}
     >
       {children}
@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useAuth = () => {
+export const useUser = () => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");

@@ -18,4 +18,20 @@ export interface User {
     username: string;
 }
 
+/////////////////////////////////////////
+// Rooms
+/////////////////////////////////////////
+
+export interface APICreateRoom {
+    name: string;
+}
+
+export interface APIRoom {
+    id: number;
+    name: string;
+}
+
+export interface APIRooms {
+    rooms: APIRoom[];
+}
 

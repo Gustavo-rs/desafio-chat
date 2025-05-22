@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import logo from "../../assets/images/logo.png";
 import { toast } from "sonner";
 import authService from "../../services/auth-service";
-import { useAuth } from "../../store/auth-store";
+import { useUser } from "../../store/auth-store";
 import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login } = useUser();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

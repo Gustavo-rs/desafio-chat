@@ -4,6 +4,7 @@ import HomePage from "../pages/HomePage.tsx";
 
 import { PrivateRoute } from "../components/PrivateRoute";
 import RegisterPage from "../pages/auth/RegisterPage.tsx";
+import MainLayout from "../layouts/MainLayout";
 
 export const AppRoutes = () => {
   return (
@@ -12,14 +13,9 @@ export const AppRoutes = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        <Route
-          path="/home"
-          element={
-            <PrivateRoute>
-              <HomePage />
-            </PrivateRoute>
-          }
-        />
+        <Route element={<PrivateRoute><MainLayout /></PrivateRoute>}>
+          <Route path="/home" element={<HomePage />} />
+        </Route>
 
         <Route path="*" element={<Login />} />
       </Routes>
