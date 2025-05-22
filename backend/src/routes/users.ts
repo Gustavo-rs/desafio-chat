@@ -10,13 +10,13 @@ router.post("/register", async (req: Request, res: Response): Promise<void> => {
   const { name, password } = req.body;
 
   if (!name || !password) {
-    res.status(400).json({ error: "Nome e senha são obrigatórios" });
+    res.status(400).json({ message: "Nome e senha são obrigatórios" });
     return;
   }
 
   const existing = await prisma.user.findUnique({ where: { name } });
   if (existing) {
-    res.status(400).json({ error: "Usuário já existe" });
+    res.status(400).json({ message: "Usuário já existe" });
     return;
   }
 
@@ -25,7 +25,7 @@ router.post("/register", async (req: Request, res: Response): Promise<void> => {
     data: { name, password: hashedPassword },
   });
 
-  res.status(201).json({ id: user.id, name: user.name });
+  res.status(201).json({ id: user.id, name: user.name, message: "Usuário criado com sucesso" });
 });
 
 router.post("/login", async (req: Request, res: Response): Promise<void> => {
@@ -33,7 +33,7 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
 
   const user = await prisma.user.findUnique({ where: { name } });
   if (!user || !(await bcrypt.compare(password, user.password))) {
-    res.status(401).json({ error: "Credenciais inválidas" });
+    res.status(401).json({ message: "Credenciais inválidas" });
     return;
   }
 
@@ -41,7 +41,7 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
     expiresIn: "2h",
   });
 
-  res.json({ token });
+  res.json({ message: "Login realizado com sucesso",token, user: { id: user.id, name: user.name } });
 });
 
 export default router;
