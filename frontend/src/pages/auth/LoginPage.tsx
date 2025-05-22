@@ -1,15 +1,46 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../../assets/images/logo.png";
+import { toast } from "sonner";
+import authService from "../../services/auth-service";
+import { useAuth } from "../../store/auth-store";
+import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Login com:", { username, password });
+    setLoading(true);
+
+    if (!username) {
+      toast.error("Usuário é obrigatório");
+      setLoading(false);
+      return;
+    }
+
+    if (!password) {
+      toast.error("Senha é obrigatória");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await authService.auth({
+        username,
+        password,
+      });
+
+      login(response.data);
+
+      navigate("/home");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -53,9 +84,16 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="w-full bg-primary text-white py-2 rounded-md hover:bg-primary/80 transition"
+              className="w-full bg-primary text-white py-2 rounded-md hover:bg-primary/80 transition flex items-center justify-center"
+              disabled={loading}
             >
-              Entrar
+              {loading ? (
+                <span>
+                  <Loader2 className="animate-spin" />
+                </span>
+              ) : (
+                <span>Entrar</span>
+              )}
             </button>
 
             <div className="flex items-center justify-center gap-2 my-2">

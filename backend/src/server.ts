@@ -46,7 +46,7 @@ io.use((socket, next) => {
 
 io.on("connection", (socket) => {
   const user = (socket as any).user;
-  console.log(`🟢 Usuário conectado: ${socket.id} (${user.name})`);
+  console.log(`🟢 Usuário conectado: ${socket.id} (${user.username})`);
 
   socket.on("join_room", (roomId) => {
     socket.join(roomId);

@@ -3,7 +3,7 @@
 /////////////////////////////////////////
 
 export interface APIAuthUser {
-    name: string;
+    username: string;
     password: string;
 }
 
@@ -15,5 +15,7 @@ export interface APIUser {
 
 export interface User {
     id: number;
-    name: string;
+    username: string;
 }
+
+

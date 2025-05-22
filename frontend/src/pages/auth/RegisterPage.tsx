@@ -29,7 +29,7 @@ export default function RegisterPage() {
 
     try {
       await authService.register({
-        name: username,
+        username: username,
         password: password
       });
 
