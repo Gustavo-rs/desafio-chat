@@ -24,9 +24,13 @@ router.post("/", (async (req: Request, res: Response) => {
     return res.status(400).json({ message: "Já existe uma sala com este nome" });
   }
 
-  const room = await prisma.room.create({ data: { name } });
+  const room = await prisma.room.create({ 
+    data: { 
+      name,
+      id: undefined // Deixa o Prisma gerar o UUID automaticamente
+    } 
+  });
   
-  // Notify all clients about new room
   io.emit("room_created", room);
   
   res.status(201).json(room);
@@ -36,22 +40,64 @@ router.delete("/:id", (async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    const room = await prisma.room.delete({
-      where: { id: Number(id) }
+    // Primeiro verifica se a sala existe
+    const existingRoom = await prisma.room.findUnique({
+      where: { id }
     });
 
-    // Notify all clients about room deletion
-    io.emit("room_deleted", { id: Number(id) });
+    if (!existingRoom) {
+      return res.status(404).json({ message: "Sala não encontrada" });
+    }
+
+    // Deleta a sala
+    await prisma.room.delete({
+      where: { id }
+    });
+
+    io.emit("room_deleted", { id });
 
     res.json({ message: "Sala deletada com sucesso" });
   } catch (error) {
-    res.status(404).json({ message: "Sala não encontrada" });
+    console.error("Erro ao deletar sala:", error);
+    res.status(500).json({ message: "Erro interno do servidor" });
   }
 }) as RequestHandler);
 
 router.get("/", (async (_req: Request, res: Response) => {
-  const rooms = await prisma.room.findMany();
-  res.json(rooms);
+  try {
+    const rooms = await prisma.room.findMany({
+      include: {
+        messages: {
+          orderBy: {
+            createdAt: 'desc'
+          },
+          take: 1,
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    const roomsWithLastMessage = rooms.map(room => ({
+      ...room,
+      lastMessage: room.messages[0] || null,
+      messages: undefined
+    }));
+
+    res.json(roomsWithLastMessage);
+  } catch (error) {
+    console.error("Erro ao buscar salas:", error);
+    res.status(500).json({ message: "Erro interno do servidor" });
+  }
 }) as RequestHandler);
 
 router.get("/unread-counts", (async (req: AuthenticatedRequest, res: Response) => {
@@ -73,7 +119,7 @@ router.get("/unread-counts", (async (req: AuthenticatedRequest, res: Response) =
       count: count._count._all
     }));
 
-    res.json(formattedCounts);
+    res.json({ data: formattedCounts });
   } catch (error) {
     console.error("Erro ao buscar contagem de mensagens não lidas:", error);
     res.status(500).json({ message: "Erro interno do servidor" });

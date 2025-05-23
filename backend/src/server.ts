@@ -58,25 +58,25 @@ io.on("connection", (socket) => {
   console.log(`🟢 Usuário conectado: ${socket.id} (${user.username})`);
 
   // Join user's personal room
-  socket.join(user.userId.toString());
+  socket.join(user.userId);
   console.log(`🔗 Socket ${socket.id} entrou na sala pessoal ${user.userId}`);
 
   socket.on("join_room", async (roomId) => {
-    socket.join(roomId.toString());
+    socket.join(roomId);
     console.log(`🔗 Socket ${socket.id} entrou na sala ${roomId}`);
 
     // Enviar lista de usuários online para todos na sala
-    const roomSockets = await io.in(roomId.toString()).fetchSockets();
+    const roomSockets = await io.in(roomId).fetchSockets();
     const onlineUsers = roomSockets.map(s => ({
       userId: (s as any).user.userId,
       username: (s as any).user.username
     }));
 
-    io.to(roomId.toString()).emit("online_users", onlineUsers);
+    io.to(roomId).emit("online_users", onlineUsers);
   });
 
   socket.on("leave_room", (roomId) => {
-    socket.leave(roomId.toString());
+    socket.leave(roomId);
     console.log(`🔗 Socket ${socket.id} saiu da sala ${roomId}`);
   });
 
@@ -123,14 +123,23 @@ io.on("connection", (socket) => {
             data: {
               messageId: newMessage.id,
               userId: user.id,
-              roomId: Number(roomId)
+              roomId: roomId
             }
           });
           console.log(`✅ Mensagem não lida criada para usuário ${user.id}:`, unread);
 
-          // Emitir evento de mensagem não lida para o socket do usuário
-          io.to(user.id.toString()).emit("unread_message", {
-            roomId: Number(roomId)
+          // Get unread count for this user and room
+          const unreadCount = await prisma.unreadMessage.count({
+            where: {
+              userId: user.id,
+              roomId: roomId
+            }
+          });
+
+          io.to(String(user.id)).emit("unread_message", {
+            roomId: roomId,
+            lastMessage: newMessage,
+            count: unreadCount
           });
           console.log(`📢 Notificação enviada para usuário ${user.id}`);
         } catch (error) {
@@ -138,8 +147,7 @@ io.on("connection", (socket) => {
         }
       }
 
-      // Emitir a mensagem para a sala
-      io.to(roomId.toString()).emit("receive_message", newMessage);
+      io.to(roomId).emit("receive_message", newMessage);
       console.log("📢 Mensagem enviada para a sala:", roomId);
 
     } catch (err) {

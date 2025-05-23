@@ -14,7 +14,7 @@ export interface APIUser {
 }
 
 export interface User {
-    id: number;
+    id: string;
     username: string;
 }
 
@@ -28,8 +28,9 @@ export interface APICreateRoom {
 
 export interface APIRoom {
     newRoom: any;
-    id: number;
+    id: string;
     name: string;
+    lastMessage?: Message;
 }
 
 export interface APIRooms {
@@ -42,7 +43,7 @@ export interface APIRooms {
 
 export interface APICreateMessage {
     content: string;
-    roomId: number;
+    roomId: string;
 }
 
 export interface APIMessage {
@@ -54,7 +55,7 @@ export interface APIMessage {
 }
 
 export interface Message {
-    id: number;
+    id: string;
     content: string;
     createdAt: string;
     user: User;
@@ -65,6 +66,6 @@ export interface Message {
 /////////////////////////////////////////
 
 export interface UnreadCount {
-    roomId: number;
+    roomId: string;
     count: number;
-  }
+}

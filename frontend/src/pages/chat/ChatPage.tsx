@@ -7,14 +7,15 @@ import { Loader2 } from "lucide-react";
 
 interface Message {
   user: {
-    id: number;
+    id: string;
     username: string;
   };
   content: string;
+  createdAt: string;
 }
 
 interface ChatPageProps {
-  roomId?: number;
+  roomId?: string;
   roomName?: string;
 }
 
@@ -35,7 +36,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTo({
         top: messagesContainerRef.current.scrollHeight,
-        behavior: "auto" // ou "smooth", dependendo da UX desejada
+        behavior: "auto"
       });
     }
   };  
@@ -90,7 +91,8 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
         ...prev,
         {
           user: { id: user?.user.id!, username: user?.user.username! },
-          content: input
+          content: input,
+          createdAt: new Date().toISOString()
         }
       ]);
 
@@ -199,7 +201,11 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                   msg.user.id === user?.user.id ? "bg-violet-100" : "bg-gray-100"
                 }`}>
                   <p className="text-sm text-gray-700">
-                    <span className="font-bold">{ msg.user.id === user?.user.id ? "Você" : msg.user.username}</span><br /> {msg.content}
+                    <div className="flex justify-between">
+                    <span className="font-bold">{ msg.user.id === user?.user.id ? "Você" : msg.user.username}</span>
+                    <span className="text-xs text-gray-500">{new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    </div>
+                     {msg.content}
                   </p>
                 </div>
               </div>

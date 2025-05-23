@@ -18,24 +18,25 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import ChatPage from "./chat/ChatPage";
 import { io } from "socket.io-client";
+import { Badge } from "@/components/ui/badge";
 
 const Home: React.FC = () => {
   const [rooms, setRooms] = useState<APIRoom[]>([]);
   const [loading, setLoading] = useState(false);
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [roomName, setRoomName] = useState("");
-  const [selectedRoomId, setSelectedRoomId] = useState<number>();
+  const [selectedRoomId, setSelectedRoomId] = useState<string>();
   const [selectedRoomName, setSelectedRoomName] = useState<string>();
-  const [unreadCounts, setUnreadCounts] = useState<Record<number, number>>({});
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const { user } = useUser();
   const [open, setOpen] = useState(false);
 
   const fetchUnreadCounts = async () => {
     try {
       const response = await roomsService.getUnreadCounts();
-      const counts: Record<number, number> = {};
+      const counts: Record<string, number> = {};
       response.data.forEach((item: UnreadCount) => {
-        counts[item.roomId] = item.count;
+        counts[item.roomId.toString()] = item.count;
       });
       setUnreadCounts(counts);
     } catch (error) {
@@ -64,8 +65,7 @@ const Home: React.FC = () => {
 
     try {
       const response = await roomsService.create({ name: roomName });
-      const newRoomWithNew = { ...response, newRoom: true };
-      setRooms([...rooms, newRoomWithNew]);
+      // Não adiciona a sala aqui pois o socket irá notificar
       setOpen(false);
       setRoomName("");
     } finally {
@@ -100,10 +100,10 @@ const Home: React.FC = () => {
     socket.on("room_created", (newRoom: APIRoom) => {
       console.log("HomePage: Nova sala criada:", newRoom);
       const newRoomWithNew = { ...newRoom, newRoom: true };
-      setRooms(prev => [...prev, newRoomWithNew]);
+      setRooms(prev => [newRoomWithNew, ...prev]);
     });
 
-    socket.on("room_deleted", (deletedRoom: {id: number}) => {
+    socket.on("room_deleted", (deletedRoom: {id: string}) => {
       console.log("HomePage: Sala deletada:", deletedRoom);
       setRooms(prev => prev.filter(room => room.id !== deletedRoom.id));
       if (selectedRoomId === deletedRoom.id) {
@@ -112,21 +112,67 @@ const Home: React.FC = () => {
       }
     });
 
-    socket.on("unread_message", ({ roomId }) => {
+    socket.on("unread_message", ({ roomId, lastMessage }) => {
       console.log("HomePage: Recebida notificação de mensagem não lida");
       console.log("Sala:", roomId);
       console.log("Sala selecionada:", selectedRoomId);
       console.log("Contador atual:", unreadCounts);
       
       setUnreadCounts(prev => {
-        const newCount = (prev[roomId] || 0) + 1;
+        const newCount = (prev[roomId.toString()] || 0) + 1;
         console.log("Novo contador calculado:", newCount);
         const newCounts = {
           ...prev,
-          [roomId]: newCount
+          [roomId.toString()]: newCount
         };
         console.log("Novos contadores:", newCounts);
         return newCounts;
+      });
+
+      // Atualiza a última mensagem da sala e move para o topo
+      setRooms(prev => {
+        const updatedRooms = prev.map(room => {
+          if (room.id === roomId) {
+            return {
+              ...room,
+              lastMessage: lastMessage
+            };
+          }
+          return room;
+        });
+        
+        // Move a sala atualizada para o topo
+        const roomIndex = updatedRooms.findIndex(room => room.id === roomId);
+        if (roomIndex > -1) {
+          const [updatedRoom] = updatedRooms.splice(roomIndex, 1);
+          updatedRooms.unshift(updatedRoom);
+        }
+        
+        return updatedRooms;
+      });
+    });
+
+    socket.on("receive_message", ({ roomId, lastMessage }) => {
+      // Atualiza a última mensagem da sala e move para o topo para o usuário que enviou
+      setRooms(prev => {
+        const updatedRooms = prev.map(room => {
+          if (room.id === roomId) {
+            return {
+              ...room,
+              lastMessage: lastMessage
+            };
+          }
+          return room;
+        });
+        
+        // Move a sala atualizada para o topo
+        const roomIndex = updatedRooms.findIndex(room => room.id === roomId);
+        if (roomIndex > -1) {
+          const [updatedRoom] = updatedRooms.splice(roomIndex, 1);
+          updatedRooms.unshift(updatedRoom);
+        }
+        
+        return updatedRooms;
       });
     });
 
@@ -138,7 +184,7 @@ const Home: React.FC = () => {
       setUnreadCounts(prev => {
         const newCounts = {
           ...prev,
-          [roomId]: 0
+          [roomId.toString()]: 0
         };
         console.log("Novos contadores após leitura:", newCounts);
         return newCounts;
@@ -153,13 +199,13 @@ const Home: React.FC = () => {
 
   const handleRoomSelect = (room: APIRoom) => {
     console.log("HomePage: Selecionando sala:", room);
-    setSelectedRoomId(room.id);
+    setSelectedRoomId(room.id.toString());
     setSelectedRoomName(room.name);
     setRooms(prev => prev.map(r => ({ ...r, newRoom: r.id === room.id ? false : r.newRoom })));
     setUnreadCounts(prev => {
       const newCounts = {
         ...prev,
-        [room.id]: 0
+        [room.id.toString()]: 0
       };
       console.log("HomePage: Zerando contador para sala", room.id);
       console.log("Novos contadores:", newCounts);
@@ -235,9 +281,10 @@ const Home: React.FC = () => {
 
         <div className="space-y-3 overflow-y-auto flex-1 pr-2">
           {rooms.map((room, index) => (
+            console.log(room),
             <div
               key={index}
-              className="flex items-center gap-4 p-3 bg-violet-50 hover:bg-violet-100 transition rounded-lg cursor-pointer shadow-sm"
+              className={`flex items-center gap-4 p-3 bg-violet-50 hover:bg-violet-100 transition rounded-lg cursor-pointer shadow-sm ${selectedRoomId === room.id.toString() ? 'border-2 border-primary' : ''}`}
               onClick={() => handleRoomSelect(room)}
             >
               <div className="flex-shrink-0">
@@ -258,11 +305,14 @@ const Home: React.FC = () => {
                   Clique para entrar na sala
                 </p>
               </div>
-              {unreadCounts[room.id] > 0 && (
-                <div className="flex-shrink-0">
-                  <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                    {formatUnreadCount(unreadCounts[room.id])}
+              {unreadCounts[room.id.toString()] > 0 && (
+                <div className="flex-shrink-0 flex flex-col items-end gap-1">
+                  <span className="text-xs text-gray-500">
+                    {new Date(room.lastMessage?.createdAt!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
+                  <Badge variant="default" className="text-white">
+                    {formatUnreadCount(unreadCounts[room.id.toString()])}
+                  </Badge>
                 </div>
               )}
             </div>

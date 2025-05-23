@@ -14,18 +14,31 @@ router.post("/register", async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  const existing = await prisma.user.findUnique({ where: { username: username } });
-  if (existing) {
-    res.status(400).json({ message: "Usuário já existe" });
-    return;
+  try {
+    const existing = await prisma.user.findUnique({ where: { username } });
+    if (existing) {
+      res.status(400).json({ message: "Usuário já existe" });
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: {
+        username,
+        password: hashedPassword
+      }
+    });
+
+    res.status(201).json({ 
+      id: user.id,
+      username: user.username,
+      message: "Usuário criado com sucesso" 
+    });
+
+  } catch (error) {
+    console.error("Erro ao criar usuário:", error);
+    res.status(500).json({ message: "Erro interno do servidor" });
   }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const user = await prisma.user.create({
-    data: { username: username, password: hashedPassword },
-  });
-
-  res.status(201).json({ id: user.id, username: user.username, message: "Usuário criado com sucesso" });
 });
 
 router.post("/login", async (req: Request, res: Response): Promise<void> => {
@@ -37,7 +50,6 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
-    // 🔍 Buscar usuário pelo username
     const user = await prisma.user.findUnique({ where: { username } });
 
     if (!user || !(await bcrypt.compare(password, user.password))) {

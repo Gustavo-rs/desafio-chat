@@ -25,14 +25,14 @@ router.get("/:roomId", (async (req: AuthenticatedRequest, res: Response): Promis
   try {
     await prisma.unreadMessage.deleteMany({
       where: {
-        roomId: Number(roomId),
-        userId: userId
+        roomId,
+        userId
       }
     });
 
     const [messages, total] = await Promise.all([
       prisma.message.findMany({
-        where: { roomId: Number(roomId) },
+        where: { roomId },
         include: {
           user: {
             select: {
@@ -46,15 +46,15 @@ router.get("/:roomId", (async (req: AuthenticatedRequest, res: Response): Promis
         skip
       }),
       prisma.message.count({
-        where: { roomId: Number(roomId) }
+        where: { roomId }
       })
     ]);
 
     console.log("Mensagens encontradas:", messages.length);
     console.log("Total de mensagens:", total);
 
-    io.to(userId.toString()).emit("messages_read", {
-      roomId: Number(roomId)
+    io.to(String(userId)).emit("messages_read", {
+      roomId
     });
 
     res.json({
