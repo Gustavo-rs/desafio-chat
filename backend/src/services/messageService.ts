@@ -89,6 +89,9 @@ export class MessageService {
       prisma.message.count({ where: { roomId } }),
     ]);
 
+    // Mark messages as read when user enters the room
+    await this.markMessagesAsRead(userId, roomId);
+
     const pages = Math.ceil(total / limit);
 
     return {
@@ -139,5 +142,7 @@ export class MessageService {
         roomId,
       },
     });
+
+    io.to(String(userId)).emit('messages_read', { roomId });
   }
 } 

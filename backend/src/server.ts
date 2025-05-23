@@ -57,7 +57,7 @@ io.use((socket, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, config.jwtSecret) as { userId: string; username: string };
+    const decoded = jwt.verify(token, config.jwtSecret!) as unknown as { userId: string; username: string };
     (socket as any).user = decoded;
     next();
   } catch (err) {

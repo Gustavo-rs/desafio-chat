@@ -6,15 +6,14 @@ import { ConflictError, NotFoundError, AuthenticationError, AppError } from '../
 import { Response } from 'express';
 
 const prisma = new PrismaClient();
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
 export class UserService {
   private setAuthCookie(res: Response, userId: string, username: string) {
-    const token = jwt.sign({ userId, username }, JWT_SECRET, { expiresIn: "24h" });
+    const token = jwt.sign({ userId, username }, config.jwtSecret!, { expiresIn: "24h" });
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     });
     return token;

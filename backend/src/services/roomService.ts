@@ -67,7 +67,7 @@ export class RoomService {
     return room;
   }
 
-  async getRooms() {
+  async getRooms(userId: string) {
     const rooms = await prisma.room.findMany({
       include: {
         messages: {
@@ -84,6 +84,14 @@ export class RoomService {
             },
           },
         },
+        unreadMessages: {
+          where: {
+            userId,
+          },
+          select: {
+            id: true,
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -93,7 +101,9 @@ export class RoomService {
     return rooms.map(room => ({
       ...room,
       lastMessage: room.messages[0] || null,
+      unreadCount: room.unreadMessages.length,
       messages: undefined,
+      unreadMessages: undefined,
     }));
   }
 

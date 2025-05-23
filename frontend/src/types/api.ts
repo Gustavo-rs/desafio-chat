@@ -30,6 +30,7 @@ export interface APIRoom {
     id: string;
     name: string;
     lastMessage?: Message;
+    unreadCount: number;
 }
 
 export interface APIRooms {

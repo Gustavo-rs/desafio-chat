@@ -31,9 +31,10 @@ router.delete("/:id", validate(roomIdSchema), async (req: Request, res: Response
   }
 });
 
-router.get("/", async (_req: Request, res: Response, next: NextFunction) => {
+router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const rooms = await roomService.getRooms();
+    const userId = req.user!.userId;
+    const rooms = await roomService.getRooms(userId);
     res.json(rooms);
   } catch (error) {
     next(error);

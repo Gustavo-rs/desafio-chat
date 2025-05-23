@@ -31,25 +31,18 @@ const Home: React.FC = () => {
   const { user } = useUser();
   const [open, setOpen] = useState(false);
 
-  const fetchUnreadCounts = async () => {
-    try {
-      const response = await roomsService.getUnreadCounts();
-      const counts: Record<string, number> = {};
-      response.data.forEach((item: UnreadCount) => {
-        counts[item.roomId.toString()] = item.count;
-      });
-      setUnreadCounts(counts);
-    } catch (error) {
-      console.error("Error fetching unread counts:", error);
-    }
-  };
-
   const handleRooms = async () => {
     setLoading(true);
 
     try {
       const response = await roomsService.list();
       setRooms(response);
+      // Initialize unread counts from rooms data
+      const counts: Record<string, number> = {};
+      response.forEach((room: APIRoom) => {
+        counts[room.id.toString()] = room.unreadCount || 0;
+      });
+      setUnreadCounts(counts);
     } finally {
       setLoading(false);
     }
@@ -75,7 +68,6 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     handleRooms();
-    fetchUnreadCounts();
 
     if (!user) return;
 
