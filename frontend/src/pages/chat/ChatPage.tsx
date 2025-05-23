@@ -87,17 +87,19 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
 
       socketRef.current.emit("send_message", message);
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          user: { id: user?.user.id!, username: user?.user.username! },
-          content: input,
-          createdAt: new Date().toISOString()
-        }
-      ]);
+      const newMessage = {
+        user: { id: user?.user.id!, username: user?.user.username! },
+        content: input,
+        createdAt: new Date().toISOString()
+      };
 
+      setMessages((prev) => [...prev, newMessage]);
       setInput("");
       scrollToBottom();
+
+      // Move a sala para o topo da lista
+      const event = new CustomEvent("update_room_order", { detail: { roomId } });
+      window.dispatchEvent(event);
     }
   };
 

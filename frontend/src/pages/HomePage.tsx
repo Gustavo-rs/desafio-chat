@@ -79,6 +79,21 @@ const Home: React.FC = () => {
 
     if (!user?.token) return;
 
+    // Adiciona listener para atualizar ordem das salas
+    const handleRoomOrder = (event: CustomEvent) => {
+      const { roomId } = event.detail;
+      setRooms(prev => {
+        const roomIndex = prev.findIndex(room => room.id === roomId);
+        if (roomIndex > -1) {
+          const [updatedRoom] = prev.splice(roomIndex, 1);
+          return [updatedRoom, ...prev];
+        }
+        return prev;
+      });
+    };
+
+    window.addEventListener("update_room_order", handleRoomOrder as EventListener);
+
     console.log("Iniciando conexão do socket no HomePage");
     const socket = io("http://localhost:3001", {
       auth: {
@@ -194,6 +209,7 @@ const Home: React.FC = () => {
     return () => {
       console.log("HomePage: Desconectando socket");
       socket.disconnect();
+      window.removeEventListener("update_room_order", handleRoomOrder as EventListener);
     };
   }, [user?.token]);
 
