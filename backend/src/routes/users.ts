@@ -1,80 +1,52 @@
-import { Router, Request, Response } from "express";
-import prisma from "../../prisma/client";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import { Router, Request, Response, NextFunction } from "express";
+import { UserService } from "../services/userService";
+import { validate } from "../middlewares/validation";
+import { createUserSchema, loginSchema } from "../schemas/validation";
+import { UserResponse, LoginResponse } from "../models/user.model";
+import { AppError } from "../utils/errors";
 
 const router = Router();
-const JWT_SECRET = "desafio";
+const userService = new UserService();
 
-router.post("/register", async (req: Request, res: Response): Promise<void> => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    res.status(400).json({ message: "Nome e senha são obrigatórios" });
-    return;
-  }
-
+router.post("/register", validate(createUserSchema), async (req: Request, res: Response<UserResponse>, next: NextFunction) => {
   try {
-    const existing = await prisma.user.findUnique({ where: { username } });
-    if (existing) {
-      res.status(400).json({ message: "Usuário já existe" });
-      return;
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({
-      data: {
-        username,
-        password: hashedPassword
-      }
-    });
-
-    res.status(201).json({ 
+    const { username, password } = req.body;
+    const { user, token } = await userService.createUser(username, password);
+    
+    res.status(201).json({
       id: user.id,
       username: user.username,
-      message: "Usuário criado com sucesso" 
+      token,
+      message: "User created successfully"
     });
-
   } catch (error) {
-    console.error("Erro ao criar usuário:", error);
-    res.status(500).json({ message: "Erro interno do servidor" });
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(new AppError("Failed to create user", 500));
+    }
   }
 });
 
-router.post("/login", async (req: Request, res: Response): Promise<void> => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    res.status(400).json({ message: "Usuário e senha são obrigatórios" });
-    return;
-  }
-
+router.post("/login", validate(loginSchema), async (req: Request, res: Response<LoginResponse>, next: NextFunction) => {
   try {
-    const user = await prisma.user.findUnique({ where: { username } });
-
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      res.status(401).json({ message: "Credenciais inválidas" });
-      return;
-    }
-
-    const token = jwt.sign(
-      { userId: user.id, username: user.username },
-      JWT_SECRET,
-      { expiresIn: "2h" }
-    );
+    const { username, password } = req.body;
+    const { user, token } = await userService.login(username, password);
 
     res.status(200).json({
-      message: "Login realizado com sucesso",
+      message: "Login successful",
       token,
       user: {
         id: user.id,
         username: user.username,
       },
     });
-
   } catch (error) {
-    console.error("Erro ao tentar login:", error);
-    res.status(500).json({ message: "Erro interno do servidor" });
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(new AppError("Invalid username or password", 401));
+    }
   }
 });
 

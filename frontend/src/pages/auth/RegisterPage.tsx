@@ -33,6 +33,8 @@ export default function RegisterPage() {
         password: password
       });
 
+      toast.success("Conta criada com sucesso");
+
       navigate("/login");
     } finally {
       setLoading(false);

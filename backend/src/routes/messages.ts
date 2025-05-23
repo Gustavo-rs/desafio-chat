@@ -1,77 +1,72 @@
-import { Router, Request, Response } from "express";
-import { RequestHandler } from "express";
-import prisma from "../../prisma/client";
-import { authMiddleware } from "../middlewares/authMiddleware";
-import { io } from "../server";
-import { AuthenticatedRequest } from "../types/express";
+import { Router, Request, Response, NextFunction } from "express";
+import { MessageService } from "../services/messageService";
+import { validate } from "../middlewares/validation";
+import { createMessageSchema } from "../schemas/validation";
+import { MessageResponse, UnreadCountResponse, ErrorResponse } from "../models/message.model";
+import { AppError } from "../utils/errors";
 
 const router = Router();
+const messageService = new MessageService();
 
-router.use(authMiddleware);
-
-router.get("/:roomId", (async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  const { roomId } = req.params;
-  const userId = req.user?.id;
-
-  if (!userId) {
-    res.status(401).json({ error: "Usuário não autenticado" });
-    return;
-  }
-
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 20;
-  const skip = (page - 1) * limit;
-
+router.get("/:roomId", async (req: Request, res: Response<MessageResponse | ErrorResponse>, next: NextFunction) => {
   try {
-    await prisma.unreadMessage.deleteMany({
-      where: {
-        roomId,
-        userId
-      }
-    });
+    const { roomId } = req.params;
+    const { page = "1", limit = "20" } = req.query;
+    const userId = req.user?.userId;
 
-    const [messages, total] = await Promise.all([
-      prisma.message.findMany({
-        where: { roomId },
-        include: {
-          user: {
-            select: {
-              id: true,
-              username: true
-            }
-          }
-        },
-        orderBy: { createdAt: "desc" },
-        take: limit,
-        skip
-      }),
-      prisma.message.count({
-        where: { roomId }
-      })
-    ]);
-
-    console.log("Mensagens encontradas:", messages.length);
-    console.log("Total de mensagens:", total);
-
-    io.to(String(userId)).emit("messages_read", {
-      roomId
-    });
-
-    res.json({
-      total,
-      pages: Math.ceil(total / limit),
-      currentPage: page,
-      limit,
-      messages: messages.reverse(),
-    });
-  } catch (error) {
-    console.error("Erro detalhado ao buscar mensagens:", error);
-    if (error instanceof Error) {
-      console.error("Mensagem de erro:", error.message);
-      console.error("Stack trace:", error.stack);
+    if (!userId) {
+      return res.status(401).json({ message: "Você precisa estar logado para ver as mensagens" });
     }
-    res.status(500).json({ error: "Erro ao buscar mensagens", details: error instanceof Error ? error.message : "Erro desconhecido" });
+
+    const messages = await messageService.getMessages(roomId, userId, parseInt(page as string), parseInt(limit as string));
+    res.json(messages);
+  } catch (error) {
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(new AppError("Erro ao buscar mensagens", 500));
+    }
   }
-}) as RequestHandler);
+});
+
+router.post("/:roomId", validate(createMessageSchema), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { roomId } = req.params;
+    const { content } = req.body;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Você precisa estar logado para enviar mensagens" });
+    }
+
+    const message = await messageService.createMessage(content, userId, roomId);
+    res.status(201).json(message);
+  } catch (error) {
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(new AppError("Erro ao enviar mensagem", 500));
+    }
+  }
+});
+
+router.get("/unread/count", async (req: Request, res: Response<UnreadCountResponse | ErrorResponse>, next: NextFunction) => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Você precisa estar logado para ver mensagens não lidas" });
+    }
+
+    const unreadCounts = await messageService.getUnreadCounts(userId);
+    res.json({ unreadCounts });
+  } catch (error) {
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(new AppError("Erro ao buscar mensagens não lidas", 500));
+    }
+  }
+});
 
 export default router;

@@ -1,129 +1,53 @@
-import { Router, Request, Response } from "express";
-import { RequestHandler } from "express";
-import prisma from "../../prisma/client";
-import { authMiddleware } from "../middlewares/authMiddleware";
-import { io } from "../server";
-import { AuthenticatedRequest } from "../types/express";
+import { Router, Request, Response, NextFunction } from "express";
+import { RoomService } from "../services/roomService";
+import { MessageService } from "../services/messageService";
+import { authenticate } from "../middlewares/auth";
+import { validate } from "../middlewares/validation";
+import { createRoomSchema, roomIdSchema } from "../schemas/validation";
 
 const router = Router();
+const roomService = new RoomService();
+const messageService = new MessageService();
 
-router.use(authMiddleware);
+router.use(authenticate);
 
-router.post("/", (async (req: Request, res: Response) => {
-  const { name } = req.body;
-
-  if (!name) {
-    return res.status(400).json({ message: "Nome da sala é obrigatório" });
-  }
-
-  const existingRoom = await prisma.room.findFirst({
-    where: { name }
-  });
-
-  if (existingRoom) {
-    return res.status(400).json({ message: "Já existe uma sala com este nome" });
-  }
-
-  const room = await prisma.room.create({ 
-    data: { 
-      name,
-      id: undefined // Deixa o Prisma gerar o UUID automaticamente
-    } 
-  });
-  
-  io.emit("room_created", room);
-  
-  res.status(201).json(room);
-}) as RequestHandler);
-
-router.delete("/:id", (async (req: Request, res: Response) => {
-  const { id } = req.params;
-
+router.post("/", validate(createRoomSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Primeiro verifica se a sala existe
-    const existingRoom = await prisma.room.findUnique({
-      where: { id }
-    });
-
-    if (!existingRoom) {
-      return res.status(404).json({ message: "Sala não encontrada" });
-    }
-
-    // Deleta a sala
-    await prisma.room.delete({
-      where: { id }
-    });
-
-    io.emit("room_deleted", { id });
-
-    res.json({ message: "Sala deletada com sucesso" });
+    const { name } = req.body;
+    const room = await roomService.createRoom(name);
+    res.status(201).json(room);
   } catch (error) {
-    console.error("Erro ao deletar sala:", error);
-    res.status(500).json({ message: "Erro interno do servidor" });
+    next(error);
   }
-}) as RequestHandler);
+});
 
-router.get("/", (async (_req: Request, res: Response) => {
+router.delete("/:id", validate(roomIdSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const rooms = await prisma.room.findMany({
-      include: {
-        messages: {
-          orderBy: {
-            createdAt: 'desc'
-          },
-          take: 1,
-          include: {
-            user: {
-              select: {
-                id: true,
-                username: true
-              }
-            }
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
-
-    const roomsWithLastMessage = rooms.map(room => ({
-      ...room,
-      lastMessage: room.messages[0] || null,
-      messages: undefined
-    }));
-
-    res.json(roomsWithLastMessage);
+    const { id } = req.params;
+    await roomService.deleteRoom(id);
+    res.json({ message: "Room deleted successfully" });
   } catch (error) {
-    console.error("Erro ao buscar salas:", error);
-    res.status(500).json({ message: "Erro interno do servidor" });
+    next(error);
   }
-}) as RequestHandler);
+});
 
-router.get("/unread-counts", (async (req: AuthenticatedRequest, res: Response) => {
+router.get("/", async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = req.user.id;
-
-    const unreadCounts = await prisma.unreadMessage.groupBy({
-      by: ['roomId'],
-      where: {
-        userId: userId
-      },
-      _count: {
-        _all: true
-      }
-    });
-
-    const formattedCounts = unreadCounts.map(count => ({
-      roomId: count.roomId,
-      count: count._count._all
-    }));
-
-    res.json({ data: formattedCounts });
+    const rooms = await roomService.getRooms();
+    res.json(rooms);
   } catch (error) {
-    console.error("Erro ao buscar contagem de mensagens não lidas:", error);
-    res.status(500).json({ message: "Erro interno do servidor" });
+    next(error);
   }
-}) as RequestHandler);
+});
+
+router.get("/unread-counts", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.userId;
+    const unreadCounts = await messageService.getUnreadCounts(userId);
+    res.json({ data: unreadCounts });
+  } catch (error) {
+    next(error);
+  }
+});
 
 export default router;

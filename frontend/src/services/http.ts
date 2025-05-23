@@ -12,7 +12,7 @@ http.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
     config.headers = config.headers || {};
-    config.headers.Authorization = `${token}`;
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
@@ -22,20 +22,13 @@ http.interceptors.response.use(
     return response;
   },
   (error) => {
-    switch (error.status) {
-      case 401:
-        toast.error(error.response.data.message);
-        break;
-      case 400:
-        toast.error(error.response.data.message);
-        break;
-      case 404:
-        toast.error(error.response.data.message);
-        break;
-      case 500:
-        toast.error(error.response.data.message);
-        break;
+
+    const message = error.response.data.message || "Erro desconhecido";
+
+    if (message) {
+      toast.error(message);
     }
+
     return Promise.reject(error);
   }
 );
