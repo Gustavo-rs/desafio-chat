@@ -61,9 +61,23 @@ io.on("connection", (socket) => {
   socket.join(user.userId.toString());
   console.log(`🔗 Socket ${socket.id} entrou na sala pessoal ${user.userId}`);
 
-  socket.on("join_room", (roomId) => {
-    socket.join(roomId);
+  socket.on("join_room", async (roomId) => {
+    socket.join(roomId.toString());
     console.log(`🔗 Socket ${socket.id} entrou na sala ${roomId}`);
+
+    // Enviar lista de usuários online para todos na sala
+    const roomSockets = await io.in(roomId.toString()).fetchSockets();
+    const onlineUsers = roomSockets.map(s => ({
+      userId: (s as any).user.userId,
+      username: (s as any).user.username
+    }));
+
+    io.to(roomId.toString()).emit("online_users", onlineUsers);
+  });
+
+  socket.on("leave_room", (roomId) => {
+    socket.leave(roomId.toString());
+    console.log(`🔗 Socket ${socket.id} saiu da sala ${roomId}`);
   });
 
   socket.on("send_message", async (data) => {

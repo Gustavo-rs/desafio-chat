@@ -57,28 +57,34 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
     socketRef.current = socket;
 
     socket.on("connect", () => {
+      console.log("ChatPage: Socket conectado");
       socket.emit("join_room", roomId);
     });
 
     socket.on("receive_message", (message: Message) => {
+      console.log("ChatPage: Nova mensagem recebida:", message);
       if (message.user.id !== user?.user.id) {
         setMessages((prev) => [...prev, message]);
+        scrollToBottom();
       }
     });
 
     return () => {
+      console.log("ChatPage: Desconectando socket");
       socket.disconnect();
     };
-  }, [roomId]);
+  }, [roomId, user?.token]);
 
   const sendMessage = () => {
     if (!roomId) return;
     
     if (input.trim() && socketRef.current) {
-      socketRef.current.emit("send_message", {
+      const message = {
         content: input,
         roomId
-      });
+      };
+
+      socketRef.current.emit("send_message", message);
 
       setMessages((prev) => [
         ...prev,
@@ -89,11 +95,12 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
       ]);
 
       setInput("");
+      scrollToBottom();
     }
   };
 
   useLayoutEffect(() => {
-    if (initialLoadDone && !isLoadingOlderMessages.current && messages.length > 0 && messages[messages.length - 1].user.id === user?.user.id) {
+    if (initialLoadDone && !isLoadingOlderMessages.current && messages.length > 0) {
       scrollToBottom();
     }
   }, [messages]);
