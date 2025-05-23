@@ -5,8 +5,15 @@ import { MessageResponse, UnreadCount } from "../models/message.model";
 
 const prisma = new PrismaClient();
 
+interface FileInfo {
+  fileName: string;
+  fileUrl: string;
+  fileType: string;
+  fileSize: number;
+}
+
 export class MessageService {
-  async createMessage(content: string, roomId: string, userId: string) {
+  async createMessage(content: string, userId: string, roomId: string, fileInfo?: FileInfo) {
     const room = await prisma.room.findUnique({
       where: { id: roomId },
     });
@@ -15,12 +22,18 @@ export class MessageService {
       throw new NotFoundError('Room not found');
     }
 
+    const messageData = {
+      content,
+      roomId,
+      userId,
+      fileName: fileInfo?.fileName,
+      fileUrl: fileInfo?.fileUrl,
+      fileType: fileInfo?.fileType,
+      fileSize: fileInfo?.fileSize,
+    } as const;
+
     const message = await prisma.message.create({
-      data: {
-        content,
-        roomId,
-        userId,
-      },
+      data: messageData,
       include: {
         user: {
           select: {
@@ -89,6 +102,9 @@ export class MessageService {
       prisma.message.count({ where: { roomId } }),
     ]);
 
+    // Inverte a ordem das mensagens para que as mais antigas fiquem no topo
+    const orderedMessages = messages.reverse();
+
     // Mark messages as read when user enters the room
     await this.markMessagesAsRead(userId, roomId);
 
@@ -99,7 +115,7 @@ export class MessageService {
       pages,
       currentPage: page,
       limit,
-      messages,
+      messages: orderedMessages,
     };
   }
 

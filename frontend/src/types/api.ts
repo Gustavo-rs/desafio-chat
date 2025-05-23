@@ -47,18 +47,22 @@ export interface APICreateMessage {
 }
 
 export interface APIMessage {
-    messages: Message[];
-    total: number;
-    pages: number;
-    currentPage: number;
-    limit: number;
-}
-
-export interface Message {
     id: string;
     content: string;
     createdAt: string;
     user: User;
+    fileName?: string;
+    fileUrl?: string;
+    fileType?: string;
+    fileSize?: number;
+}
+
+export interface MessageResponse {
+    messages: APIMessage[];
+    total: number;
+    pages: number;
+    currentPage: number;
+    limit: number;
 }
 
 /////////////////////////////////////////

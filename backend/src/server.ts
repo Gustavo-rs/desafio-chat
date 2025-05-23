@@ -5,6 +5,7 @@ import cors from "cors";
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
+import path from "path";
 import { config } from "./config/config";
 import { errorHandler } from "./middlewares/errorHandler";
 import { authenticate } from "./middlewares/auth";
@@ -33,6 +34,9 @@ export { io };
 app.use(cookieParser());
 app.use(express.json());
 app.use(cors(corsOptions));
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use(rateLimit(config.rateLimit));
 

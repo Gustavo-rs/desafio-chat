@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Paperclip } from "lucide-react";
 import ChatPage from "./chat/ChatPage";
 import { io } from "socket.io-client";
 import { Badge } from "@/components/ui/badge";
@@ -307,8 +307,18 @@ const Home: React.FC = () => {
                   )}
                 </p>
                 {room.lastMessage ? (
-                  <p className="text-xs text-gray-500 truncate">
-                    <strong>{room.lastMessage.user.username}</strong>: {room.lastMessage.content.length > 30 ? `${room.lastMessage.content.slice(0, 30)}...` : room.lastMessage.content}
+                  <p className="text-xs text-gray-500 truncate flex items-center gap-1">
+                    <strong>{room.lastMessage.user.username}</strong>:{" "}
+                    {room.lastMessage.fileUrl ? (
+                      <>
+                        <Paperclip size={12} />
+                        <span>Arquivo</span>
+                      </>
+                    ) : (
+                      room.lastMessage.content.length > 30
+                        ? `${room.lastMessage.content.slice(0, 30)}...`
+                        : room.lastMessage.content
+                    )}
                   </p>
                 ) : (
                   <p className="text-xs text-gray-500 truncate">

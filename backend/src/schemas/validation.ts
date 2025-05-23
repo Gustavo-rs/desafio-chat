@@ -22,7 +22,7 @@ export const createRoomSchema = z.object({
 
 export const createMessageSchema = z.object({
   body: z.object({
-    content: z.string().min(1).max(1000),
+    content: z.string().max(1000).optional(),
     roomId: z.string().uuid(),
   }),
 });

@@ -38,6 +38,10 @@ model Message {
   room      Room     @relation(fields: [roomId], references: [id])
   roomId    String
   unreadMessages UnreadMessage[]
+  fileName  String?
+  fileUrl   String?
+  fileType  String?
+  fileSize  Int?
 }
 
 model UnreadMessage {
