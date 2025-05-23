@@ -4,6 +4,7 @@ import { Server } from "socket.io";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
+import cookieParser from "cookie-parser";
 import { config } from "./config/config";
 import { errorHandler } from "./middlewares/errorHandler";
 import { authenticate } from "./middlewares/auth";
@@ -14,16 +15,24 @@ import { MessageService } from "./services/messageService";
 
 const app = express();
 const server = http.createServer(app);
+
+// Configure CORS
+const corsOptions = {
+  origin: "http://localhost:5173", // Your frontend URL
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
 const io = new Server(server, {
-  cors: {
-    origin: config.corsOrigin,
-  },
+  cors: corsOptions
 });
 
 export { io };
 
-app.use(cors());
+app.use(cookieParser());
 app.use(express.json());
+app.use(cors(corsOptions));
 
 app.use(rateLimit(config.rateLimit));
 
@@ -41,7 +50,7 @@ app.get("/", (req, res) => {
 });
 
 io.use((socket, next) => {
-  const token = socket.handshake.auth.token;
+  const token = socket.handshake.headers.cookie?.split(';').find(c => c.trim().startsWith('token='))?.split('=')[1];
 
   if (!token) {
     return next(new Error("No token provided"));

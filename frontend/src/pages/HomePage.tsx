@@ -64,8 +64,8 @@ const Home: React.FC = () => {
     setIsCreatingRoom(true);
 
     try {
-      const response = await roomsService.create({ name: roomName });
-      // Não adiciona a sala aqui pois o socket irá notificar
+      await roomsService.create({ name: roomName });
+
       setOpen(false);
       setRoomName("");
     } finally {
@@ -77,9 +77,8 @@ const Home: React.FC = () => {
     handleRooms();
     fetchUnreadCounts();
 
-    if (!user?.token) return;
+    if (!user) return;
 
-    // Adiciona listener para atualizar ordem das salas
     const handleRoomOrder = (event: CustomEvent) => {
       const { roomId } = event.detail;
       setRooms(prev => {
@@ -96,9 +95,7 @@ const Home: React.FC = () => {
 
     console.log("Iniciando conexão do socket no HomePage");
     const socket = io("http://localhost:3001", {
-      auth: {
-        token: user.token
-      },
+      withCredentials: true,
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000
@@ -211,7 +208,7 @@ const Home: React.FC = () => {
       socket.disconnect();
       window.removeEventListener("update_room_order", handleRoomOrder as EventListener);
     };
-  }, [user?.token]);
+  }, [user]);
 
   const handleRoomSelect = (room: APIRoom) => {
     console.log("HomePage: Selecionando sala:", room);
@@ -313,13 +310,19 @@ const Home: React.FC = () => {
                   {room.name}
                   {room.newRoom && (
                     <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-md">
-                      (Nova Sala)
+                      (Novo)
                     </span>
                   )}
                 </p>
-                <p className="text-xs text-gray-500 truncate">
-                  Clique para entrar na sala
-                </p>
+                {room.lastMessage ? (
+                  <p className="text-xs text-gray-500 truncate">
+                    <strong>{room.lastMessage.user.username}</strong>: {room.lastMessage.content.length > 30 ? `${room.lastMessage.content.slice(0, 30)}...` : room.lastMessage.content}
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-500 truncate">
+                    Nenhuma mensagem ainda
+                  </p>
+                )}
               </div>
               {unreadCounts[room.id.toString()] > 0 && (
                 <div className="flex-shrink-0 flex flex-col items-end gap-1">

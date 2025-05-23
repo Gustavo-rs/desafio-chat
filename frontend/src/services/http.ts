@@ -6,6 +6,7 @@ const http = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true
 });
 
 http.interceptors.request.use((config) => {
@@ -22,8 +23,7 @@ http.interceptors.response.use(
     return response;
   },
   (error) => {
-
-    const message = error.response.data.message || "Erro desconhecido";
+    const message = error.response?.data?.message || "Erro desconhecido";
 
     if (message) {
       toast.error(message);

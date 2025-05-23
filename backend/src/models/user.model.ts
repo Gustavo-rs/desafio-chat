@@ -9,13 +9,11 @@ export interface User {
 export interface UserResponse {
   id: string;
   username: string;
-  token: string;
   message: string;
 }
 
 export interface LoginResponse {
   message: string;
-  token: string;
   user: {
     id: string;
     username: string;

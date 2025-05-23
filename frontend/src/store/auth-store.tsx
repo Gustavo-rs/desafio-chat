@@ -18,15 +18,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     try {
       const userStr = localStorage.getItem("user");
-      const token = localStorage.getItem("token");
 
-      if (!userStr || !token) return;
+      if (!userStr) return;
 
       const user = JSON.parse(userStr);
 
       if (user?.username && user?.id) {
         setUser({
-          token,
           message: "authenticated",
           user: {
             id: user.id,
@@ -42,7 +40,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = (data: APIUser) => {
     try {
-      localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       setUser(data);
     } catch (err) {
@@ -52,7 +49,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
   };
@@ -63,7 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user,
         login,
         logout,
-        isAuthenticated: !!user && !!user.token,
+        isAuthenticated: !!user,
       }}
     >
       {children}

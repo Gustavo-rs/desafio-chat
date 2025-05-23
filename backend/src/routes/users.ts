@@ -11,12 +11,11 @@ const userService = new UserService();
 router.post("/register", validate(createUserSchema), async (req: Request, res: Response<UserResponse>, next: NextFunction) => {
   try {
     const { username, password } = req.body;
-    const { user, token } = await userService.createUser(username, password);
+    const { user, token } = await userService.createUser(username, password, res);
     
     res.status(201).json({
       id: user.id,
       username: user.username,
-      token,
       message: "User created successfully"
     });
   } catch (error) {
@@ -31,11 +30,10 @@ router.post("/register", validate(createUserSchema), async (req: Request, res: R
 router.post("/login", validate(loginSchema), async (req: Request, res: Response<LoginResponse>, next: NextFunction) => {
   try {
     const { username, password } = req.body;
-    const { user, token } = await userService.login(username, password);
+    const { user, token } = await userService.login(username, password, res);
 
     res.status(200).json({
       message: "Login successful",
-      token,
       user: {
         id: user.id,
         username: user.username,
@@ -48,6 +46,11 @@ router.post("/login", validate(loginSchema), async (req: Request, res: Response<
       next(new AppError("Invalid username or password", 401));
     }
   }
+});
+
+router.post("/logout", (req: Request, res: Response) => {
+  res.clearCookie('token');
+  res.status(200).json({ message: "Logged out successfully" });
 });
 
 export default router;

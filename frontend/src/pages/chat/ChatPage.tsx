@@ -50,9 +50,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
     listMessagesFromRoom();
 
     const socket = io("http://localhost:3001", {
-      auth: {
-        token: user?.token
-      }
+      withCredentials: true
     });
 
     socketRef.current = socket;
@@ -74,7 +72,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
       console.log("ChatPage: Desconectando socket");
       socket.disconnect();
     };
-  }, [roomId, user?.token]);
+  }, [roomId]);
 
   const sendMessage = () => {
     if (!roomId) return;

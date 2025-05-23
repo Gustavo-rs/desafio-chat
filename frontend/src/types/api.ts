@@ -9,7 +9,6 @@ export interface APIAuthUser {
 
 export interface APIUser {
     message: string;
-    token: string;
     user: User;
 }
 
