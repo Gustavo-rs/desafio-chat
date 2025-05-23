@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useUser } from "../store/auth-store";
-import type { APIRoom } from "@/types/api";
+import type { APIRoom, UnreadCount } from "@/types/api";
 import roomsService from "@/services/rooms-service";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import ChatPage from "./chat/ChatPage";
+import { io } from "socket.io-client";
 
 const Home: React.FC = () => {
   const [rooms, setRooms] = useState<APIRoom[]>([]);
@@ -25,15 +26,28 @@ const Home: React.FC = () => {
   const [roomName, setRoomName] = useState("");
   const [selectedRoomId, setSelectedRoomId] = useState<number>();
   const [selectedRoomName, setSelectedRoomName] = useState<string>();
+  const [unreadCounts, setUnreadCounts] = useState<Record<number, number>>({});
   const { user } = useUser();
   const [open, setOpen] = useState(false);
+
+  const fetchUnreadCounts = async () => {
+    try {
+      const response = await roomsService.getUnreadCounts();
+      const counts: Record<number, number> = {};
+      response.data.forEach((item: UnreadCount) => {
+        counts[item.roomId] = item.count;
+      });
+      setUnreadCounts(counts);
+    } catch (error) {
+      console.error("Error fetching unread counts:", error);
+    }
+  };
 
   const handleRooms = async () => {
     setLoading(true);
 
     try {
       const response = await roomsService.list();
-
       setRooms(response);
     } finally {
       setLoading(false);
@@ -50,7 +64,8 @@ const Home: React.FC = () => {
 
     try {
       const response = await roomsService.create({ name: roomName });
-      setRooms([...rooms, response]);
+      const newRoomWithNew = { ...response, newRoom: true };
+      setRooms([...rooms, newRoomWithNew]);
       setOpen(false);
       setRoomName("");
     } finally {
@@ -60,12 +75,106 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     handleRooms();
-  }, []);
+    fetchUnreadCounts();
+
+    if (!user?.token) return;
+
+    console.log("Iniciando conexão do socket no HomePage");
+    const socket = io("http://localhost:3001", {
+      auth: {
+        token: user.token
+      },
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
+    });
+
+    socket.on("connect", () => {
+      console.log("HomePage: Socket conectado com ID:", socket.id);
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("HomePage: Erro na conexão do socket:", error);
+    });
+
+    socket.on("room_created", (newRoom: APIRoom) => {
+      console.log("HomePage: Nova sala criada:", newRoom);
+      const newRoomWithNew = { ...newRoom, newRoom: true };
+      setRooms(prev => [...prev, newRoomWithNew]);
+    });
+
+    socket.on("room_deleted", (deletedRoom: {id: number}) => {
+      console.log("HomePage: Sala deletada:", deletedRoom);
+      setRooms(prev => prev.filter(room => room.id !== deletedRoom.id));
+      if (selectedRoomId === deletedRoom.id) {
+        setSelectedRoomId(undefined);
+        setSelectedRoomName(undefined);
+      }
+    });
+
+    socket.on("unread_message", ({ roomId }) => {
+      console.log("HomePage: Recebida notificação de mensagem não lida");
+      console.log("Sala:", roomId);
+      console.log("Sala selecionada:", selectedRoomId);
+      console.log("Contador atual:", unreadCounts);
+      
+      setUnreadCounts(prev => {
+        const newCount = (prev[roomId] || 0) + 1;
+        console.log("Novo contador calculado:", newCount);
+        const newCounts = {
+          ...prev,
+          [roomId]: newCount
+        };
+        console.log("Novos contadores:", newCounts);
+        return newCounts;
+      });
+    });
+
+    socket.on("messages_read", ({ roomId }) => {
+      console.log("HomePage: Mensagens marcadas como lidas");
+      console.log("Sala:", roomId);
+      console.log("Contador atual:", unreadCounts);
+      
+      setUnreadCounts(prev => {
+        const newCounts = {
+          ...prev,
+          [roomId]: 0
+        };
+        console.log("Novos contadores após leitura:", newCounts);
+        return newCounts;
+      });
+    });
+
+    return () => {
+      console.log("HomePage: Desconectando socket");
+      socket.disconnect();
+    };
+  }, [user?.token]);
+
+  const handleRoomSelect = (room: APIRoom) => {
+    console.log("HomePage: Selecionando sala:", room);
+    setSelectedRoomId(room.id);
+    setSelectedRoomName(room.name);
+    setRooms(prev => prev.map(r => ({ ...r, newRoom: r.id === room.id ? false : r.newRoom })));
+    setUnreadCounts(prev => {
+      const newCounts = {
+        ...prev,
+        [room.id]: 0
+      };
+      console.log("HomePage: Zerando contador para sala", room.id);
+      console.log("Novos contadores:", newCounts);
+      return newCounts;
+    });
+  };
+
+  const formatUnreadCount = (count: number) => {
+    return count > 99 ? '99+' : count;
+  };
 
   return (
     <div className="flex h-[calc(100vh-8rem)] gap-4">
       {/* Lista de salas (30%) */}
-      <div className="w-[30%] p-4 bg-white rounded-xl shadow-sm border border-gray-100">
+      <div className="w-[30%] p-4 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-800">Salas</h2>
 
@@ -124,15 +233,12 @@ const Home: React.FC = () => {
           />
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3 overflow-y-auto flex-1 pr-2">
           {rooms.map((room, index) => (
             <div
               key={index}
               className="flex items-center gap-4 p-3 bg-violet-50 hover:bg-violet-100 transition rounded-lg cursor-pointer shadow-sm"
-              onClick={() => {
-                setSelectedRoomId(room.id);
-                setSelectedRoomName(room.name);
-              }}
+              onClick={() => handleRoomSelect(room)}
             >
               <div className="flex-shrink-0">
                 <div className="w-10 h-10 bg-violet-400 text-white flex items-center justify-center rounded-full text-sm font-bold uppercase">
@@ -140,11 +246,25 @@ const Home: React.FC = () => {
                 </div>
               </div>
               <div className="flex-1">
-                <p className="font-medium text-gray-800">{room.name}</p>
+                <p className="font-medium text-gray-800">
+                  {room.name}
+                  {room.newRoom && (
+                    <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-md">
+                      (Nova Sala)
+                    </span>
+                  )}
+                </p>
                 <p className="text-xs text-gray-500 truncate">
                   Clique para entrar na sala
                 </p>
               </div>
+              {unreadCounts[room.id] > 0 && (
+                <div className="flex-shrink-0">
+                  <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                    {formatUnreadCount(unreadCounts[room.id])}
+                  </span>
+                </div>
+              )}
             </div>
           ))}
         </div>

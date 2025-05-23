@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { AuthenticatedRequest } from "../types/express";
 
 const JWT_SECRET = "desafio";
 
@@ -16,8 +17,11 @@ export const authMiddleware = (
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    (req as any).user = decoded;
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; username: string };
+    (req as AuthenticatedRequest).user = {
+      id: decoded.userId,
+      username: decoded.username
+    };
     next();
   } catch (err) {
     res.status(401).json({ error: "Token inválido" });

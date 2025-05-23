@@ -19,7 +19,6 @@ http.interceptors.request.use((config) => {
 
 http.interceptors.response.use(
   (response) => {
-    toast.success((response.data as { message?: string }).message || "Operação realizada com sucesso");
     return response;
   },
   (error) => {

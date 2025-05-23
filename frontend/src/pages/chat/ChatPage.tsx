@@ -1,6 +1,9 @@
 import { useUser } from "@/store/auth-store";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
+import messageService from "@/services/message-service";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface Message {
   user: {
@@ -18,11 +21,32 @@ interface ChatPageProps {
 export default function ChatPage({ roomId, roomName }: ChatPageProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
+  const isLoadingOlderMessages = useRef(false);
+
   const socketRef = useRef<Socket | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const { user } = useUser();
+
+  const scrollToBottom = () => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: "auto" // ou "smooth", dependendo da UX desejada
+      });
+    }
+  };  
 
   useEffect(() => {
     if (!roomId) return;
+
+    setPage(1);
+    setMessages([]);
+    setHasMore(true);
+    listMessagesFromRoom();
 
     const socket = io("http://localhost:3001", {
       auth: {
@@ -32,7 +56,9 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
 
     socketRef.current = socket;
 
-    socket.emit("join_room", roomId);
+    socket.on("connect", () => {
+      socket.emit("join_room", roomId);
+    });
 
     socket.on("receive_message", (message: Message) => {
       if (message.user.id !== user?.user.id) {
@@ -54,7 +80,6 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
         roomId
       });
 
-      // Adiciona apenas localmente a mensagem do usuário atual
       setMessages((prev) => [
         ...prev,
         {
@@ -64,6 +89,63 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
       ]);
 
       setInput("");
+    }
+  };
+
+  useLayoutEffect(() => {
+    if (initialLoadDone && !isLoadingOlderMessages.current && messages.length > 0 && messages[messages.length - 1].user.id === user?.user.id) {
+      scrollToBottom();
+    }
+  }, [messages]);
+
+  const listMessagesFromRoom = async (pageNumber = 1) => {
+    if (!roomId) return;
+  
+    setLoading(true);
+    const container = messagesContainerRef.current;
+    const previousScrollHeight = container?.scrollHeight ?? 0;
+    const previousScrollTop = container?.scrollTop ?? 0;
+  
+    try {
+      const response = await messageService.listMessagesFromRoom(roomId, pageNumber);
+      const newMessages = response.data.messages;
+  
+      if (pageNumber === 1) {
+        setMessages(newMessages);
+        setInitialLoadDone(true);
+      } else {
+        isLoadingOlderMessages.current = true;
+        setMessages((prev) => [...newMessages, ...prev]);
+  
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const newScrollHeight = container?.scrollHeight ?? 0;
+            const scrollDiff = newScrollHeight - previousScrollHeight;
+  
+            if (container) {
+              container.scrollTop = previousScrollTop + scrollDiff;
+            }
+  
+            isLoadingOlderMessages.current = false;
+          });
+        });
+      }
+  
+      setHasMore(response.data.currentPage < response.data.pages);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+
+  const handleScroll = () => {
+    if (!messagesContainerRef.current || loading || !hasMore) return;
+
+    const { scrollTop } = messagesContainerRef.current;
+    if (scrollTop === 0) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      listMessagesFromRoom(nextPage);
     }
   };
 
@@ -83,19 +165,39 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
           <h2 className="text-xl font-semibold">{roomName}</h2>
         </div>
 
-        <div className="flex-1 py-4 space-y-2 overflow-y-auto max-h-[400px]">
-          {messages.map((msg, idx) => (
-            <div
-              key={idx}
-              className={`p-2 rounded-md max-w-[80%] ${
-                msg.user.id === user?.user.id ? "bg-violet-100 ml-auto" : "bg-gray-100"
-              }`}
-            >
-              <p className="text-sm text-gray-700">
-                <span className="font-bold">{msg.user.username}:</span> {msg.content}
-              </p>
+        <div 
+          ref={messagesContainerRef} 
+          className="flex-1 py-4 space-y-2 overflow-y-auto"
+          onScroll={handleScroll}
+        >
+          {loading && page > 1 && (
+            <div className="flex justify-center py-2">
+              <Loader2 className="h-6 w-6 animate-spin text-violet-500" />
             </div>
-          ))}
+          )}
+          
+          {messages.length === 0 ? (
+            <div className="h-full flex items-center justify-center">
+              <p className="text-gray-500">Nenhuma mensagem encontrada nesta sala</p>
+            </div>
+          ) : (
+            messages.map((msg, idx) => (
+              <div
+                key={idx}
+                className={`p-2 rounded-md max-w-[80%] ${
+                  msg.user.id === user?.user.id ? "ml-auto" : ""
+                }`}
+              >
+                <div className={`p-2 rounded-md break-words ${
+                  msg.user.id === user?.user.id ? "bg-violet-100" : "bg-gray-100"
+                }`}>
+                  <p className="text-sm text-gray-700">
+                    <span className="font-bold">{ msg.user.id === user?.user.id ? "Você" : msg.user.username}</span><br /> {msg.content}
+                  </p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         <div className="border-t pt-4 flex gap-2">
@@ -109,12 +211,14 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
               if (e.key === "Enter") sendMessage();
             }}
           />
-          <button
+          <Button
             onClick={sendMessage}
-            className="bg-violet-600 text-white px-4 py-2 rounded-md hover:bg-violet-700 transition"
+            variant="default"
+            className="bg-violet-600 hover:bg-violet-700"
           >
-            Enviar
-          </button>
+            <span className="text-white">Enviar</span>
+            
+          </Button>
         </div>
       </div>
     </div>
