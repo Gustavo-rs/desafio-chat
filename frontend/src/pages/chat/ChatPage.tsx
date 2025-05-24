@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Edit2, Trash2, Check, X, Paperclip, AlertTriangle } from "lucide-react";
+import { Loader2, Edit2, Trash2, Check, X, Paperclip, AlertTriangle, File } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import type { Message, ChatPageProps, MessageStatus } from "@/types/api";
 
@@ -107,7 +107,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
     setHasMore(true);
     listMessagesFromRoom();
 
-    const socket = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:3001", {
+    const socket = io(import.meta.env.VITE_SOCKET_URL, {
       withCredentials: true
     });
 
@@ -378,13 +378,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                           {msg.user.id === user?.user.id ? "Você" : msg.user.username}
                         </span>
                         <div className="flex items-center gap-2">
-                          {/* Indicador de mensagem editada */}
-                          {msg.status === 'EDITED' && (
-                            <span className="text-xs text-gray-400 italic flex items-center gap-1" title={`Editada às ${msg.updatedAt ? new Date(msg.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}`}>
-                              <Edit2 size={10} />
-                              editada
-                            </span>
-                          )}
+                         
                           
                           {/* Botões de ação para mensagens próprias - apenas se não for deletada */}
                           {msg.user.id === user?.user.id && editingMessageId !== msg.id && msg.status !== 'DELETED' && (
@@ -404,6 +398,13 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                                 <Trash2 size={14} />
                               </button>
                             </div>
+                          )}
+                           {/* Indicador de mensagem editada */}
+                           {msg.status === 'EDITED' && (
+                            <span className="text-xs text-gray-400 italic flex items-center gap-1" title={`Editada às ${msg.updatedAt ? new Date(msg.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}`}>
+                              <Edit2 size={10} />
+                              editada
+                            </span>
                           )}
                           <span className="text-xs text-gray-500">
                             {new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
@@ -491,9 +492,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                           rel="noopener noreferrer"
                           className="flex items-center gap-2 text-violet-600 hover:text-violet-700"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clipRule="evenodd" />
-                          </svg>
+                          <File size={16} />
                           {msg.fileName}
                         </a>
                       )}
