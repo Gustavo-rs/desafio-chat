@@ -66,6 +66,7 @@ export interface MessageResponse {
 }
 
 export interface Message {
+    id: string;
     user: {
       id: string;
       username: string;

@@ -161,4 +161,53 @@ export class MessageService {
 
     io.to(String(userId)).emit('messages_read', { roomId });
   }
+
+  async deleteMessage(messageId: string, userId: string) {
+    // Busca a mensagem para obter o roomId antes de deletar
+    const message = await prisma.message.findUnique({
+      where: { id: messageId },
+      select: { roomId: true, userId: true }
+    });
+
+    if (!message) {
+      throw new NotFoundError('Message not found');
+    }
+
+    // Verifica se o usuário é o dono da mensagem
+    if (message.userId !== userId) {
+      throw new Error('You can only delete your own messages');
+    }
+
+    await prisma.message.delete({
+      where: { id: messageId },
+    });
+
+    // Emite para toda a sala
+    io.to(message.roomId).emit('message_deleted', { messageId });
+  }
+
+  async updateMessage(messageId: string, content: string, userId: string) {
+    // Busca a mensagem para obter o roomId antes de editar
+    const message = await prisma.message.findUnique({
+      where: { id: messageId },
+      select: { roomId: true, userId: true }
+    });
+
+    if (!message) {
+      throw new NotFoundError('Message not found');
+    }
+
+    // Verifica se o usuário é o dono da mensagem
+    if (message.userId !== userId) {
+      throw new Error('You can only edit your own messages');
+    }
+
+    await prisma.message.update({
+      where: { id: messageId },
+      data: { content },
+    });
+   
+    // Emite para toda a sala
+    io.to(message.roomId).emit('message_updated', { messageId, content });
+  }
 } 

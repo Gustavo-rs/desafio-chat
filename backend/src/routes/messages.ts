@@ -86,4 +86,49 @@ router.get("/unread/count", async (req: Request, res: Response<UnreadCountRespon
   }
 });
 
+router.delete("/:messageId", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { messageId } = req.params;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Você precisa estar logado para deletar mensagens" });
+    }
+
+    await messageService.deleteMessage(messageId, userId);
+    res.status(200).json({ message: "Mensagem deletada com sucesso" });
+  } catch (error) {
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(new AppError("Erro ao deletar mensagem", 500));
+    }
+  }
+});
+
+router.put("/:messageId", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { messageId } = req.params;
+    const { content } = req.body;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Você precisa estar logado para editar mensagens" });
+    }
+
+    if (!content || !content.trim()) {
+      return res.status(400).json({ message: "O conteúdo da mensagem é obrigatório" });
+    }
+
+    await messageService.updateMessage(messageId, content, userId);
+    res.status(200).json({ message: "Mensagem editada com sucesso" });
+  } catch (error) {
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(new AppError("Erro ao editar mensagem", 500));
+    }
+  }
+});
+
 export default router;

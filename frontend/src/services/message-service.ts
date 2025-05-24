@@ -17,6 +17,14 @@ class MessageService extends BaseService<MessageResponse, APICreateMessage> {
       },
     });
   }
+
+  async deleteMessage(messageId: string) {
+    return this.api.delete(`${this.basePath}/${messageId}`);
+  }
+
+  async updateMessage(messageId: string, content: string) {
+    return this.api.put(`${this.basePath}/${messageId}`, { content });
+  }
 }
 
 export default new MessageService();
