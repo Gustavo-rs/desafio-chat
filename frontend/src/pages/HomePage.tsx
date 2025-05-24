@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Loader2, Paperclip } from "lucide-react";
+import { Loader2, Paperclip, Trash2, Edit2 } from "lucide-react";
 import ChatPage from "./chat/ChatPage";
 import { io } from "socket.io-client";
 import { Badge } from "@/components/ui/badge";
@@ -309,7 +309,25 @@ const Home: React.FC = () => {
                 {room.lastMessage ? (
                   <p className="text-xs text-gray-500 truncate flex items-center gap-1">
                     <strong>{room.lastMessage.user.username}</strong>:{" "}
-                    {room.lastMessage.fileUrl ? (
+                    {room.lastMessage.status === 'DELETED' ? (
+                      <>
+                        <Trash2 size={12} className="text-red-400" />
+                        <span className="italic">Esta mensagem foi excluída</span>
+                      </>
+                    ) : room.lastMessage.status === 'EDITED' ? (
+                      <>
+                        <Edit2 size={12} className="text-blue-500" />
+                        <span className="italic">
+                          {room.lastMessage.fileUrl ? (
+                            "Arquivo (editada)"
+                          ) : (
+                            room.lastMessage.content.length > 25
+                              ? `${room.lastMessage.content.slice(0, 25)}... (editada)`
+                              : `${room.lastMessage.content} (editada)`
+                          )}
+                        </span>
+                      </>
+                    ) : room.lastMessage.fileUrl ? (
                       <>
                         <Paperclip size={12} />
                         <span>Arquivo</span>
