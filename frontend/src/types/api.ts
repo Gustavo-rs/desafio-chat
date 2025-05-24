@@ -65,6 +65,24 @@ export interface MessageResponse {
     limit: number;
 }
 
+export interface Message {
+    user: {
+      id: string;
+      username: string;
+    };
+    content: string;
+    createdAt: string;
+    fileName?: string;
+    fileUrl?: string;
+    fileType?: string;
+    fileSize?: number;
+  }
+  
+  export interface ChatPageProps {
+    roomId?: string;
+    roomName?: string;
+  }
+
 /////////////////////////////////////////
 // Unread Messages
 /////////////////////////////////////////
@@ -73,3 +91,4 @@ export interface UnreadCount {
     roomId: string;
     count: number;
 }
+

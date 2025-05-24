@@ -4,24 +4,7 @@ import { io, Socket } from "socket.io-client";
 import messageService from "@/services/message-service";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-
-interface Message {
-  user: {
-    id: string;
-    username: string;
-  };
-  content: string;
-  createdAt: string;
-  fileName?: string;
-  fileUrl?: string;
-  fileType?: string;
-  fileSize?: number;
-}
-
-interface ChatPageProps {
-  roomId?: string;
-  roomName?: string;
-}
+import type { Message, ChatPageProps } from "@/types/api";
 
 export default function ChatPage({ roomId, roomName }: ChatPageProps) {
   const [messages, setMessages] = useState<Message[]>([]);
