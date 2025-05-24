@@ -86,7 +86,9 @@ export class MessageService {
     const skip = (page - 1) * limit;
     const [messages, total] = await Promise.all([
       prisma.message.findMany({
-        where: { roomId },
+        where: { 
+          roomId
+        },
         include: {
           user: {
             select: {
@@ -99,7 +101,11 @@ export class MessageService {
         skip,
         take: limit,
       }),
-      prisma.message.count({ where: { roomId } }),
+      prisma.message.count({ 
+        where: { 
+          roomId
+        }
+      }),
     ]);
 
     // Inverte a ordem das mensagens para que as mais antigas fiquem no topo
@@ -163,10 +169,10 @@ export class MessageService {
   }
 
   async deleteMessage(messageId: string, userId: string) {
-    // Busca a mensagem para obter o roomId antes de deletar
+    // Busca a mensagem para obter o roomId antes de marcar como deletada
     const message = await prisma.message.findUnique({
       where: { id: messageId },
-      select: { roomId: true, userId: true }
+      select: { roomId: true, userId: true, status: true }
     });
 
     if (!message) {
@@ -178,19 +184,42 @@ export class MessageService {
       throw new Error('You can only delete your own messages');
     }
 
-    await prisma.message.delete({
+    // Verifica se a mensagem já foi deletada
+    if (message.status === 'DELETED') {
+      throw new Error('Message already deleted');
+    }
+
+    // Marca a mensagem como deletada (soft delete)
+    const updatedMessage = await prisma.message.update({
       where: { id: messageId },
+      data: { 
+        status: 'DELETED',
+        content: 'Mensagem deletada'  // Substitui o conteúdo
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
+      },
     });
 
-    // Emite para toda a sala
-    io.to(message.roomId).emit('message_deleted', { messageId });
+    // Emite para toda a sala com os dados atualizados
+    io.to(message.roomId).emit('message_deleted', { 
+      messageId, 
+      message: updatedMessage 
+    });
+
+    return updatedMessage;
   }
 
   async updateMessage(messageId: string, content: string, userId: string) {
     // Busca a mensagem para obter o roomId antes de editar
     const message = await prisma.message.findUnique({
       where: { id: messageId },
-      select: { roomId: true, userId: true }
+      select: { roomId: true, userId: true, status: true }
     });
 
     if (!message) {
@@ -202,12 +231,35 @@ export class MessageService {
       throw new Error('You can only edit your own messages');
     }
 
-    await prisma.message.update({
+    // Verifica se a mensagem foi deletada
+    if (message.status === 'DELETED') {
+      throw new Error('Cannot edit deleted message');
+    }
+
+    // Atualiza a mensagem e marca como editada
+    const updatedMessage = await prisma.message.update({
       where: { id: messageId },
-      data: { content },
+      data: { 
+        content,
+        status: 'EDITED'
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
+      },
     });
    
-    // Emite para toda a sala
-    io.to(message.roomId).emit('message_updated', { messageId, content });
+    // Emite para toda a sala com os dados atualizados
+    io.to(message.roomId).emit('message_updated', { 
+      messageId, 
+      content,
+      message: updatedMessage
+    });
+
+    return updatedMessage;
   }
 } 

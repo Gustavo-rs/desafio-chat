@@ -1,3 +1,6 @@
+-- CreateEnum
+CREATE TYPE "MessageStatus" AS ENUM ('ACTIVE', 'EDITED', 'DELETED');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL DEFAULT gen_random_uuid(),
@@ -21,8 +24,14 @@ CREATE TABLE "Message" (
     "id" TEXT NOT NULL DEFAULT gen_random_uuid(),
     "content" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "userId" TEXT NOT NULL,
     "roomId" TEXT NOT NULL,
+    "fileName" TEXT,
+    "fileUrl" TEXT,
+    "fileType" TEXT,
+    "fileSize" INTEGER,
+    "status" "MessageStatus" NOT NULL DEFAULT 'ACTIVE',
 
     CONSTRAINT "Message_pkey" PRIMARY KEY ("id")
 );
