@@ -86,7 +86,7 @@ const Home: React.FC = () => {
     window.addEventListener("update_room_order", handleRoomOrder as EventListener);
 
     console.log("Iniciando conexão do socket no HomePage");
-    const socket = io("http://localhost:3001", {
+    const socket = io(import.meta.env.VITE_SOCKET_URL, {
       withCredentials: true,
       reconnection: true,
       reconnectionAttempts: 5,

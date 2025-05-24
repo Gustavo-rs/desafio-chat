@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import messageService from "@/services/message-service";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Paperclip, X } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import type { Message, ChatPageProps } from "@/types/api";
 
@@ -44,7 +44,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
     setHasMore(true);
     listMessagesFromRoom();
 
-    const socket = io("http://localhost:3001", {
+    const socket = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:3001", {
       withCredentials: true
     });
 
@@ -236,13 +236,13 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                       <div className="mt-2">
                         {msg.fileType?.startsWith('image/') ? (
                           <img 
-                            src={`http://localhost:3001${msg.fileUrl}`} 
+                            src={`${import.meta.env.VITE_API_URL}${msg.fileUrl}`} 
                             alt={msg.fileName} 
                             className="max-w-full rounded-lg"
                           />
                         ) : (
                           <a 
-                            href={`http://localhost:3001${msg.fileUrl}`}
+                            href={`${import.meta.env.VITE_API_URL}${msg.fileUrl}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 text-violet-600 hover:text-violet-700"
@@ -271,9 +271,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                 onClick={removeSelectedFile}
                 className="text-violet-600 hover:text-violet-700"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
+                <X className="h-5 w-5" />
               </button>
             </div>
           )}
@@ -300,9 +298,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
               variant="outline"
               className="border-violet-200 hover:bg-violet-50"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-violet-600" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clipRule="evenodd" />
-              </svg>
+              <Paperclip className="h-5 w-5 text-violet-600" />
             </Button>
             <Button
               onClick={sendMessage}

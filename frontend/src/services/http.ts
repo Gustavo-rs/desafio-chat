@@ -1,15 +1,16 @@
 import axios from "axios";
 import { toast } from "sonner";
+import { config } from "@/config/env";
 
-const http = axios.create({
-  baseURL: "http://localhost:3001",
+const api = axios.create({
+  baseURL: config.apiUrl,
   headers: {
     "Content-Type": "application/json",
   },
   withCredentials: true
 });
 
-http.interceptors.request.use((config) => {
+api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
     config.headers = config.headers || {};
@@ -18,7 +19,7 @@ http.interceptors.request.use((config) => {
   return config;
 });
 
-http.interceptors.response.use(
+api.interceptors.response.use(
   (response) => {
     return response;
   },
@@ -33,4 +34,4 @@ http.interceptors.response.use(
   }
 );
 
-export default http;
+export default api;
