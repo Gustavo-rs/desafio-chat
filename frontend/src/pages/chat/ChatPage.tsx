@@ -1,10 +1,12 @@
 import { useUser } from "@/store/auth-store";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import messageService from "@/services/message-service";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import ReactMarkdown from 'react-markdown';
 import type { Message, ChatPageProps } from "@/types/api";
+
 
 export default function ChatPage({ roomId, roomName }: ChatPageProps) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -220,7 +222,16 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                       <span className="font-bold">{ msg.user.id === user?.user.id ? "Você" : msg.user.username}</span>
                       <span className="text-xs text-gray-500">{new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                     </div>
-                    {msg.content}
+                    <ReactMarkdown 
+                      components={{
+                        a: (props) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:text-violet-700 underline" />,
+                        code: (props) => <code {...props} className="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono" />,
+                        blockquote: (props) => <blockquote {...props} className="border-l-4 border-violet-200 pl-3 italic text-gray-600" />,
+                        p: (props) => <p {...props} className="mb-1 last:mb-0" />
+                      }}
+                    >
+                      {msg.content}
+                    </ReactMarkdown>
                     {msg.fileUrl && (
                       <div className="mt-2">
                         {msg.fileType?.startsWith('image/') ? (
@@ -249,7 +260,6 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
               </div>
             ))
           )}
-          {/* Elemento de referência para scroll automático */}
           <div ref={bottomRef} />
         </div>
 
