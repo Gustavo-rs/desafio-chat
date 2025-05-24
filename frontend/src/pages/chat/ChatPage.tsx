@@ -11,9 +11,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Edit2, Trash2, Check, X, Paperclip, AlertTriangle, File } from "lucide-react";
+import { Loader2, Edit2, Trash2, Check, X, Paperclip, AlertTriangle, Users, UserCheck, UserMinus, File } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
-import type { Message, ChatPageProps, MessageStatus } from "@/types/api";
+import type { Message, ChatPageProps, MessageStatus, OnlineUser } from "@/types/api";
 
 // Componente Skeleton simples
 const Skeleton = ({ className }: { className?: string }) => (
@@ -60,6 +60,12 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
   const [editingContent, setEditingContent] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
+  
+  // Estados melhorados para usuários online
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  const [showOnlineUsers, setShowOnlineUsers] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  
   const isLoadingOlderMessages = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -105,9 +111,13 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
     setPage(1);
     setMessages([]);
     setHasMore(true);
+    
+    // Não resetar onlineUsers imediatamente, apenas marcar como loading
+    setLoadingUsers(true);
+    
     listMessagesFromRoom();
 
-    const socket = io(import.meta.env.VITE_SOCKET_URL, {
+    const socket = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:3001", {
       withCredentials: true
     });
 
@@ -147,8 +157,32 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
       }
     });
 
+    // Eventos de usuários online melhorados
+    socket.on("room_users_updated", ({ roomId: updatedRoomId, users, count }) => {
+      if (updatedRoomId === roomId) {
+        console.log("ChatPage: Lista de usuários atualizada:", users);
+        setOnlineUsers(users);
+        setLoadingUsers(false); // Parar loading quando receber dados
+      }
+    });
+
+    socket.on("user_joined_room", ({ userId, username, roomId: joinedRoomId }) => {
+      if (joinedRoomId === roomId && userId !== user?.user.id) {
+        console.log("ChatPage: Usuário entrou na sala:", username);
+      }
+    });
+
+    socket.on("user_left_room", ({ userId, username, roomId: leftRoomId }) => {
+      if (leftRoomId === roomId && userId !== user?.user.id) {
+        console.log("ChatPage: Usuário saiu da sala:", username);
+      }
+    });
+
     return () => {
-      console.log("ChatPage: Desconectando socket");
+      console.log("ChatPage: Desconectando socket e saindo da sala");
+      if (socket.connected) {
+        socket.emit("leave_room", roomId);
+      }
       socket.disconnect();
     };
   }, [roomId]);
@@ -334,9 +368,72 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
   return (
     <div className="w-[50%] bg-white rounded-lg shadow-sm p-4">
       <div className="h-full flex flex-col">
-        <div className="border-b pb-4 flex justify-between">
-          <h2 className="text-xl font-semibold">Chat</h2>
-          <h2 className="text-xl font-semibold">{roomName}</h2>
+        <div className="border-b pb-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Chat</h2>
+            <h2 className="text-xl font-semibold">{roomName}</h2>
+          </div>
+          
+          <div className="flex items-center justify-between mt-2">
+            <button
+              onClick={() => setShowOnlineUsers(!showOnlineUsers)}
+              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              {loadingUsers ? (
+                <>
+                  <Loader2 size={16} className="animate-spin text-violet-500" />
+                </>
+              ) : (
+                <>
+                  <Users size={16} />
+                  <span>{onlineUsers.length} usuário{onlineUsers.length !== 1 ? 's' : ''} online</span>
+                  <span className="text-xs">({showOnlineUsers ? 'ocultar' : 'mostrar'})</span>
+                </>
+              )}
+              
+            </button>
+          </div>
+
+          {showOnlineUsers && (
+            <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                {loadingUsers ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin text-violet-500" />
+                    <span>Carregando usuários...</span>
+                  </>
+                ) : (
+                  <>
+                    <Users size={14} />
+                    <span>Usuários Online ({onlineUsers.length})</span>
+                  </>
+                )}
+              </h4>
+              
+              {loadingUsers ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 size={20} className="animate-spin text-violet-500" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  {onlineUsers.map((onlineUser) => (
+                    <div
+                      key={onlineUser.userId}
+                      className="flex items-center gap-2 text-sm transition-all duration-200 ease-in-out"
+                    >
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className={onlineUser.userId === user?.user.id ? "font-semibold text-violet-700" : "text-gray-700"}>
+                        {onlineUser.userId === user?.user.id ? "Você" : onlineUser.username}
+                      </span>
+                    </div>
+                  ))}
+                  {onlineUsers.length === 0 && (
+                    <p className="text-sm text-gray-500 italic col-span-2">Nenhum usuário online</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div 
@@ -553,7 +650,6 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
         </div>
       </div>
 
-      {/* Dialog de Confirmação de Exclusão */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

@@ -31,6 +31,65 @@ const io = new Server(server, {
 
 export { io };
 
+// Mapa para rastrear usuários online por sala
+const roomUsers = new Map<string, Map<string, {userId: string, username: string, socketId: string}>>();
+
+// Função para atualizar lista de usuários online de uma sala
+const updateRoomUsers = async (roomId: string) => {
+  try {
+    const roomSockets = await io.in(roomId).fetchSockets();
+    const onlineUsers = roomSockets
+      .filter(s => (s as any).user) // Garantir que tem user
+      .map(s => ({
+        userId: (s as any).user.userId,
+        username: (s as any).user.username,
+        socketId: s.id
+      }));
+
+    // Atualizar mapa interno
+    if (!roomUsers.has(roomId)) {
+      roomUsers.set(roomId, new Map());
+    }
+    
+    const roomMap = roomUsers.get(roomId)!;
+    roomMap.clear();
+    
+    onlineUsers.forEach(user => {
+      roomMap.set(user.userId, user);
+    });
+
+    // Emitir para todos na sala
+    const usersList = Array.from(roomMap.values()).map(({userId, username}) => ({userId, username}));
+    io.to(roomId).emit("room_users_updated", {
+      roomId,
+      users: usersList,
+      count: usersList.length
+    });
+
+    console.log(`📊 Room ${roomId} users updated: ${usersList.map(u => u.username).join(', ')}`);
+  } catch (error) {
+    console.error('Error updating room users:', error);
+  }
+};
+
+// Função para remover usuário de todas as salas
+const removeUserFromAllRooms = async (socketId: string, userId: string) => {
+  const roomsToUpdate = new Set<string>();
+  
+  // Encontrar todas as salas onde o usuário estava
+  for (const [roomId, usersMap] of roomUsers.entries()) {
+    if (usersMap.has(userId)) {
+      usersMap.delete(userId);
+      roomsToUpdate.add(roomId);
+    }
+  }
+
+  // Atualizar todas as salas afetadas
+  for (const roomId of roomsToUpdate) {
+    await updateRoomUsers(roomId);
+  }
+};
+
 app.use(cookieParser());
 app.use(express.json());
 app.use(cors(corsOptions));
@@ -78,20 +137,32 @@ io.on("connection", (socket) => {
 
   socket.on("join_room", async (roomId) => {
     socket.join(roomId);
-    console.log(`🔗 Socket ${socket.id} joined room ${roomId}`);
+    console.log(`🔗 Socket ${socket.id} (${user.username}) joined room ${roomId}`);
 
-    const roomSockets = await io.in(roomId).fetchSockets();
-    const onlineUsers = roomSockets.map(s => ({
-      userId: (s as any).user.userId,
-      username: (s as any).user.username
-    }));
-
-    io.to(roomId).emit("online_users", onlineUsers);
+    // Atualizar lista de usuários da sala
+    await updateRoomUsers(roomId);
+    
+    // Notificar outros usuários sobre entrada
+    socket.to(roomId).emit("user_joined_room", {
+      userId: user.userId,
+      username: user.username,
+      roomId
+    });
   });
 
-  socket.on("leave_room", (roomId) => {
+  socket.on("leave_room", async (roomId) => {
     socket.leave(roomId);
-    console.log(`🔗 Socket ${socket.id} left room ${roomId}`);
+    console.log(`🔗 Socket ${socket.id} (${user.username}) left room ${roomId}`);
+
+    // Atualizar lista de usuários da sala
+    await updateRoomUsers(roomId);
+    
+    // Notificar outros usuários sobre saída
+    socket.to(roomId).emit("user_left_room", {
+      userId: user.userId,
+      username: user.username,
+      roomId
+    });
   });
 
   socket.on("send_message", async (data) => {
@@ -103,6 +174,13 @@ io.on("connection", (socket) => {
       console.error("Error sending message:", error);
       socket.emit("error", { message: "Failed to send message" });
     }
+  });
+
+  socket.on("disconnecting", async () => {
+    console.log(`🔴 User disconnecting: ${socket.id} (${user.username})`);
+    
+    // Remover usuário de todas as salas antes da desconexão
+    await removeUserFromAllRooms(socket.id, user.userId);
   });
 
   socket.on("disconnect", () => {

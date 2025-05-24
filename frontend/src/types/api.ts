@@ -17,6 +17,12 @@ export interface User {
     username: string;
 }
 
+// Novo tipo para usuários online
+export interface OnlineUser {
+    userId: string;
+    username: string;
+}
+
 /////////////////////////////////////////
 // Rooms
 /////////////////////////////////////////
