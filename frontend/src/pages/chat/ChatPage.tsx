@@ -1,5 +1,5 @@
 import { useUser } from "@/store/auth-store";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import messageService from "@/services/message-service";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2, Edit2, Trash2, Check, X, Paperclip, AlertTriangle } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
-import type { Message, ChatPageProps } from "@/types/api";
+import type { Message, ChatPageProps, MessageStatus } from "@/types/api";
 
 // Componente Skeleton simples
 const Skeleton = ({ className }: { className?: string }) => (
@@ -56,7 +56,6 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -68,6 +67,25 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { user } = useUser();
+
+  // Função para normalizar mensagens vindas da API ou Socket
+  const normalizeMessage = (msg: any): Message => {
+    return {
+      id: msg.id,
+      user: {
+        id: msg.user.id,
+        username: msg.user.username,
+      },
+      content: msg.content || "",
+      createdAt: msg.createdAt,
+      updatedAt: msg.updatedAt || msg.createdAt,
+      status: msg.status || 'ACTIVE',
+      fileName: msg.fileName,
+      fileUrl: msg.fileUrl,
+      fileType: msg.fileType,
+      fileSize: msg.fileSize,
+    };
+  };
 
   const scrollToBottom = () => {
     if (bottomRef.current) {
@@ -100,24 +118,33 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
       socket.emit("join_room", roomId);
     });
 
-    socket.on("receive_message", (message: Message) => {
+    socket.on("receive_message", (message: any) => {
       console.log("ChatPage: Nova mensagem recebida:", message);
       if (message.user.id !== user?.user.id) {
-        setMessages((prev) => [...prev, message]);
+        const normalizedMessage = normalizeMessage(message);
+        setMessages((prev) => [...prev, normalizedMessage]);
         scrollToBottom();
       }
     });
 
-    socket.on("message_deleted", ({ messageId }) => {
-      console.log("ChatPage: Mensagem deletada:", messageId);
-      setMessages((prev) => prev.filter(msg => msg.id !== messageId));
+    socket.on("message_deleted", ({ messageId, message: updatedMessage }) => {
+      console.log("ChatPage: Mensagem deletada:", messageId, updatedMessage);
+      if (updatedMessage) {
+        const normalizedMessage = normalizeMessage(updatedMessage);
+        setMessages((prev) => prev.map(msg => 
+          msg.id === messageId ? normalizedMessage : msg
+        ));
+      }
     });
 
-    socket.on("message_updated", ({ messageId, content }) => {
-      console.log("ChatPage: Mensagem editada:", messageId, content);
-      setMessages((prev) => prev.map(msg => 
-        msg.id === messageId ? { ...msg, content } : msg
-      ));
+    socket.on("message_updated", ({ messageId, content, message: updatedMessage }) => {
+      console.log("ChatPage: Mensagem editada:", messageId, content, updatedMessage);
+      if (updatedMessage) {
+        const normalizedMessage = normalizeMessage(updatedMessage);
+        setMessages((prev) => prev.map(msg => 
+          msg.id === messageId ? normalizedMessage : msg
+        ));
+      }
     });
 
     return () => {
@@ -165,7 +192,8 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
 
         socketRef.current.emit("send_message", message);
 
-        setMessages((prev) => [...prev, message]);
+        const normalizedMessage = normalizeMessage(message);
+        setMessages((prev) => [...prev, normalizedMessage]);
         setInput("");
         setSelectedFile(null);
         if (fileInputRef.current) {
@@ -208,12 +236,26 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
     if (!editingContent.trim()) return;
     
     try {
+      // Atualiza localmente primeiro para feedback imediato
+      setMessages((prev) => prev.map(msg => 
+        msg.id === messageId ? { 
+          ...msg, 
+          content: editingContent, 
+          status: 'EDITED' as MessageStatus, 
+          updatedAt: new Date().toISOString() 
+        } : msg
+      ));
+      
       await messageService.updateMessage(messageId, editingContent);
       setEditingMessageId(null);
       setEditingContent("");
-      // A atualização local será feita pelo evento socket
+      // A atualização final será feita pelo evento socket
     } catch (error) {
       console.error("Erro ao editar mensagem:", error);
+      // Em caso de erro, reverte a alteração local
+      setMessages((prev) => prev.map(msg => 
+        msg.id === messageId ? { ...msg, status: 'ACTIVE' as MessageStatus } : msg
+      ));
     }
   };
 
@@ -237,7 +279,10 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
   
     try {
       const response = await messageService.listMessagesFromRoom(roomId, pageNumber);
-      const newMessages = response.data.messages;
+      console.log('Resposta da API:', response.data.messages);
+      
+      const newMessages = response.data.messages.map(normalizeMessage);
+      console.log('Mensagens normalizadas:', newMessages);
   
       if (pageNumber === 1) {
         setMessages(newMessages);
@@ -317,18 +362,32 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                   msg.user.id === user?.user.id ? "ml-auto" : ""
                 } group transition-all duration-200 ease-in-out ${
                   editingMessageId === msg.id ? "ring-2 ring-violet-300 ring-opacity-50" : ""
-                }`}
+                } ${msg.status === 'DELETED' ? "opacity-60" : ""}`}
               >
                 <div className={`p-3 rounded-lg break-words transition-all duration-200 ${
-                  msg.user.id === user?.user.id ? "bg-violet-100 hover:bg-violet-50" : "bg-gray-100 hover:bg-gray-50"
+                  msg.status === 'DELETED'
+                    ? "bg-red-50 border border-red-100 border-dashed" 
+                    : msg.user.id === user?.user.id 
+                      ? "bg-violet-100 hover:bg-violet-50" 
+                      : "bg-gray-100 hover:bg-gray-50"
                 } ${editingMessageId === msg.id ? "bg-violet-50 border-2 border-violet-200" : ""}`}>
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex justify-between items-center mb-2">
-                        <span className="font-semibold text-sm">{ msg.user.id === user?.user.id ? "Você" : msg.user.username}</span>
+                        <span className="font-semibold text-sm">
+                          {msg.user.id === user?.user.id ? "Você" : msg.user.username}
+                        </span>
                         <div className="flex items-center gap-2">
-                          {/* Botões de ação para mensagens próprias */}
-                          {msg.user.id === user?.user.id && editingMessageId !== msg.id && (
+                          {/* Indicador de mensagem editada */}
+                          {msg.status === 'EDITED' && (
+                            <span className="text-xs text-gray-400 italic flex items-center gap-1" title={`Editada às ${msg.updatedAt ? new Date(msg.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}`}>
+                              <Edit2 size={10} />
+                              editada
+                            </span>
+                          )}
+                          
+                          {/* Botões de ação para mensagens próprias - apenas se não for deletada */}
+                          {msg.user.id === user?.user.id && editingMessageId !== msg.id && msg.status !== 'DELETED' && (
                             <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out">
                               <button
                                 onClick={() => startEditing(msg.id, msg.content)}
@@ -346,7 +405,9 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                               </button>
                             </div>
                           )}
-                          <span className="text-xs text-gray-500">{new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                          <span className="text-xs text-gray-500">
+                            {new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          </span>
                         </div>
                       </div>
                       
@@ -383,6 +444,11 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                             </button>
                           </div>
                         </div>
+                      ) : msg.status === 'DELETED' ? (
+                        <div className="flex items-center gap-2 text-gray-500 italic py-2">
+                          <Trash2 size={16} className="text-red-400" />
+                          <span className="text-sm">Esta mensagem foi excluída</span>
+                        </div>
                       ) : (
                         <ReactMarkdown 
                           components={{
@@ -409,29 +475,30 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                     </div>
                   </div>
                   
-                    {msg.fileUrl && (
-                      <div className="mt-2">
-                        {msg.fileType?.startsWith('image/') ? (
-                          <img 
-                          src={`${import.meta.env.VITE_API_URL}${msg.fileUrl}`} 
-                            alt={msg.fileName} 
-                            className="max-w-full rounded-lg"
-                          />
-                        ) : (
-                          <a 
-                          href={`${import.meta.env.VITE_API_URL}${msg.fileUrl}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-violet-600 hover:text-violet-700"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clipRule="evenodd" />
-                            </svg>
-                            {msg.fileName}
-                          </a>
-                        )}
-                      </div>
-                    )}
+                  {/* Arquivos anexos - só mostrar se a mensagem não foi deletada */}
+                  {msg.fileUrl && msg.status !== 'DELETED' && (
+                    <div className="mt-2">
+                      {msg.fileType?.startsWith('image/') ? (
+                        <img 
+                        src={`${import.meta.env.VITE_API_URL}${msg.fileUrl}`} 
+                          alt={msg.fileName} 
+                          className="max-w-full rounded-lg"
+                        />
+                      ) : (
+                        <a 
+                        href={`${import.meta.env.VITE_API_URL}${msg.fileUrl}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-violet-600 hover:text-violet-700"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clipRule="evenodd" />
+                          </svg>
+                          {msg.fileName}
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             ))

@@ -41,6 +41,8 @@ export interface APIRooms {
 // Messages
 /////////////////////////////////////////
 
+export type MessageStatus = 'ACTIVE' | 'EDITED' | 'DELETED';
+
 export interface APICreateMessage {
     content: string;
     roomId: string;
@@ -50,7 +52,9 @@ export interface APIMessage {
     id: string;
     content: string;
     createdAt: string;
+    updatedAt: string;
     user: User;
+    status: MessageStatus;
     fileName?: string;
     fileUrl?: string;
     fileType?: string;
@@ -73,16 +77,20 @@ export interface Message {
     };
     content: string;
     createdAt: string;
+    updatedAt: string;
+    status: MessageStatus;
+    isDeleted?: boolean;
+    isEdited?: boolean;
     fileName?: string;
     fileUrl?: string;
     fileType?: string;
     fileSize?: number;
-  }
-  
-  export interface ChatPageProps {
+}
+
+export interface ChatPageProps {
     roomId?: string;
     roomName?: string;
-  }
+}
 
 /////////////////////////////////////////
 // Unread Messages
