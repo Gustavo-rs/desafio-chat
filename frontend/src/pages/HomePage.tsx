@@ -342,7 +342,7 @@ const Home: React.FC = () => {
       </div>
 
       {/* Área do chat (50%) */}
-      <ChatPage roomId={selectedRoomId} roomName={selectedRoomName} />
+      <ChatPage key={selectedRoomId} roomId={selectedRoomId} roomName={selectedRoomName} />
 
       {/* Área lateral direita (20%) */}
       <div className="w-[20%] bg-white rounded-lg shadow-sm p-4">

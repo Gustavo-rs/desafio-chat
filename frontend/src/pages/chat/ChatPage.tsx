@@ -19,16 +19,20 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
 
   const socketRef = useRef<Socket | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
   const { user } = useUser();
 
   const scrollToBottom = () => {
-    if (messagesContainerRef.current) {
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+    else if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTo({
         top: messagesContainerRef.current.scrollHeight,
         behavior: "auto"
       });
     }
-  };  
+  };
 
   useEffect(() => {
     if (!roomId) return;
@@ -62,6 +66,14 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
       socket.disconnect();
     };
   }, [roomId]);
+
+  useEffect(() => {
+    if (initialLoadDone && !isLoadingOlderMessages.current && messages.length > 0) {
+      const timeout = setTimeout(scrollToBottom, 0);
+      return () => clearTimeout(timeout);
+    }
+  }, [messages, initialLoadDone]);
+  
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -102,7 +114,6 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
         }
         scrollToBottom();
 
-        // Move a sala para o topo da lista
         const event = new CustomEvent("update_room_order", { detail: { roomId } });
         window.dispatchEvent(event);
       } catch (error) {
@@ -110,14 +121,6 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
       }
     }
   };
-
-useEffect(() => {
-  if (initialLoadDone && messages.length > 0 && page === 1) {
-    requestAnimationFrame(() => {
-      scrollToBottom();
-    });
-  }
-}, [initialLoadDone, messages]);
 
   const listMessagesFromRoom = async (pageNumber = 1) => {
     if (!roomId) return;
@@ -246,6 +249,8 @@ useEffect(() => {
               </div>
             ))
           )}
+          {/* Elemento de referência para scroll automático */}
+          <div ref={bottomRef} />
         </div>
 
         <div className="mt-4 flex flex-col gap-2">
