@@ -38,6 +38,8 @@ export default function RoomMembersManager({
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [userToRemove, setUserToRemove] = useState<{ id: string; username: string } | null>(null);
   const { user } = useUser();
 
   const fetchAvailableUsers = async () => {
@@ -99,16 +101,24 @@ export default function RoomMembersManager({
     user.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleRemoveMember = async (userId: string, username: string) => {
-    if (window.confirm(`Tem certeza que deseja remover ${username} da sala?`)) {
-      try {
-        await roomsService.removeMemberFromRoom(roomId, userId);
-        toast.success(`${username} foi removido da sala`);
-        onMembersUpdate();
-      } catch (error: any) {
-        console.error('Erro ao remover membro:', error);
-        toast.error(error.response?.data?.message || 'Erro ao remover usuário');
-      }
+  const handleRemoveMember = (userId: string, username: string) => {
+    setUserToRemove({ id: userId, username });
+    setIsConfirmDialogOpen(true);
+  };
+
+  const confirmRemoveMember = async () => {
+    if (!userToRemove) return;
+
+    try {
+      await roomsService.removeMemberFromRoom(roomId, userToRemove.id);
+      toast.success(`${userToRemove.username} foi removido da sala`);
+      onMembersUpdate();
+    } catch (error: any) {
+      console.error('Erro ao remover membro:', error);
+      toast.error(error.response?.data?.message || 'Erro ao remover usuário');
+    } finally {
+      setIsConfirmDialogOpen(false);
+      setUserToRemove(null);
     }
   };
 
@@ -183,7 +193,7 @@ export default function RoomMembersManager({
                         Nenhum usuário encontrado com "{searchTerm}"
                       </p>
                     ) : (
-                      <p className="text-sm text-gray-500 text-center py-4">
+                      <p className="text-sm text-gray-500 flex items-center justify-center py-4">
                         Todos os usuários já são membros desta sala
                       </p>
                     )}
@@ -202,14 +212,14 @@ export default function RoomMembersManager({
                   onClick={handleAddMember}
                   disabled={isLoading || !selectedUserId}
                 >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="animate-spin mr-2" size={16} />
+                  <span className='text-white'>{isLoading ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="animate-spin" size={16} />
                       Adicionando...
-                    </>
+                    </span>
                   ) : (
                     'Adicionar'
-                  )}
+                  )}</span>
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -267,6 +277,46 @@ export default function RoomMembersManager({
           </div>
         ))}
       </div>
+
+      {/* Dialog de confirmação para remover membro */}
+      <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Remover Membro</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja remover <strong>{userToRemove?.username}</strong> da sala?
+              <br />
+              <span className="text-sm text-gray-500 mt-2 block">
+                Esta ação não pode ser desfeita. O usuário perderá acesso à sala e suas mensagens.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsConfirmDialogOpen(false);
+                setUserToRemove(null);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="default"
+              onClick={confirmRemoveMember}
+            >
+              <span className='text-white'>{isLoading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="animate-spin" size={16} />
+                  Removendo...
+                </span>
+              ) : ( 
+                'Remover'
+              )}</span>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 
