@@ -32,40 +32,7 @@ import {
 import ChatPage from "./chat/ChatPage";
 import { io } from "socket.io-client";
 import { Badge } from "@/components/ui/badge";
-import ReactMarkdown from 'react-markdown';
-
-// Componente para renderizar markdown compacto na lista de salas
-const CompactMarkdown = ({ content, maxLength = 30 }: { content: string; maxLength?: number }) => {
-  const truncatedContent = content.length > maxLength ? `${content.slice(0, maxLength)}...` : content;
-  
-  return (
-    <ReactMarkdown
-      components={{
-        // Remove paragraphs wrapper
-        p: ({ children }) => <span>{children}</span>,
-        // Inline styles for compact display
-        strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-        em: ({ children }) => <em className="italic">{children}</em>,
-        code: ({ children }) => <code className="bg-gray-200 px-1 rounded text-xs">{children}</code>,
-        // Remove other block elements
-        h1: ({ children }) => <span className="font-bold">{children}</span>,
-        h2: ({ children }) => <span className="font-bold">{children}</span>,
-        h3: ({ children }) => <span className="font-bold">{children}</span>,
-        h4: ({ children }) => <span className="font-bold">{children}</span>,
-        h5: ({ children }) => <span className="font-bold">{children}</span>,
-        h6: ({ children }) => <span className="font-bold">{children}</span>,
-        blockquote: ({ children }) => <span className="italic">{children}</span>,
-        ul: ({ children }) => <span>{children}</span>,
-        ol: ({ children }) => <span>{children}</span>,
-        li: ({ children }) => <span>{children} </span>,
-        a: ({ children }) => <span className="text-violet-600 underline">{children}</span>,
-        br: () => <span> </span>,
-      }}
-    >
-      {truncatedContent}
-    </ReactMarkdown>
-  );
-};
+import RoomPage from "./rooms/RoomPage";
 
 const Home: React.FC = () => {
   const [rooms, setRooms] = useState<APIRoom[]>([]);
@@ -275,7 +242,7 @@ const Home: React.FC = () => {
   };
 
   const formatUnreadCount = (count: number) => {
-    return count > 99 ? '99+' : count;
+    return count > 99 ? '99+' : count.toString();
   };
 
   // Função para buscar detalhes da sala (atualizada)
@@ -304,142 +271,19 @@ const Home: React.FC = () => {
   return (
     <div className="flex h-[calc(100vh-8rem)] gap-4">
       {/* Lista de salas (30%) */}
-      <div className="w-[30%] p-4 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">Salas</h2>
-
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-sm text-primary border-primary"
-              >
-                Nova sala
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[475px]">
-              <DialogHeader>
-                <DialogTitle>Nova sala</DialogTitle>
-                <DialogDescription>
-                  Crie uma nova sala para começar a conversar.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <Input
-                  placeholder="Nome da sala"
-                  value={roomName}
-                  onChange={(e) => setRoomName(e.target.value)}
-                />
-              </div>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button variant="outline">Cancelar</Button>
-                </DialogClose>
-                <Button
-                  variant="default"
-                  className="text-white"
-                  onClick={handleCreateRoom}
-                  disabled={isCreatingRoom}
-                >
-                  {isCreatingRoom ? (
-                    <span>
-                      <Loader2 className="animate-spin" />
-                    </span>
-                  ) : (
-                    <span>Criar Sala</span>
-                  )}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        <div className="mb-4">
-          <input
-            type="text"
-            placeholder="Pesquisar sala..."
-            className="w-full px-4 py-2 rounded-full border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm"
-          />
-        </div>
-
-        <div className="space-y-3 overflow-y-auto flex-1 pr-2">
-          {rooms.map((room, index) => (
-            console.log(room),
-            <div
-              key={index}
-              className={`flex items-center gap-4 p-3 bg-violet-50 hover:bg-violet-100 transition rounded-lg cursor-pointer shadow-sm ${selectedRoomId === room.id.toString() ? 'border-2 border-primary' : ''}`}
-              onClick={() => handleRoomSelect(room)}
-            >
-              <div className="flex-shrink-0">
-                <div className="w-10 h-10 bg-violet-400 text-white flex items-center justify-center rounded-full text-sm font-bold uppercase">
-                  {room.name.charAt(0)}
-                </div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-800 text-sm lg:text-base truncate">
-                  {room.name}
-                  {room.newRoom && (
-                    <span className="ml-2 text-xs bg-green-100 text-green-800 px-1 lg:px-2 py-0.5 rounded-md">
-                      <span className="hidden sm:inline">(Novo)</span>
-                      <span className="sm:hidden">N</span>
-                    </span>
-                  )}
-                </p>
-                {room.lastMessage ? (
-                  <p className="text-xs text-gray-500 truncate flex items-center gap-1">
-                    <strong>{room.lastMessage.user.username}</strong>:{" "}
-                    {room.lastMessage.status === 'DELETED' ? (
-                      <>
-                        <Trash2 size={12} className="text-red-400" />
-                        <span className="italic">Esta mensagem foi excluída</span>
-                      </>
-                    ) : room.lastMessage.status === 'EDITED' ? (
-                      <>
-                        <Edit2 size={12} className="text-blue-500" />
-                        <span className="italic">
-                          {room.lastMessage.fileUrl ? (
-                            "Arquivo (editada)"
-                          ) : (
-                            <span>
-                              <CompactMarkdown content={room.lastMessage.content} maxLength={25} /> (editada)
-                            </span>
-                          )}
-                        </span>
-                      </>
-                    ) : room.lastMessage.fileUrl ? (
-                      <>
-                        <Paperclip size={12} />
-                        <span>Arquivo</span>
-                      </>
-                    ) : (
-                      <CompactMarkdown content={room.lastMessage.content} maxLength={30} />
-                    )}
-                  </p>
-                ) : (
-                  <p className="text-xs text-gray-500 truncate">
-                    Nenhuma mensagem ainda
-                  </p>
-                )}
-              </div>
-              <div className="flex-shrink-0 flex flex-col items-end gap-1">
-                {/* Hora da última mensagem - sempre visível */}
-                {room.lastMessage && (
-                  <span className="text-xs text-gray-400">
-                    {new Date(room.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                )}
-                {/* Badge de notificação - só aparece quando há mensagens não lidas */}
-                {unreadCounts[room.id.toString()] > 0 && (
-                  <Badge variant="default" className="text-white text-xs">
-                    {formatUnreadCount(unreadCounts[room.id.toString()])}
-                  </Badge>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <RoomPage 
+        rooms={rooms}
+        selectedRoomId={selectedRoomId}
+        unreadCounts={unreadCounts}
+        open={open}
+        setOpen={setOpen}
+        roomName={roomName}
+        setRoomName={setRoomName}
+        isCreatingRoom={isCreatingRoom}
+        handleCreateRoom={handleCreateRoom}
+        handleRoomSelect={handleRoomSelect}
+        formatUnreadCount={formatUnreadCount}
+      />
 
       {/* Área do chat (50%) */}
       <ChatPage key={selectedRoomId} roomId={selectedRoomId} roomName={selectedRoomName} />
