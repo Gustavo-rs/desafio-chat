@@ -126,7 +126,24 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
     socket.on("connect", () => {
       console.log("ChatPage: Socket conectado");
       socket.emit("join_room", roomId);
+      // Notificar que começou a visualizar a sala
+      socket.emit("start_viewing_room", roomId);
     });
+
+    // Listener para detectar mudanças de visibilidade da aba
+    const handleVisibilityChange = () => {
+      if (socket.connected) {
+        if (document.hidden) {
+          console.log("ChatPage: Aba ficou inativa, parando visualização");
+          socket.emit("stop_viewing_room", roomId);
+        } else {
+          console.log("ChatPage: Aba ficou ativa, iniciando visualização");
+          socket.emit("start_viewing_room", roomId);
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     socket.on("receive_message", (message: any) => {
       console.log("ChatPage: Nova mensagem recebida:", message);
@@ -180,8 +197,11 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
 
     return () => {
       console.log("ChatPage: Desconectando socket e saindo da sala");
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       if (socket.connected) {
         socket.emit("leave_room", roomId);
+        // Notificar que parou de visualizar a sala
+        socket.emit("stop_viewing_room", roomId);
       }
       socket.disconnect();
     };

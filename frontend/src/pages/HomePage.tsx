@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useUser } from "../store/auth-store";
 import type { APIRoom, UnreadCount, OnlineUser } from "@/types/api";
 import roomsService, { type RoomDetails } from "@/services/rooms-service";
@@ -82,6 +82,9 @@ const Home: React.FC = () => {
   const [roomDetails, setRoomDetails] = useState<RoomDetails | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
+  // Referência para o socket para poder enviar eventos de visualização
+  const socketRef = useRef<any>(null);
+
   const handleRooms = async () => {
     setLoading(true);
 
@@ -143,6 +146,9 @@ const Home: React.FC = () => {
       reconnectionAttempts: 5,
       reconnectionDelay: 1000
     });
+
+    // Armazenar referência do socket
+    socketRef.current = socket;
 
     socket.on("connect", () => {
       console.log("HomePage: Socket conectado com ID:", socket.id);
@@ -248,13 +254,26 @@ const Home: React.FC = () => {
 
     return () => {
       console.log("HomePage: Desconectando socket");
+      
+      // Parar de visualizar a sala atual se houver uma selecionada
+      if (selectedRoomId && socketRef.current?.connected) {
+        socketRef.current.emit("stop_viewing_room", selectedRoomId);
+      }
+      
       socket.disconnect();
+      socketRef.current = null;
       window.removeEventListener("update_room_order", handleRoomOrder as EventListener);
     };
   }, [user]);
 
   const handleRoomSelect = (room: APIRoom) => {
     console.log("HomePage: Selecionando sala:", room);
+    
+    // Se havia uma sala selecionada anteriormente, parar de visualizá-la
+    if (selectedRoomId && socketRef.current?.connected) {
+      socketRef.current.emit("stop_viewing_room", selectedRoomId);
+    }
+    
     setSelectedRoomId(room.id.toString());
     setSelectedRoomName(room.name);
     setRooms(prev => prev.map(r => ({ ...r, newRoom: r.id === room.id ? false : r.newRoom })));

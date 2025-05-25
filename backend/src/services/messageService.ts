@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { NotFoundError } from '../utils/errors';
-import { io } from '../server';
+import { io, getActiveViewers } from '../server';
 import { MessageResponse, UnreadCount } from "../models/message.model";
 
 const prisma = new PrismaClient();
@@ -53,8 +53,17 @@ export class MessageService {
       },
     });
 
-    // Create unread entries for all other users
+    // Get users currently viewing this room
+    const activeViewers = getActiveViewers(roomId);
+
+    // Create unread entries for all other users who are NOT actively viewing the room
     for (const user of users) {
+      // Skip notification if user is actively viewing the room
+      if (activeViewers.has(user.id)) {
+        console.log(`⏭️ Skipping notification for ${user.username} - actively viewing room ${roomId}`);
+        continue;
+      }
+
       await prisma.unreadMessage.create({
         data: {
           messageId: message.id,

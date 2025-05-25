@@ -35,6 +35,9 @@ export { io };
 // Mapa para rastrear usuários online por sala
 const roomUsers = new Map<string, Map<string, {userId: string, username: string, socketId: string}>>();
 
+// Mapa para rastrear usuários que estão atualmente visualizando cada sala
+const activeViewers = new Map<string, Set<string>>(); // roomId -> Set<userId>
+
 // Função para atualizar lista de usuários online de uma sala
 const updateRoomUsers = async (roomId: string) => {
   try {
@@ -82,6 +85,16 @@ const removeUserFromAllRooms = async (socketId: string, userId: string) => {
     if (usersMap.has(userId)) {
       usersMap.delete(userId);
       roomsToUpdate.add(roomId);
+    }
+  }
+
+  // Remover usuário dos visualizadores ativos
+  for (const [roomId, viewers] of activeViewers.entries()) {
+    if (viewers.has(userId)) {
+      viewers.delete(userId);
+      if (viewers.size === 0) {
+        activeViewers.delete(roomId);
+      }
     }
   }
 
@@ -173,6 +186,30 @@ io.on("connection", (socket) => {
     });
   });
 
+  // Evento para quando usuário começa a visualizar uma sala (aba ativa)
+  socket.on("start_viewing_room", async (roomId) => {
+    if (!activeViewers.has(roomId)) {
+      activeViewers.set(roomId, new Set());
+    }
+    activeViewers.get(roomId)!.add(user.userId);
+    console.log(`👁️ User ${user.username} started viewing room ${roomId}`);
+    
+    // Marcar mensagens como lidas quando começar a visualizar
+    const messageService = new MessageService();
+    await messageService.markMessagesAsRead(user.userId, roomId);
+  });
+
+  // Evento para quando usuário para de visualizar uma sala (aba inativa ou mudou de sala)
+  socket.on("stop_viewing_room", async (roomId) => {
+    if (activeViewers.has(roomId)) {
+      activeViewers.get(roomId)!.delete(user.userId);
+      if (activeViewers.get(roomId)!.size === 0) {
+        activeViewers.delete(roomId);
+      }
+    }
+    console.log(`👁️ User ${user.username} stopped viewing room ${roomId}`);
+  });
+
   socket.on("send_message", async (data) => {
     try {
       const { content, roomId } = data;
@@ -201,3 +238,8 @@ app.use(errorHandler);
 server.listen(config.port, () => {
   console.log(`🚀 Server running on port ${config.port}`);
 });
+
+// Função para obter visualizadores ativos de uma sala
+export const getActiveViewers = (roomId: string): Set<string> => {
+  return activeViewers.get(roomId) || new Set();
+};
