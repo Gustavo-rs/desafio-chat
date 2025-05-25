@@ -424,14 +424,17 @@ export class RoomService {
       },
     });
 
-    // Emitir evento para todos os membros da sala
+    // Emitir evento para todos os membros da sala (incluindo o usuário removido)
     const remainingMembers = await prisma.roomMember.findMany({
       where: { roomId },
       select: { userId: true },
     });
     
     const memberIds = remainingMembers.map(member => member.userId);
-    io.to(memberIds).emit('member_removed', {
+    // Adicionar o usuário removido à lista para que ele também receba a notificação
+    const allNotificationIds = [...memberIds, userIdToRemove];
+    
+    io.to(allNotificationIds).emit('member_removed', {
       roomId,
       removedUserId: userIdToRemove,
     });

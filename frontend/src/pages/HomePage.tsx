@@ -207,6 +207,43 @@ const Home: React.FC = () => {
       });
     });
 
+    // Eventos de membros de sala
+    socket.on("member_added", ({ roomId, member }) => {
+      console.log("HomePage: Membro adicionado à sala:", roomId, member);
+      
+      // Se o usuário atual foi adicionado, buscar a sala e adicioná-la à lista
+      if (member.user.id === user?.user?.id) {
+        console.log("HomePage: Usuário atual foi adicionado à sala, recarregando lista");
+        handleRooms(); // Recarregar lista de salas
+        toast.success(`Você foi adicionado à sala "${member.room.name}"`);
+      }
+    });
+
+    socket.on("member_removed", ({ roomId, removedUserId }) => {
+      console.log("HomePage: Membro removido da sala:", roomId, removedUserId);
+      
+      // Se o usuário atual foi removido, remover a sala da lista
+      if (removedUserId === user?.user?.id) {
+        console.log("HomePage: Usuário atual foi removido da sala, removendo da lista");
+        setRooms(prev => prev.filter(room => room.id !== roomId));
+        
+        // Se estava visualizando a sala removida, limpar seleção
+        if (selectedRoomId === roomId) {
+          setSelectedRoomId(undefined);
+          setSelectedRoomName(undefined);
+        }
+        
+        // Remover contador de não lidas
+        setUnreadCounts(prev => {
+          const newCounts = { ...prev };
+          delete newCounts[roomId.toString()];
+          return newCounts;
+        });
+        
+        toast.error("Você foi removido da sala");
+      }
+    });
+
     return () => {
       console.log("HomePage: Desconectando socket");
       

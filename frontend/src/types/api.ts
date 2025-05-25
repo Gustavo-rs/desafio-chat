@@ -114,7 +114,7 @@ export interface Message {
     fileType?: string;
     fileSize?: number;
     isSystemMessage?: boolean;
-    systemMessageType?: 'user_joined' | 'user_left';
+    systemMessageType?: 'user_joined' | 'user_left' | 'member_added' | 'member_removed';
 }
 
 export interface ChatPageProps {

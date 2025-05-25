@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Edit2, Trash2, Check, X, Paperclip, AlertTriangle, Users, UserCheck, UserMinus, File } from "lucide-react";
+import { Loader2, Edit2, Trash2, Check, X, Paperclip, AlertTriangle, Users, UserCheck, UserMinus, UserPlus, File } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import type { Message, ChatPageProps, MessageStatus, OnlineUser } from "@/types/api";
 
@@ -230,6 +230,59 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
           status: 'ACTIVE',
           isSystemMessage: true,
           systemMessageType: 'user_left'
+        };
+        
+        setMessages((prev) => [...prev, systemMessage]);
+        scrollToBottom();
+      }
+    });
+
+    // Eventos de membros de sala
+    socket.on("member_added", ({ roomId: eventRoomId, member }) => {
+      if (eventRoomId === roomId) {
+        console.log("ChatPage: Membro adicionado à sala:", member);
+        
+        // Criar mensagem do sistema
+        const systemMessage: Message = {
+          id: `system-member-added-${Date.now()}-${member.user.id}`,
+          user: {
+            id: 'system',
+            username: 'Sistema'
+          },
+          content: `${member.user.username} foi adicionado à sala`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          status: 'ACTIVE',
+          isSystemMessage: true,
+          systemMessageType: 'member_added'
+        };
+        
+        setMessages((prev) => [...prev, systemMessage]);
+        scrollToBottom();
+      }
+    });
+
+    socket.on("member_removed", ({ roomId: eventRoomId, removedUserId }) => {
+      if (eventRoomId === roomId) {
+        console.log("ChatPage: Membro removido da sala:", removedUserId);
+        
+        // Buscar o nome do usuário removido nas mensagens existentes
+        const removedUserMessage = messages.find(msg => msg.user.id === removedUserId);
+        const removedUsername = removedUserMessage?.user.username || 'Usuário';
+        
+        // Criar mensagem do sistema
+        const systemMessage: Message = {
+          id: `system-member-removed-${Date.now()}-${removedUserId}`,
+          user: {
+            id: 'system',
+            username: 'Sistema'
+          },
+          content: `${removedUsername} foi removido da sala`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          status: 'ACTIVE',
+          isSystemMessage: true,
+          systemMessageType: 'member_removed'
         };
         
         setMessages((prev) => [...prev, systemMessage]);
@@ -518,6 +571,12 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                   <div className="bg-blue-50 border border-blue-200 rounded-md px-4 py-2 text-sm text-blue-700 flex items-center gap-2">
                     {msg.systemMessageType === 'user_joined' ? (
                       <UserCheck size={14} className="text-green-600" />
+                    ) : msg.systemMessageType === 'user_left' ? (
+                      <UserMinus size={14} className="text-orange-600" />
+                    ) : msg.systemMessageType === 'member_added' ? (
+                      <UserPlus size={14} className="text-blue-600" />
+                    ) : msg.systemMessageType === 'member_removed' ? (
+                      <UserMinus size={14} className="text-red-600" />
                     ) : (
                       <UserMinus size={14} className="text-orange-600" />
                     )}
