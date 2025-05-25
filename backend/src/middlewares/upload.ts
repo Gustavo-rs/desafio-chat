@@ -7,18 +7,34 @@ import { Request } from "express";
 // Configure storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = 'uploads/';
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
     
-    // Create uploads directory if it doesn't exist
+    // Generate a unique hash for this upload session
+    const hash = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    
+    // Create the folder structure: uploads/year/month/day/hash/
+    const uploadDir = path.join('uploads', year.toString(), month, day, hash.toString());
+    
+    // Create directory structure if it doesn't exist
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
+      console.log(`📁 Created upload directory: ${uploadDir}`);
     }
+    
+    // Store the hash in the request for use in filename generation
+    (req as any).uploadHash = hash;
     
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    // Use the same hash from destination
+    const hash = (req as any).uploadHash;
+    const filename = `file-${hash}${path.extname(file.originalname)}`;
+    console.log(`📄 Saving file as: ${filename}`);
+    cb(null, filename);
   }
 });
 

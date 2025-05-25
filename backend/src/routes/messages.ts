@@ -52,7 +52,7 @@ router.post("/:roomId", upload.single('file'), validate(createMessageSchema), as
       roomId,
       file ? {
         fileName: file.originalname,
-        fileUrl: `/uploads/${file.filename}`,
+        fileUrl: `/${file.path.replace(/\\/g, '/')}`,
         fileType: file.mimetype,
         fileSize: file.size
       } : undefined
