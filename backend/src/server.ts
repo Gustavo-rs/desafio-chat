@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
 import path from "path";
+import fs from "fs";
 import { config } from "./config/config";
 import { errorHandler } from "./middlewares/errorHandler";
 import { authenticate } from "./middlewares/auth";
@@ -93,6 +94,13 @@ const removeUserFromAllRooms = async (socketId: string, userId: string) => {
 app.use(cookieParser());
 app.use(express.json());
 app.use(cors(corsOptions));
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('📁 Created uploads directory');
+}
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
