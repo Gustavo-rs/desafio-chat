@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { NotFoundError } from '../utils/errors';
+import { NotFoundError, ForbiddenError } from '../utils/errors';
 import { io, getActiveViewers } from '../server';
 import { MessageResponse, UnreadCount } from "../models/message.model";
 
@@ -14,12 +14,21 @@ interface FileInfo {
 
 export class MessageService {
   async createMessage(content: string, userId: string, roomId: string, fileInfo?: FileInfo) {
-    const room = await prisma.room.findUnique({
-      where: { id: roomId },
+    // Verificar se o usuário é membro da sala
+    const roomMembership = await prisma.roomMember.findUnique({
+      where: {
+        userId_roomId: {
+          userId,
+          roomId,
+        },
+      },
+      include: {
+        room: true,
+      },
     });
 
-    if (!room) {
-      throw new NotFoundError('Room not found');
+    if (!roomMembership) {
+      throw new ForbiddenError('You are not a member of this room');
     }
 
     const messageData = {
@@ -44,30 +53,34 @@ export class MessageService {
       },
     });
 
-    // Get all users except the sender
-    const users = await prisma.user.findMany({
+    // Get all room members except the sender
+    const roomMembers = await prisma.roomMember.findMany({
       where: {
-        id: {
+        roomId,
+        userId: {
           not: userId,
         },
+      },
+      include: {
+        user: true,
       },
     });
 
     // Get users currently viewing this room
     const activeViewers = getActiveViewers(roomId);
 
-    // Create unread entries for all other users who are NOT actively viewing the room
-    for (const user of users) {
+    // Create unread entries for all other room members who are NOT actively viewing the room
+    for (const member of roomMembers) {
       // Skip notification if user is actively viewing the room
-      if (activeViewers.has(user.id)) {
-        console.log(`⏭️ Skipping notification for ${user.username} - actively viewing room ${roomId}`);
+      if (activeViewers.has(member.user.id)) {
+        console.log(`⏭️ Skipping notification for ${member.user.username} - actively viewing room ${roomId}`);
         continue;
       }
 
       await prisma.unreadMessage.create({
         data: {
           messageId: message.id,
-          userId: user.id,
+          userId: member.user.id,
           roomId,
         },
       });
@@ -75,12 +88,12 @@ export class MessageService {
       // Get unread count for this user and room
       const unreadCount = await prisma.unreadMessage.count({
         where: {
-          userId: user.id,
+          userId: member.user.id,
           roomId,
         },
       });
 
-      io.to(String(user.id)).emit('unread_message', {
+      io.to(String(member.user.id)).emit('unread_message', {
         roomId,
         lastMessage: message,
         count: unreadCount,
@@ -94,6 +107,20 @@ export class MessageService {
   }
 
   async getMessages(roomId: string, userId: string, page: number, limit: number): Promise<MessageResponse> {
+    // Verificar se o usuário é membro da sala
+    const roomMembership = await prisma.roomMember.findUnique({
+      where: {
+        userId_roomId: {
+          userId,
+          roomId,
+        },
+      },
+    });
+
+    if (!roomMembership) {
+      throw new ForbiddenError('You are not a member of this room');
+    }
+
     const skip = (page - 1) * limit;
     const [messages, total] = await Promise.all([
       prisma.message.findMany({

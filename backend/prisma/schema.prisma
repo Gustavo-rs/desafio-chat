@@ -19,12 +19,19 @@ enum MessageStatus {
   DELETED
 }
 
+enum RoomRole {
+  ADMIN
+  MEMBER
+}
+
 model User {
   id       String   @id @default(dbgenerated("gen_random_uuid()"))
   username String   @unique
   password String
   messages Message[]
   unreadMessages UnreadMessage[]
+  roomMemberships RoomMember[]
+  createdRooms Room[] @relation("RoomCreator")
 }
 
 model Room {
@@ -33,6 +40,9 @@ model Room {
   createdAt DateTime @default(now())
   messages  Message[]
   unreadMessages UnreadMessage[]
+  members   RoomMember[]
+  creator   User     @relation("RoomCreator", fields: [creatorId], references: [id])
+  creatorId String
 }
 
 model Message {
@@ -63,4 +73,16 @@ model UnreadMessage {
   createdAt DateTime @default(now())
 
   @@unique([messageId, userId])
+}
+
+model RoomMember {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  room      Room     @relation(fields: [roomId], references: [id])
+  roomId    String
+  role      RoomRole @default(MEMBER)
+  joinedAt  DateTime @default(now())
+
+  @@unique([userId, roomId])
 }

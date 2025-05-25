@@ -33,6 +33,7 @@ import ChatPage from "./chat/ChatPage";
 import { io } from "socket.io-client";
 import { Badge } from "@/components/ui/badge";
 import RoomPage from "./rooms/RoomPage";
+import RoomMembersManager from "@/components/RoomMembersManager";
 
 const Home: React.FC = () => {
   const [rooms, setRooms] = useState<APIRoom[]>([]);
@@ -320,7 +321,7 @@ const Home: React.FC = () => {
                   <p className="font-medium truncate">{roomDetails.name}</p>
                 </div>
                 <div>
-                  <span className="text-gray-500">Criada em:</span>
+                  <span className="text-gray-500">Cri a em:</span>
                   <p className="font-medium">
                     {new Date(roomDetails.createdAt).toLocaleDateString('pt-BR')}
                   </p>
@@ -342,42 +343,14 @@ const Home: React.FC = () => {
               </div>
             </div>
 
-            {/* Participantes compactos */}
+            {/* Gerenciador de Membros */}
             <div className="bg-gray-50 rounded-lg p-3">
-              <h3 className="font-semibold text-gray-800 mb-2 text-sm flex items-center gap-1">
-                <Users size={14} />
-                Participantes
-              </h3>
-              <div className="space-y-1 max-h-32 overflow-y-auto">
-                {roomDetails.participants && roomDetails.participants.length > 0 ? (
-                  <>
-                    {roomDetails.participants.slice(0, 5).map((participant) => (
-                      <div key={participant.userId} className="flex items-center gap-2 py-1">
-                        <div className="w-6 h-6 bg-violet-100 rounded-full flex items-center justify-center">
-                          <span className="text-violet-700 font-semibold text-xs">
-                            {participant.username.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-xs truncate">{participant.username}</p>
-                          <p className="text-xs text-gray-500">
-                            {participant.messageCount} msg
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                    {roomDetails.participants.length > 5 && (
-                      <p className="text-xs text-gray-500 text-center pt-1">
-                        +{roomDetails.participants.length - 5} outros
-                      </p>
-                    )}
-                  </>
-                ) : (
-                  <p className="text-xs text-gray-500 italic text-center py-2">
-                    Nenhum participante
-                  </p>
-                )}
-              </div>
+              <RoomMembersManager
+                roomId={selectedRoomId}
+                members={roomDetails.members || []}
+                userRole={roomDetails.userRole}
+                onMembersUpdate={() => fetchRoomDetails(selectedRoomId)}
+              />
             </div>
 
             {/* Arquivos compartilhados compactos */}

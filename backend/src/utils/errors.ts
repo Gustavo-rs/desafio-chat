@@ -39,3 +39,9 @@ export class ConflictError extends AppError {
     super(message, 409);
   }
 }
+
+export class ForbiddenError extends AppError {
+  constructor(message: string = 'Acesso negado') {
+    super(message, 403);
+  }
+}

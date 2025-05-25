@@ -37,6 +37,28 @@ export interface APIRoom {
     name: string;
     lastMessage?: Message;
     unreadCount: number;
+    creator?: {
+        id: string;
+        username: string;
+    };
+    members?: RoomMember[];
+}
+
+export interface RoomMember {
+    id: string;
+    userId: string;
+    roomId: string;
+    role: 'ADMIN' | 'MEMBER';
+    joinedAt: string;
+    user: {
+        id: string;
+        username: string;
+    };
+}
+
+export interface AvailableUser {
+    id: string;
+    username: string;
 }
 
 export interface APIRooms {
