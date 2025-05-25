@@ -91,6 +91,8 @@ export interface Message {
     fileUrl?: string;
     fileType?: string;
     fileSize?: number;
+    isSystemMessage?: boolean;
+    systemMessageType?: 'user_joined' | 'user_left';
 }
 
 export interface ChatPageProps {

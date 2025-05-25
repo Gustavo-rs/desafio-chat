@@ -90,6 +90,8 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
       fileUrl: msg.fileUrl,
       fileType: msg.fileType,
       fileSize: msg.fileSize,
+      isSystemMessage: msg.isSystemMessage,
+      systemMessageType: msg.systemMessageType,
     };
   };
 
@@ -190,12 +192,48 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
     socket.on("user_joined_room", ({ userId, username, roomId: joinedRoomId }) => {
       if (joinedRoomId === roomId && userId !== user?.user.id) {
         console.log("ChatPage: Usuário entrou na sala:", username);
+        
+        // Criar mensagem do sistema
+        const systemMessage: Message = {
+          id: `system-join-${Date.now()}-${userId}`,
+          user: {
+            id: 'system',
+            username: 'Sistema'
+          },
+          content: `${username} entrou na sala`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          status: 'ACTIVE',
+          isSystemMessage: true,
+          systemMessageType: 'user_joined'
+        };
+        
+        setMessages((prev) => [...prev, systemMessage]);
+        scrollToBottom();
       }
     });
 
     socket.on("user_left_room", ({ userId, username, roomId: leftRoomId }) => {
       if (leftRoomId === roomId && userId !== user?.user.id) {
         console.log("ChatPage: Usuário saiu da sala:", username);
+        
+        // Criar mensagem do sistema
+        const systemMessage: Message = {
+          id: `system-leave-${Date.now()}-${userId}`,
+          user: {
+            id: 'system',
+            username: 'Sistema'
+          },
+          content: `${username} saiu da sala`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          status: 'ACTIVE',
+          isSystemMessage: true,
+          systemMessageType: 'user_left'
+        };
+        
+        setMessages((prev) => [...prev, systemMessage]);
+        scrollToBottom();
       }
     });
 
@@ -473,152 +511,170 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
               <p className="text-gray-500">Nenhuma mensagem encontrada nesta sala</p>
             </div>
           ) : (
-            messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`p-2 rounded-md max-w-[80%] ${
-                  msg.user.id === user?.user.id ? "ml-auto" : ""
-                } group transition-all duration-200 ease-in-out ${
-                  editingMessageId === msg.id ? "ring-2 ring-violet-300 ring-opacity-50" : ""
-                } ${msg.status === 'DELETED' ? "opacity-60" : ""}`}
-              >
-                <div className={`p-3 rounded-lg break-words transition-all duration-200 ${
-                  msg.status === 'DELETED'
-                    ? "bg-red-50 border border-red-100 border-dashed" 
-                    : msg.user.id === user?.user.id 
-                      ? "bg-violet-100 hover:bg-violet-50" 
-                      : "bg-gray-100 hover:bg-gray-50"
-                } ${editingMessageId === msg.id ? "bg-violet-50 border-2 border-violet-200" : ""}`}>
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="font-semibold text-sm">
-                          {msg.user.id === user?.user.id ? "Você" : msg.user.username}
-                        </span>
-                        <div className="flex items-center gap-2">
-                         
-                          
-                          {/* Botões de ação para mensagens próprias - apenas se não for deletada */}
-                          {msg.user.id === user?.user.id && editingMessageId !== msg.id && msg.status !== 'DELETED' && (
-                            <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out">
+            messages.map((msg, idx) => 
+              // Renderização especial para mensagens do sistema
+              msg.isSystemMessage ? (
+                <div key={idx} className="flex justify-center my-2">
+                  <div className="bg-blue-50 border border-blue-200 rounded-md px-4 py-2 text-sm text-blue-700 flex items-center gap-2">
+                    {msg.systemMessageType === 'user_joined' ? (
+                      <UserCheck size={14} className="text-green-600" />
+                    ) : (
+                      <UserMinus size={14} className="text-orange-600" />
+                    )}
+                    <span className="font-medium">{msg.content}</span>
+                    <span className="text-xs text-blue-500">
+                      {new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                // Renderização normal para mensagens de usuário
+                <div
+                  key={idx}
+                  className={`p-2 rounded-md max-w-[80%] ${
+                    msg.user.id === user?.user.id ? "ml-auto" : ""
+                  } group transition-all duration-200 ease-in-out ${
+                    editingMessageId === msg.id ? "ring-2 ring-violet-300 ring-opacity-50" : ""
+                  } ${msg.status === 'DELETED' ? "opacity-60" : ""}`}
+                >
+                  <div className={`p-3 rounded-lg break-words transition-all duration-200 ${
+                    msg.status === 'DELETED'
+                      ? "bg-red-50 border border-red-100 border-dashed" 
+                      : msg.user.id === user?.user.id 
+                        ? "bg-violet-100 hover:bg-violet-50" 
+                        : "bg-gray-100 hover:bg-gray-50"
+                  } ${editingMessageId === msg.id ? "bg-violet-50 border-2 border-violet-200" : ""}`}>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-semibold text-sm">
+                            {msg.user.id === user?.user.id ? "Você" : msg.user.username}
+                          </span>
+                          <div className="flex items-center gap-2">
+                           
+                            
+                            {/* Botões de ação para mensagens próprias - apenas se não for deletada */}
+                            {msg.user.id === user?.user.id && editingMessageId !== msg.id && msg.status !== 'DELETED' && (
+                              <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out">
+                                <button
+                                  onClick={() => startEditing(msg.id, msg.content)}
+                                  className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 transition-all duration-200 ease-in-out hover:scale-110 active:scale-95 shadow-sm hover:shadow-md"
+                                  title="Editar mensagem"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteMessage(msg.id)}
+                                  className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-all duration-200 ease-in-out hover:scale-110 active:scale-95 shadow-sm hover:shadow-md"
+                                  title="Deletar mensagem"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            )}
+                             {/* Indicador de mensagem editada */}
+                             {msg.status === 'EDITED' && (
+                              <span className="text-xs text-gray-400 italic flex items-center gap-1" title={`Editada às ${msg.updatedAt ? new Date(msg.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}`}>
+                                <Edit2 size={10} />
+                                editada
+                              </span>
+                            )}
+                            <span className="text-xs text-gray-500">
+                              {new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {editingMessageId === msg.id ? (
+                          <div className="mt-3 space-y-3">
+                            <div className="flex items-center gap-2 text-xs text-violet-600 font-medium">
+                              <Edit2 size={12} />
+                              Editando mensagem...
+                            </div>
+                            <textarea
+                              value={editingContent}
+                              onChange={(e) => setEditingContent(e.target.value)}
+                              className="w-full p-3 border-2 border-violet-200 rounded-lg resize-none text-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all duration-200"
+                              rows={3}
+                              autoFocus
+                              placeholder="Digite sua mensagem..."
+                            />
+                            <div className="flex gap-2 justify-end">
                               <button
-                                onClick={() => startEditing(msg.id, msg.content)}
-                                className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 transition-all duration-200 ease-in-out hover:scale-110 active:scale-95 shadow-sm hover:shadow-md"
-                                title="Editar mensagem"
+                                onClick={() => handleEditMessage(msg.id)}
+                                className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all duration-200 ease-in-out hover:scale-105 active:scale-95 text-sm font-medium shadow-sm hover:shadow-md"
+                                title="Salvar alterações"
                               >
-                                <Edit2 size={14} />
+                                <Check size={16} />
+                                Salvar
                               </button>
                               <button
-                                onClick={() => handleDeleteMessage(msg.id)}
-                                className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-all duration-200 ease-in-out hover:scale-110 active:scale-95 shadow-sm hover:shadow-md"
-                                title="Deletar mensagem"
+                                onClick={cancelEditing}
+                                className="flex items-center gap-2 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all duration-200 ease-in-out hover:scale-105 active:scale-95 text-sm font-medium shadow-sm hover:shadow-md"
+                                title="Cancelar edição"
                               >
-                                <Trash2 size={14} />
+                                <X size={16} />
+                                Cancelar
                               </button>
                             </div>
-                          )}
-                           {/* Indicador de mensagem editada */}
-                           {msg.status === 'EDITED' && (
-                            <span className="text-xs text-gray-400 italic flex items-center gap-1" title={`Editada às ${msg.updatedAt ? new Date(msg.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}`}>
-                              <Edit2 size={10} />
-                              editada
-                            </span>
-                          )}
-                          <span className="text-xs text-gray-500">
-                            {new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                          </span>
-                        </div>
+                          </div>
+                        ) : msg.status === 'DELETED' ? (
+                          <div className="flex items-center gap-2 text-gray-500 italic py-2">
+                            <Trash2 size={16} className="text-red-400" />
+                            <span className="text-sm">Esta mensagem foi excluída</span>
+                          </div>
+                        ) : (
+                          <ReactMarkdown 
+                            components={{
+                              // Links abrem em nova aba
+                              a: (props) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:text-violet-700 underline decoration-2 underline-offset-2 transition-colors duration-200" />,
+                              // Código inline com estilo
+                              code: (props) => <code {...props} className="bg-violet-50 border border-violet-200 px-2 py-1 rounded-md text-sm font-mono text-violet-800" />,
+                              // Citações com estilo
+                              blockquote: (props) => <blockquote {...props} className="border-l-4 border-violet-300 pl-4 my-2 italic text-gray-700 bg-violet-25 py-2 rounded-r-md" />,
+                              // Quebras de linha
+                              p: (props) => <p {...props} className="mb-1 last:mb-0 leading-relaxed" />,
+                              // Listas
+                              ul: (props) => <ul {...props} className="list-disc list-inside ml-2 space-y-1" />,
+                              ol: (props) => <ol {...props} className="list-decimal list-inside ml-2 space-y-1" />,
+                              // Headers
+                              h1: (props) => <h1 {...props} className="text-lg font-bold text-gray-800 mb-2" />,
+                              h2: (props) => <h2 {...props} className="text-base font-semibold text-gray-800 mb-1" />,
+                              h3: (props) => <h3 {...props} className="text-sm font-semibold text-gray-800 mb-1" />
+                            }}
+                          >
+                            {msg.content}
+                          </ReactMarkdown>
+                        )}
                       </div>
-                      
-                      {editingMessageId === msg.id ? (
-                        <div className="mt-3 space-y-3">
-                          <div className="flex items-center gap-2 text-xs text-violet-600 font-medium">
-                            <Edit2 size={12} />
-                            Editando mensagem...
-                          </div>
-                          <textarea
-                            value={editingContent}
-                            onChange={(e) => setEditingContent(e.target.value)}
-                            className="w-full p-3 border-2 border-violet-200 rounded-lg resize-none text-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all duration-200"
-                            rows={3}
-                            autoFocus
-                            placeholder="Digite sua mensagem..."
+                    </div>
+                    
+                    {/* Arquivos anexos - só mostrar se a mensagem não foi deletada */}
+                    {msg.fileUrl && msg.status !== 'DELETED' && (
+                      <div className="mt-2">
+                        {msg.fileType?.startsWith('image/') ? (
+                          <img 
+                          src={`${import.meta.env.VITE_API_URL}${msg.fileUrl}`} 
+                            alt={msg.fileName} 
+                            className="max-w-full rounded-lg"
                           />
-                          <div className="flex gap-2 justify-end">
-                            <button
-                              onClick={() => handleEditMessage(msg.id)}
-                              className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all duration-200 ease-in-out hover:scale-105 active:scale-95 text-sm font-medium shadow-sm hover:shadow-md"
-                              title="Salvar alterações"
-                            >
-                              <Check size={16} />
-                              Salvar
-                            </button>
-                            <button
-                              onClick={cancelEditing}
-                              className="flex items-center gap-2 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all duration-200 ease-in-out hover:scale-105 active:scale-95 text-sm font-medium shadow-sm hover:shadow-md"
-                              title="Cancelar edição"
-                            >
-                              <X size={16} />
-                              Cancelar
-                            </button>
-                          </div>
-                        </div>
-                      ) : msg.status === 'DELETED' ? (
-                        <div className="flex items-center gap-2 text-gray-500 italic py-2">
-                          <Trash2 size={16} className="text-red-400" />
-                          <span className="text-sm">Esta mensagem foi excluída</span>
-                        </div>
-                      ) : (
-                        <ReactMarkdown 
-                          components={{
-                            // Links abrem em nova aba
-                            a: (props) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:text-violet-700 underline decoration-2 underline-offset-2 transition-colors duration-200" />,
-                            // Código inline com estilo
-                            code: (props) => <code {...props} className="bg-violet-50 border border-violet-200 px-2 py-1 rounded-md text-sm font-mono text-violet-800" />,
-                            // Citações com estilo
-                            blockquote: (props) => <blockquote {...props} className="border-l-4 border-violet-300 pl-4 my-2 italic text-gray-700 bg-violet-25 py-2 rounded-r-md" />,
-                            // Quebras de linha
-                            p: (props) => <p {...props} className="mb-1 last:mb-0 leading-relaxed" />,
-                            // Listas
-                            ul: (props) => <ul {...props} className="list-disc list-inside ml-2 space-y-1" />,
-                            ol: (props) => <ol {...props} className="list-decimal list-inside ml-2 space-y-1" />,
-                            // Headers
-                            h1: (props) => <h1 {...props} className="text-lg font-bold text-gray-800 mb-2" />,
-                            h2: (props) => <h2 {...props} className="text-base font-semibold text-gray-800 mb-1" />,
-                            h3: (props) => <h3 {...props} className="text-sm font-semibold text-gray-800 mb-1" />
-                          }}
-                        >
-                          {msg.content}
-                        </ReactMarkdown>
-                      )}
-                    </div>
+                        ) : (
+                          <a 
+                          href={`${import.meta.env.VITE_API_URL}${msg.fileUrl}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-violet-600 hover:text-violet-700"
+                          >
+                            <File size={16} />
+                            {msg.fileName}
+                          </a>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  
-                  {/* Arquivos anexos - só mostrar se a mensagem não foi deletada */}
-                  {msg.fileUrl && msg.status !== 'DELETED' && (
-                    <div className="mt-2">
-                      {msg.fileType?.startsWith('image/') ? (
-                        <img 
-                        src={`${import.meta.env.VITE_API_URL}${msg.fileUrl}`} 
-                          alt={msg.fileName} 
-                          className="max-w-full rounded-lg"
-                        />
-                      ) : (
-                        <a 
-                        href={`${import.meta.env.VITE_API_URL}${msg.fileUrl}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-violet-600 hover:text-violet-700"
-                        >
-                          <File size={16} />
-                          {msg.fileName}
-                        </a>
-                      )}
-                    </div>
-                  )}
                 </div>
-              </div>
-            ))
+              )
+            )
           )}
           <div ref={bottomRef} />
         </div>
