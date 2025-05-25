@@ -485,7 +485,7 @@ const Home: React.FC = () => {
             </div>
 
             {/* Estatísticas compactas */}
-            <div className="grid grid-cols-1 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <div className="bg-violet-50 rounded-lg p-3 text-center">
                 <MessageSquare className="mx-auto mb-1 text-violet-600" size={16} />
                 <p className="text-lg font-bold text-violet-700">{roomDetails.totalMessages}</p>
