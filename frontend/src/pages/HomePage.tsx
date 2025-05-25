@@ -32,6 +32,40 @@ import {
 import ChatPage from "./chat/ChatPage";
 import { io } from "socket.io-client";
 import { Badge } from "@/components/ui/badge";
+import ReactMarkdown from 'react-markdown';
+
+// Componente para renderizar markdown compacto na lista de salas
+const CompactMarkdown = ({ content, maxLength = 30 }: { content: string; maxLength?: number }) => {
+  const truncatedContent = content.length > maxLength ? `${content.slice(0, maxLength)}...` : content;
+  
+  return (
+    <ReactMarkdown
+      components={{
+        // Remove paragraphs wrapper
+        p: ({ children }) => <span>{children}</span>,
+        // Inline styles for compact display
+        strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+        em: ({ children }) => <em className="italic">{children}</em>,
+        code: ({ children }) => <code className="bg-gray-200 px-1 rounded text-xs">{children}</code>,
+        // Remove other block elements
+        h1: ({ children }) => <span className="font-bold">{children}</span>,
+        h2: ({ children }) => <span className="font-bold">{children}</span>,
+        h3: ({ children }) => <span className="font-bold">{children}</span>,
+        h4: ({ children }) => <span className="font-bold">{children}</span>,
+        h5: ({ children }) => <span className="font-bold">{children}</span>,
+        h6: ({ children }) => <span className="font-bold">{children}</span>,
+        blockquote: ({ children }) => <span className="italic">{children}</span>,
+        ul: ({ children }) => <span>{children}</span>,
+        ol: ({ children }) => <span>{children}</span>,
+        li: ({ children }) => <span>{children} </span>,
+        a: ({ children }) => <span className="text-violet-600 underline">{children}</span>,
+        br: () => <span> </span>,
+      }}
+    >
+      {truncatedContent}
+    </ReactMarkdown>
+  );
+};
 
 const Home: React.FC = () => {
   const [rooms, setRooms] = useState<APIRoom[]>([]);
@@ -337,12 +371,13 @@ const Home: React.FC = () => {
                   {room.name.charAt(0)}
                 </div>
               </div>
-              <div className="flex-1">
-                <p className="font-medium text-gray-800">
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-gray-800 text-sm lg:text-base truncate">
                   {room.name}
                   {room.newRoom && (
-                    <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-md">
-                      (Novo)
+                    <span className="ml-2 text-xs bg-green-100 text-green-800 px-1 lg:px-2 py-0.5 rounded-md">
+                      <span className="hidden sm:inline">(Novo)</span>
+                      <span className="sm:hidden">N</span>
                     </span>
                   )}
                 </p>
@@ -358,12 +393,12 @@ const Home: React.FC = () => {
                       <>
                         <Edit2 size={12} className="text-blue-500" />
                         <span className="italic">
-                    {room.lastMessage.fileUrl ? (
+                          {room.lastMessage.fileUrl ? (
                             "Arquivo (editada)"
                           ) : (
-                            room.lastMessage.content.length > 25
-                              ? `${room.lastMessage.content.slice(0, 25)}... (editada)`
-                              : `${room.lastMessage.content} (editada)`
+                            <span>
+                              <CompactMarkdown content={room.lastMessage.content} maxLength={25} /> (editada)
+                            </span>
                           )}
                         </span>
                       </>
@@ -373,9 +408,7 @@ const Home: React.FC = () => {
                         <span>Arquivo</span>
                       </>
                     ) : (
-                      room.lastMessage.content.length > 30
-                        ? `${room.lastMessage.content.slice(0, 30)}...`
-                        : room.lastMessage.content
+                      <CompactMarkdown content={room.lastMessage.content} maxLength={30} />
                     )}
                   </p>
                 ) : (
@@ -384,16 +417,20 @@ const Home: React.FC = () => {
                   </p>
                 )}
               </div>
-              {unreadCounts[room.id.toString()] > 0 && (
-                <div className="flex-shrink-0 flex flex-col items-end gap-1">
-                  <span className="text-xs text-gray-500">
-                    {new Date(room.lastMessage?.createdAt!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              <div className="flex-shrink-0 flex flex-col items-end gap-1">
+                {/* Hora da última mensagem - sempre visível */}
+                {room.lastMessage && (
+                  <span className="text-xs text-gray-400">
+                    {new Date(room.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
-                  <Badge variant="default" className="text-white">
+                )}
+                {/* Badge de notificação - só aparece quando há mensagens não lidas */}
+                {unreadCounts[room.id.toString()] > 0 && (
+                  <Badge variant="default" className="text-white text-xs">
                     {formatUnreadCount(unreadCounts[room.id.toString()])}
                   </Badge>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           ))}
         </div>
