@@ -93,18 +93,30 @@ export class RoomService {
           },
         },
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
     });
 
-    return rooms.map(room => ({
-      ...room,
-      lastMessage: room.messages[0] || null,
-      unreadCount: room.unreadMessages.length,
-      messages: undefined,
-      unreadMessages: undefined,
-    }));
+    // Map rooms and calculate last activity
+    const roomsWithActivity = rooms.map(room => {
+      const lastMessage = room.messages[0] || null;
+      const lastActivity = lastMessage ? lastMessage.createdAt : room.createdAt;
+      
+      return {
+        ...room,
+        lastMessage,
+        unreadCount: room.unreadMessages.length,
+        lastActivity,
+        messages: undefined,
+        unreadMessages: undefined,
+      };
+    });
+
+    // Sort by last activity (most recent first)
+    roomsWithActivity.sort((a, b) => {
+      return new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime();
+    });
+
+    // Remove the temporary lastActivity field before returning
+    return roomsWithActivity.map(({ lastActivity, ...room }) => room);
   }
 
   async getRoomMessages(roomId: string, userId: string) {

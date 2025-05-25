@@ -538,8 +538,8 @@ const Home: React.FC = () => {
                 Arquivos ({roomDetails.sharedFiles?.length || 0})
               </h3>
               {roomDetails.sharedFiles && roomDetails.sharedFiles.length > 0 ? (
-                <div className="space-y-1 max-h-32 overflow-y-auto">
-                  {roomDetails.sharedFiles.slice(0, 3).map((file) => (
+                <div className="space-y-1 max-h-48 overflow-y-auto">
+                  {roomDetails.sharedFiles.map((file) => (
                     <div key={file.id} className="flex items-center gap-2 py-1">
                       {file.fileType.startsWith('image/') ? (
                         <Image size={12} className="text-green-600 flex-shrink-0" />
@@ -553,18 +553,23 @@ const Home: React.FC = () => {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => window.open(`${import.meta.env.VITE_API_URL}${file.fileUrl}`, '_blank')}
-                        className="h-6 w-6 p-0"
+                        onClick={() => {
+                          const downloadUrl = `${import.meta.env.VITE_API_URL}${file.fileUrl}`;
+                          const link = document.createElement('a');
+                          link.href = downloadUrl;
+                          link.download = file.fileName;
+                          link.target = '_blank';
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                        }}
+                        className="h-6 w-6 p-0 hover:bg-gray-200"
+                        title={`Baixar ${file.fileName}`}
                       >
                         <Download size={10} />
                       </Button>
                     </div>
                   ))}
-                  {roomDetails.sharedFiles.length > 3 && (
-                    <p className="text-xs text-gray-500 text-center pt-1">
-                      +{roomDetails.sharedFiles.length - 3} outros
-                    </p>
-                  )}
                 </div>
               ) : (
                 <p className="text-xs text-gray-500 italic text-center py-2">
