@@ -145,24 +145,10 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    socket.on("receive_message", (data: any, roomIdParam?: string) => {
-      console.log("ChatPage: Nova mensagem recebida:", data, roomIdParam);
+    socket.on("receive_message", (data: any) => {
+      console.log("ChatPage: Nova mensagem recebida:", data);
       
-      // Lidar com diferentes formatos do evento
-      let message, eventRoomId;
-      if (roomIdParam) {
-        // Formato: (message, roomId)
-        message = data;
-        eventRoomId = roomIdParam;
-      } else if (data.message && data.roomId) {
-        // Formato: { roomId, message }
-        message = data.message;
-        eventRoomId = data.roomId;
-      } else {
-        // Formato antigo
-        message = data;
-        eventRoomId = roomId;
-      }
+      const { roomId: eventRoomId, message } = data;
       
       // Só processar se for da sala atual e não for do próprio usuário
       if (eventRoomId === roomId && message.user.id !== user?.user.id) {

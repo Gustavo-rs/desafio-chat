@@ -87,10 +87,7 @@ export class MessageService {
       });
     }
 
-    // Emitir para a sala específica (para usuários no chat)
-    io.to(roomId).emit('receive_message', message, roomId);
-    
-    // Emitir globalmente para atualizar listas de salas (HomePage)
+    // Emitir apenas uma vez globalmente com estrutura adequada para ambos os casos
     io.emit('receive_message', { roomId, message });
     
     return message;
