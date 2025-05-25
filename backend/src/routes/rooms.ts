@@ -41,6 +41,16 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
+router.get("/:id/details", validate(roomIdSchema), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const roomDetails = await roomService.getRoomDetails(id);
+    res.json(roomDetails);
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get("/unread-counts", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.userId;

@@ -29,7 +29,7 @@ export const createMessageSchema = z.object({
 
 export const roomIdSchema = z.object({
   params: z.object({
-    roomId: z.string().uuid(),
+    id: z.string().uuid(),
   }),
 });
 

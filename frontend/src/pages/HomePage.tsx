@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useUser } from "../store/auth-store";
-import type { APIRoom, UnreadCount } from "@/types/api";
-import roomsService from "@/services/rooms-service";
+import type { APIRoom, UnreadCount, OnlineUser } from "@/types/api";
+import roomsService, { type RoomDetails } from "@/services/rooms-service";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,7 +15,20 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Loader2, Paperclip, Trash2, Edit2 } from "lucide-react";
+import { 
+  Loader2, 
+  Paperclip, 
+  Edit2, 
+  Trash2,
+  Info,
+  Calendar,
+  MessageSquare,
+  Users,
+  File,
+  Download,
+  Image,
+  User
+} from "lucide-react";
 import ChatPage from "./chat/ChatPage";
 import { io } from "socket.io-client";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +43,10 @@ const Home: React.FC = () => {
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const { user } = useUser();
   const [open, setOpen] = useState(false);
+
+  // Estados para detalhes da sala (atualizados)
+  const [roomDetails, setRoomDetails] = useState<RoomDetails | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
 
   const handleRooms = async () => {
     setLoading(true);
@@ -222,6 +239,29 @@ const Home: React.FC = () => {
     return count > 99 ? '99+' : count;
   };
 
+  // Função para buscar detalhes da sala (atualizada)
+  const fetchRoomDetails = async (roomId: string) => {
+    setLoadingDetails(true);
+    try {
+      const response = await roomsService.getRoomDetails(roomId);
+      setRoomDetails(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar detalhes da sala:', error);
+      setRoomDetails(null);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  // Buscar detalhes quando seleciona uma sala
+  useEffect(() => {
+    if (selectedRoomId) {
+      fetchRoomDetails(selectedRoomId);
+    } else {
+      setRoomDetails(null);
+    }
+  }, [selectedRoomId]);
+
   return (
     <div className="flex h-[calc(100vh-8rem)] gap-4">
       {/* Lista de salas (30%) */}
@@ -318,7 +358,7 @@ const Home: React.FC = () => {
                       <>
                         <Edit2 size={12} className="text-blue-500" />
                         <span className="italic">
-                          {room.lastMessage.fileUrl ? (
+                    {room.lastMessage.fileUrl ? (
                             "Arquivo (editada)"
                           ) : (
                             room.lastMessage.content.length > 25
@@ -362,12 +402,145 @@ const Home: React.FC = () => {
       {/* Área do chat (50%) */}
       <ChatPage key={selectedRoomId} roomId={selectedRoomId} roomName={selectedRoomName} />
 
-      {/* Área lateral direita (20%) */}
-      <div className="w-[20%] bg-white rounded-lg shadow-sm p-4">
-        <h2 className="text-xl font-semibold mb-4">Detalhes</h2>
-        <div className="text-sm text-gray-600">
-          Usuário: {user?.user?.username}
-        </div>
+      {/* Área lateral direita (20%) - AQUI vão os detalhes */}
+      <div className="w-[20%] bg-white rounded-lg shadow-sm p-4 flex flex-col">
+        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+          <Info size={20} />
+          Detalhes
+        </h2>
+        
+        {!selectedRoomId ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center text-gray-500">
+              <Info size={32} className="mx-auto mb-2 opacity-50" />
+              <p className="text-sm">Selecione uma sala para ver os detalhes</p>
+            </div>
+          </div>
+        ) : loadingDetails ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <Loader2 size={24} className="animate-spin text-violet-500 mx-auto mb-2" />
+              <p className="text-sm text-gray-500">Carregando...</p>
+            </div>
+          </div>
+        ) : roomDetails ? (
+          <div className="flex-1 overflow-y-auto space-y-4">
+            {/* Informações básicas */}
+            <div className="bg-gray-50 rounded-lg p-3">
+              <h3 className="font-semibold text-gray-800 mb-2 text-sm">Informações</h3>
+              <div className="space-y-2 text-xs">
+                <div>
+                  <span className="text-gray-500">Nome:</span>
+                  <p className="font-medium truncate">{roomDetails.name}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Criada em:</span>
+                  <p className="font-medium">
+                    {new Date(roomDetails.createdAt).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Estatísticas compactas */}
+            <div className="grid grid-cols-1 gap-2">
+              <div className="bg-violet-50 rounded-lg p-3 text-center">
+                <MessageSquare className="mx-auto mb-1 text-violet-600" size={16} />
+                <p className="text-lg font-bold text-violet-700">{roomDetails.totalMessages}</p>
+                <p className="text-xs text-violet-600">Mensagens</p>
+              </div>
+              <div className="bg-blue-50 rounded-lg p-3 text-center">
+                <Users className="mx-auto mb-1 text-blue-600" size={16} />
+                <p className="text-lg font-bold text-blue-700">{roomDetails.totalUsers}</p>
+                <p className="text-xs text-blue-600">Participantes</p>
+              </div>
+            </div>
+
+            {/* Participantes compactos */}
+            <div className="bg-gray-50 rounded-lg p-3">
+              <h3 className="font-semibold text-gray-800 mb-2 text-sm flex items-center gap-1">
+                <Users size={14} />
+                Participantes
+              </h3>
+              <div className="space-y-1 max-h-32 overflow-y-auto">
+                {roomDetails.participants && roomDetails.participants.length > 0 ? (
+                  <>
+                    {roomDetails.participants.slice(0, 5).map((participant) => (
+                      <div key={participant.userId} className="flex items-center gap-2 py-1">
+                        <div className="w-6 h-6 bg-violet-100 rounded-full flex items-center justify-center">
+                          <span className="text-violet-700 font-semibold text-xs">
+                            {participant.username.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-xs truncate">{participant.username}</p>
+                          <p className="text-xs text-gray-500">
+                            {participant.messageCount} msg
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                    {roomDetails.participants.length > 5 && (
+                      <p className="text-xs text-gray-500 text-center pt-1">
+                        +{roomDetails.participants.length - 5} outros
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-xs text-gray-500 italic text-center py-2">
+                    Nenhum participante
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Arquivos compartilhados compactos */}
+            <div className="bg-gray-50 rounded-lg p-3">
+              <h3 className="font-semibold text-gray-800 mb-2 text-sm flex items-center gap-1">
+                <File size={14} />
+                Arquivos ({roomDetails.sharedFiles?.length || 0})
+              </h3>
+              {roomDetails.sharedFiles && roomDetails.sharedFiles.length > 0 ? (
+                <div className="space-y-1 max-h-32 overflow-y-auto">
+                  {roomDetails.sharedFiles.slice(0, 3).map((file) => (
+                    <div key={file.id} className="flex items-center gap-2 py-1">
+                      {file.fileType.startsWith('image/') ? (
+                        <Image size={12} className="text-green-600 flex-shrink-0" />
+                      ) : (
+                        <File size={12} className="text-blue-600 flex-shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-xs truncate">{file.fileName}</p>
+                        <p className="text-xs text-gray-500">{file.uploadedBy}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => window.open(`${import.meta.env.VITE_API_URL}${file.fileUrl}`, '_blank')}
+                        className="h-6 w-6 p-0"
+                      >
+                        <Download size={10} />
+                      </Button>
+                    </div>
+                  ))}
+                  {roomDetails.sharedFiles.length > 3 && (
+                    <p className="text-xs text-gray-500 text-center pt-1">
+                      +{roomDetails.sharedFiles.length - 3} outros
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 italic text-center py-2">
+                  Nenhum arquivo
+                </p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <p className="text-sm text-gray-500">Erro ao carregar detalhes</p>
+          </div>
+        )}
       </div>
     </div>
   );
