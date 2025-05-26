@@ -20,10 +20,10 @@ export class RoomService {
     const room = await prisma.room.create({
       data: { 
         name,
-        creatorId,
+        creator_id: creatorId,
         members: {
           create: {
-            userId: creatorId,
+            user_id: creatorId,
             role: 'ADMIN'
           }
         }
@@ -49,7 +49,7 @@ export class RoomService {
     });
 
     // Emitir evento apenas para os membros da sala
-    const memberIds = room.members.map(member => member.userId);
+    const memberIds = room.members.map(member => member.user_id);
     io.to(memberIds).emit('room_created', room);
     
     return room;
@@ -60,7 +60,7 @@ export class RoomService {
       where: { id },
       include: {
         members: {
-          where: { userId },
+          where: { user_id: userId },
         },
       },
     });
@@ -70,7 +70,7 @@ export class RoomService {
     }
 
     // Verificar se o usuário é o criador da sala
-    if (room.creatorId !== userId) {
+    if (room.creator_id !== userId) {
       throw new ForbiddenError('Only the room creator can delete the room');
     }
 
@@ -95,11 +95,11 @@ export class RoomService {
             },
           },
           orderBy: {
-            createdAt: 'asc',
+            created_at: 'asc',
           },
         },
         members: {
-          where: { userId },
+          where: { user_id: userId },
         },
       },
     });
@@ -122,14 +122,14 @@ export class RoomService {
       where: {
         members: {
           some: {
-            userId,
+            user_id: userId,
           },
         },
       },
       include: {
         messages: {
           orderBy: {
-            createdAt: 'desc',
+            created_at: 'desc',
           },
           take: 1,
           include: {
@@ -139,11 +139,12 @@ export class RoomService {
                 username: true,
               },
             },
+            files: true,
           },
         },
-        unreadMessages: {
+        unread_messages: {
           where: {
-            userId,
+            user_id: userId,
           },
           select: {
             id: true,
@@ -171,15 +172,15 @@ export class RoomService {
     // Map rooms and calculate last activity
     const roomsWithActivity = rooms.map(room => {
       const lastMessage = room.messages[0] || null;
-      const lastActivity = lastMessage ? lastMessage.createdAt : room.createdAt;
+      const lastActivity = lastMessage ? lastMessage.created_at : room.created_at;
       
       return {
         ...room,
         lastMessage,
-        unreadCount: room.unreadMessages.length,
+        unreadCount: room.unread_messages.length,
         lastActivity,
         messages: undefined,
-        unreadMessages: undefined,
+        unread_messages: undefined,
       };
     });
 
@@ -210,9 +211,10 @@ export class RoomService {
                 username: true,
               },
             },
+            files: true,
           },
           orderBy: {
-            createdAt: 'asc',
+            created_at: 'asc',
           },
         },
         members: {
@@ -239,7 +241,7 @@ export class RoomService {
     }
 
     // Verificar se o usuário é membro da sala
-    const userMembership = room.members.find(member => member.userId === userId);
+    const userMembership = room.members.find(member => member.user_id === userId);
     if (!userMembership) {
       throw new ForbiddenError('You are not a member of this room');
     }
@@ -256,31 +258,33 @@ export class RoomService {
       const userId = msg.user.id;
       if (participantMap.has(userId)) {
         participantMap.get(userId).messageCount++;
-        participantMap.get(userId).lastActiveAt = msg.createdAt;
+        participantMap.get(userId).lastActiveAt = msg.created_at;
       } else {
         participantMap.set(userId, {
           userId: msg.user.id,
           username: msg.user.username,
           messageCount: 1,
-          lastActiveAt: msg.createdAt,
+          lastActiveAt: msg.created_at,
         });
       }
     });
 
     const participants = Array.from(participantMap.values());
 
-    // Get shared files (messages with fileUrl)
+    // Get shared files (messages with files)
     const sharedFiles = room.messages
-      .filter(msg => msg.fileUrl && msg.status !== 'DELETED')
-      .map(msg => ({
-        id: msg.id,
-        fileName: msg.fileName || 'Arquivo',
-        fileType: msg.fileType || 'application/octet-stream',
-        fileUrl: msg.fileUrl,
-        fileSize: msg.fileSize || 0,
-        uploadedBy: msg.user.username,
-        uploadedAt: msg.createdAt,
-      }));
+      .filter(msg => msg.files && msg.files.length > 0 && msg.status !== 'DELETED')
+      .flatMap(msg => 
+        msg.files.map(file => ({
+          id: file.id,
+          fileName: file.file_name || 'Arquivo',
+          fileType: file.file_type || 'application/octet-stream',
+          fileUrl: file.file_url,
+          fileSize: file.file_size || 0,
+          uploadedBy: msg.user.username,
+          uploadedAt: msg.created_at,
+        }))
+      );
 
     // Get first and last message dates
     const firstMessage = room.messages.length > 0 ? room.messages[0] : null;
@@ -289,11 +293,11 @@ export class RoomService {
     return {
       id: room.id,
       name: room.name,
-      createdAt: room.createdAt,
+      created_at: room.created_at,
       creator: room.creator,
       totalMessages,
       totalUsers: room.members.length,
-      lastMessageAt: lastMessage?.createdAt || null,
+      lastMessageAt: lastMessage?.created_at || null,
       participants,
       sharedFiles,
       members: room.members,
@@ -307,7 +311,7 @@ export class RoomService {
       where: { id: roomId },
       include: {
         members: {
-          where: { userId: adminUserId },
+          where: { user_id: adminUserId },
         },
       },
     });
@@ -317,17 +321,17 @@ export class RoomService {
     }
 
     // Verificar se o usuário que está adicionando é ADMIN
-    const adminMembership = room.members.find(member => member.userId === adminUserId);
+    const adminMembership = room.members.find(member => member.user_id === adminUserId);
     if (!adminMembership || adminMembership.role !== 'ADMIN') {
       throw new ForbiddenError('Only room admins can add members');
     }
 
     // Verificar se o usuário já é membro
-    const existingMember = await prisma.roomMember.findUnique({
+    const existingMember = await prisma.room_member.findUnique({
       where: {
-        userId_roomId: {
-          userId: userIdToAdd,
-          roomId,
+        user_id_room_id: {
+          user_id: userIdToAdd,
+          room_id: roomId,
         },
       },
     });
@@ -347,10 +351,10 @@ export class RoomService {
     }
 
     // Adicionar o usuário à sala
-    const newMember = await prisma.roomMember.create({
+    const newMember = await prisma.room_member.create({
       data: {
-        userId: userIdToAdd,
-        roomId,
+        user_id: userIdToAdd,
+        room_id: roomId,
         role: 'MEMBER',
       },
       include: {
@@ -370,12 +374,12 @@ export class RoomService {
     });
 
     // Emitir evento para todos os membros da sala
-    const allMembers = await prisma.roomMember.findMany({
-      where: { roomId },
-      select: { userId: true },
+    const allMembers = await prisma.room_member.findMany({
+      where: { room_id: roomId },
+      select: { user_id: true },
     });
     
-    const memberIds = allMembers.map(member => member.userId);
+    const memberIds = allMembers.map(member => member.user_id);
     io.to(memberIds).emit('member_added', {
       roomId,
       member: newMember,
@@ -398,39 +402,39 @@ export class RoomService {
     }
 
     // Verificar se o usuário que está removendo é ADMIN
-    const adminMembership = room.members.find(member => member.userId === adminUserId);
+    const adminMembership = room.members.find(member => member.user_id === adminUserId);
     if (!adminMembership || adminMembership.role !== 'ADMIN') {
       throw new ForbiddenError('Only room admins can remove members');
     }
 
     // Não permitir remover o criador da sala
-    if (userIdToRemove === room.creatorId) {
+    if (userIdToRemove === room.creator_id) {
       throw new ForbiddenError('Cannot remove the room creator');
     }
 
     // Verificar se o usuário é membro
-    const memberToRemove = room.members.find(member => member.userId === userIdToRemove);
+    const memberToRemove = room.members.find(member => member.user_id === userIdToRemove);
     if (!memberToRemove) {
       throw new NotFoundError('User is not a member of this room');
     }
 
     // Remover o usuário da sala
-    await prisma.roomMember.delete({
+    await prisma.room_member.delete({
       where: {
-        userId_roomId: {
-          userId: userIdToRemove,
-          roomId,
+        user_id_room_id: {
+          user_id: userIdToRemove,
+          room_id: roomId,
         },
       },
     });
 
     // Emitir evento para todos os membros da sala (incluindo o usuário removido)
-    const remainingMembers = await prisma.roomMember.findMany({
-      where: { roomId },
-      select: { userId: true },
+    const remainingMembers = await prisma.room_member.findMany({
+      where: { room_id: roomId },
+      select: { user_id: true },
     });
     
-    const memberIds = remainingMembers.map(member => member.userId);
+    const memberIds = remainingMembers.map(member => member.user_id);
     // Adicionar o usuário removido à lista para que ele também receba a notificação
     const allNotificationIds = [...memberIds, userIdToRemove];
     
@@ -450,7 +454,7 @@ export class RoomService {
       where: { id: roomId },
       include: {
         members: {
-          where: { userId: adminUserId },
+          where: { user_id: adminUserId },
         },
       },
     });
@@ -460,7 +464,7 @@ export class RoomService {
     }
 
     // Verificar se o usuário é ADMIN
-    const adminMembership = room.members.find(member => member.userId === adminUserId);
+    const adminMembership = room.members.find(member => member.user_id === adminUserId);
     console.log(`👤 Admin membership:`, adminMembership);
     
     if (!adminMembership || adminMembership.role !== 'ADMIN') {
@@ -471,9 +475,9 @@ export class RoomService {
     const availableUsers = await prisma.user.findMany({
       where: {
         NOT: {
-          roomMemberships: {
+          room_memberships: {
             some: {
-              roomId,
+              room_id: roomId,
             },
           },
         },

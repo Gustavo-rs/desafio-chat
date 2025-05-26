@@ -13,13 +13,13 @@ interface FileInfo {
 }
 
 export class MessageService {
-  async createMessage(content: string, userId: string, roomId: string, fileInfo?: FileInfo) {
+  async createMessage(content: string, userId: string, roomId: string, files?: FileInfo[]) {
     // Verificar se o usuário é membro da sala
-    const roomMembership = await prisma.roomMember.findUnique({
+    const roomMembership = await prisma.room_member.findUnique({
       where: {
-        userId_roomId: {
-          userId,
-          roomId,
+        user_id_room_id: {
+          user_id: userId,
+          room_id: roomId,
         },
       },
       include: {
@@ -31,18 +31,21 @@ export class MessageService {
       throw new ForbiddenError('You are not a member of this room');
     }
 
-    const messageData = {
-      content,
-      roomId,
-      userId,
-      fileName: fileInfo?.fileName,
-      fileUrl: fileInfo?.fileUrl,
-      fileType: fileInfo?.fileType,
-      fileSize: fileInfo?.fileSize,
-    } as const;
-
+    // Create message with files
     const message = await prisma.message.create({
-      data: messageData,
+      data: {
+        content,
+        room_id: roomId,
+        user_id: userId,
+        files: files ? {
+          create: files.map(file => ({
+            file_name: file.fileName,
+            file_url: file.fileUrl,
+            file_type: file.fileType,
+            file_size: file.fileSize,
+          }))
+        } : undefined,
+      },
       include: {
         user: {
           select: {
@@ -50,14 +53,15 @@ export class MessageService {
             username: true,
           },
         },
+        files: true,
       },
     });
 
     // Get all room members except the sender
-    const roomMembers = await prisma.roomMember.findMany({
+    const roomMembers = await prisma.room_member.findMany({
       where: {
-        roomId,
-        userId: {
+        room_id: roomId,
+        user_id: {
           not: userId,
         },
       },
@@ -77,19 +81,19 @@ export class MessageService {
         continue;
       }
 
-      await prisma.unreadMessage.create({
+      await prisma.unread_message.create({
         data: {
-          messageId: message.id,
-          userId: member.user.id,
-          roomId,
+          message_id: message.id,
+          user_id: member.user.id,
+          room_id: roomId,
         },
       });
 
       // Get unread count for this user and room
-      const unreadCount = await prisma.unreadMessage.count({
+      const unreadCount = await prisma.unread_message.count({
         where: {
-          userId: member.user.id,
-          roomId,
+          user_id: member.user.id,
+          room_id: roomId,
         },
       });
 
@@ -108,11 +112,11 @@ export class MessageService {
 
   async getMessages(roomId: string, userId: string, page: number, limit: number): Promise<MessageResponse> {
     // Verificar se o usuário é membro da sala
-    const roomMembership = await prisma.roomMember.findUnique({
+    const roomMembership = await prisma.room_member.findUnique({
       where: {
-        userId_roomId: {
-          userId,
-          roomId,
+        user_id_room_id: {
+          user_id: userId,
+          room_id: roomId,
         },
       },
     });
@@ -125,7 +129,7 @@ export class MessageService {
     const [messages, total] = await Promise.all([
       prisma.message.findMany({
         where: { 
-          roomId
+          room_id: roomId
         },
         include: {
           user: {
@@ -134,14 +138,15 @@ export class MessageService {
               username: true,
             },
           },
+          files: true,
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { created_at: "desc" },
         skip,
         take: limit,
       }),
       prisma.message.count({ 
         where: { 
-          roomId
+          room_id: roomId
         }
       }),
     ]);
@@ -159,47 +164,53 @@ export class MessageService {
       pages,
       currentPage: page,
       limit,
-      messages: orderedMessages,
+      messages: orderedMessages.map(msg => ({
+        ...msg,
+        roomId: msg.room_id,
+        userId: msg.user_id,
+        createdAt: msg.created_at,
+        updatedAt: msg.updated_at,
+      })) as any,
     };
   }
 
   async getTotalMessages(roomId: string) {
     return prisma.message.count({
-      where: { roomId },
+      where: { room_id: roomId },
     });
   }
 
   async getUnreadCounts(userId: string): Promise<UnreadCount[]> {
-    const unreadCounts = await prisma.unreadMessage.groupBy({
-      by: ["roomId"],
+    const unreadCounts = await prisma.unread_message.groupBy({
+      by: ["room_id"],
       where: {
-        userId,
+        user_id: userId,
       },
       _count: {
         _all: true,
       },
     });
 
-    return unreadCounts.map((count) => ({
-      roomId: count.roomId,
+    return unreadCounts.map((count: any) => ({
+      roomId: count.room_id,
       count: count._count._all,
     }));
   }
 
   async getUnreadCount(userId: string, roomId: string) {
-    return prisma.unreadMessage.count({
+    return prisma.unread_message.count({
       where: {
-        userId,
-        roomId,
+        user_id: userId,
+        room_id: roomId,
       },
     });
   }
 
   async markMessagesAsRead(userId: string, roomId: string) {
-    await prisma.unreadMessage.deleteMany({
+    await prisma.unread_message.deleteMany({
       where: {
-        userId,
-        roomId,
+        user_id: userId,
+        room_id: roomId,
       },
     });
 
@@ -210,7 +221,7 @@ export class MessageService {
     // Busca a mensagem para obter o roomId antes de marcar como deletada
     const message = await prisma.message.findUnique({
       where: { id: messageId },
-      select: { roomId: true, userId: true, status: true }
+      select: { room_id: true, user_id: true, status: true }
     });
 
     if (!message) {
@@ -218,7 +229,7 @@ export class MessageService {
     }
 
     // Verifica se o usuário é o dono da mensagem
-    if (message.userId !== userId) {
+    if (message.user_id !== userId) {
       throw new Error('You can only delete your own messages');
     }
 
@@ -245,7 +256,7 @@ export class MessageService {
     });
 
     // Emite para toda a sala com os dados atualizados
-    io.to(message.roomId).emit('message_deleted', { 
+    io.to(message.room_id).emit('message_deleted', { 
       messageId, 
       message: updatedMessage 
     });
@@ -257,7 +268,7 @@ export class MessageService {
     // Busca a mensagem para obter o roomId antes de editar
     const message = await prisma.message.findUnique({
       where: { id: messageId },
-      select: { roomId: true, userId: true, status: true }
+      select: { room_id: true, user_id: true, status: true }
     });
 
     if (!message) {
@@ -265,7 +276,7 @@ export class MessageService {
     }
 
     // Verifica se o usuário é o dono da mensagem
-    if (message.userId !== userId) {
+    if (message.user_id !== userId) {
       throw new Error('You can only edit your own messages');
     }
 
@@ -292,7 +303,7 @@ export class MessageService {
     });
    
     // Emite para toda a sala com os dados atualizados
-    io.to(message.roomId).emit('message_updated', { 
+    io.to(message.room_id).emit('message_updated', { 
       messageId, 
       content,
       message: updatedMessage

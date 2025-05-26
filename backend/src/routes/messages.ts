@@ -4,7 +4,7 @@ import { validate } from "../middlewares/validation";
 import { createMessageSchema } from "../schemas/validation";
 import { MessageResponse, UnreadCountResponse, ErrorResponse } from "../models/message.model";
 import { AppError } from "../utils/errors";
-import { upload } from "../middlewares/upload";
+import { uploadMultiple } from "../middlewares/upload";
 
 const router = Router();
 const messageService = new MessageService();
@@ -30,32 +30,35 @@ router.get("/:roomId", async (req: Request, res: Response<MessageResponse | Erro
   }
 });
 
-router.post("/:roomId", upload.single('file'), validate(createMessageSchema), async (req: Request, res: Response, next: NextFunction) => {
+router.post("/:roomId", uploadMultiple, validate(createMessageSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { roomId } = req.params;
     const { content } = req.body;
     const userId = req.user?.userId;
-    const file = req.file;
+    const files = req.files as Express.Multer.File[];
 
     if (!userId) {
       return res.status(401).json({ message: "Você precisa estar logado para enviar mensagens" });
     }
 
     // Verifica se tem pelo menos conteúdo ou arquivo
-    if (!content && !file) {
-      return res.status(400).json({ message: "A mensagem deve conter texto ou um arquivo" });
+    if (!content && (!files || files.length === 0)) {
+      return res.status(400).json({ message: "A mensagem deve conter texto ou pelo menos um arquivo" });
     }
+
+    // Processa múltiplos arquivos
+    const fileInfos = files?.map(file => ({
+      fileName: file.originalname,
+      fileUrl: `/uploads/${file.path.replace(/\\/g, '/').replace('uploads/', '')}`,
+      fileType: file.mimetype,
+      fileSize: file.size
+    }));
 
     const message = await messageService.createMessage(
       content || "", 
       userId, 
       roomId,
-      file ? {
-        fileName: file.originalname,
-        fileUrl: `/uploads/${file.path.replace(/\\/g, '/').replace('uploads/', '')}`,
-        fileType: file.mimetype,
-        fileSize: file.size
-      } : undefined
+      fileInfos
     );
     res.status(201).json(message);
   } catch (error) {

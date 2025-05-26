@@ -24,65 +24,73 @@ enum RoomRole {
   MEMBER
 }
 
-model User {
+model user {
   id       String   @id @default(dbgenerated("gen_random_uuid()"))
   username String   @unique
   password String
-  messages Message[]
-  unreadMessages UnreadMessage[]
-  roomMemberships RoomMember[]
-  createdRooms Room[] @relation("RoomCreator")
+  messages message[]
+  unread_messages unread_message[]
+  room_memberships room_member[]
+  created_rooms room[] @relation("RoomCreator")
 }
 
-model Room {
+model room {
   id        String   @id @default(dbgenerated("gen_random_uuid()"))
   name      String
-  createdAt DateTime @default(now())
-  messages  Message[]
-  unreadMessages UnreadMessage[]
-  members   RoomMember[]
-  creator   User     @relation("RoomCreator", fields: [creatorId], references: [id])
-  creatorId String
+  created_at DateTime @default(now())
+  messages  message[]
+  unread_messages unread_message[]
+  members   room_member[]
+  creator   user     @relation("RoomCreator", fields: [creator_id], references: [id])
+  creator_id String
 }
 
-model Message {
+model message {
   id        String   @id @default(dbgenerated("gen_random_uuid()"))
   content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String
-  room      Room     @relation(fields: [roomId], references: [id])
-  roomId    String
-  unreadMessages UnreadMessage[]
-  fileName  String?
-  fileUrl   String?
-  fileType  String?
-  fileSize  Int?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  user      user     @relation(fields: [user_id], references: [id])
+  user_id    String
+  room      room     @relation(fields: [room_id], references: [id])
+  room_id    String
+  unread_messages unread_message[]
+  files     message_file[]
   status    MessageStatus @default(ACTIVE)
 }
 
-model UnreadMessage {
+model message_file {
   id        String   @id @default(dbgenerated("gen_random_uuid()"))
-  message   Message  @relation(fields: [messageId], references: [id])
-  messageId String
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String
-  room      Room     @relation(fields: [roomId], references: [id])
-  roomId    String
-  createdAt DateTime @default(now())
-
-  @@unique([messageId, userId])
+  file_name  String
+  file_url   String
+  file_type  String
+  file_size  Int
+  message   message  @relation(fields: [message_id], references: [id], onDelete: Cascade)
+  message_id String
+  created_at DateTime @default(now())
 }
 
-model RoomMember {
+model unread_message {
   id        String   @id @default(dbgenerated("gen_random_uuid()"))
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String
-  room      Room     @relation(fields: [roomId], references: [id])
-  roomId    String
-  role      RoomRole @default(MEMBER)
-  joinedAt  DateTime @default(now())
+  message   message  @relation(fields: [message_id], references: [id])
+  message_id String
+  user      user     @relation(fields: [user_id], references: [id])
+  user_id    String
+  room      room     @relation(fields: [room_id], references: [id])
+  room_id    String
+  created_at DateTime @default(now())
 
-  @@unique([userId, roomId])
+  @@unique([message_id, user_id])
+}
+
+model room_member {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  user      user     @relation(fields: [user_id], references: [id])
+  user_id    String
+  room      room     @relation(fields: [room_id], references: [id])
+  room_id    String
+  role      RoomRole @default(MEMBER)
+  joined_at  DateTime @default(now())
+
+  @@unique([user_id, room_id])
 }

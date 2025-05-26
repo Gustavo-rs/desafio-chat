@@ -18,7 +18,7 @@ import type { Message, ChatPageProps, MessageStatus, OnlineUser } from "@/types/
 export default function ChatPage({ roomId, roomName }: ChatPageProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -49,15 +49,20 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
         username: msg.user.username,
       },
       content: msg.content || "",
-      createdAt: msg.createdAt,
-      updatedAt: msg.updatedAt || msg.createdAt,
+      created_at: msg.created_at,
+      updated_at: msg.updated_at,
       status: msg.status || 'ACTIVE',
-      fileName: msg.fileName,
-      fileUrl: msg.fileUrl,
-      fileType: msg.fileType,
-      fileSize: msg.fileSize,
-      isSystemMessage: msg.isSystemMessage,
-      systemMessageType: msg.systemMessageType,
+      // New multiple files support
+      files: msg.files ? msg.files.map((file: any) => ({
+        id: file.id,
+        file_name: file.file_name,
+        file_url: file.file_url,
+        file_type: file.file_type,
+        file_size: file.file_size,
+        created_at: file.created_at,
+      })) : [],
+      isSystemMessage: msg.is_system_message,
+      systemMessageType: msg.system_message_type,
     };
   };
 
@@ -85,7 +90,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
     
     listMessagesFromRoom();
 
-    const socket = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:3001", {
+    const socket = io(import.meta.env.VITE_SOCKET_URL, {
       withCredentials: true
     });
 
@@ -162,8 +167,8 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
             username: 'Sistema'
           },
           content: `${username} entrou na sala`,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
           status: 'ACTIVE',
           isSystemMessage: true,
           systemMessageType: 'user_joined'
@@ -185,8 +190,8 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
             username: 'Sistema'
           },
           content: `${username} saiu da sala`,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
           status: 'ACTIVE',
           isSystemMessage: true,
           systemMessageType: 'user_left'
@@ -208,8 +213,8 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
             username: 'Sistema'
           },
           content: `${member.user.username} foi adicionado à sala`,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
           status: 'ACTIVE',
           isSystemMessage: true,
           systemMessageType: 'member_added'
@@ -245,8 +250,8 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
             username: 'Sistema'
           },
           content: `${removedUsername} foi removido da sala`,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
           status: 'ACTIVE',
           isSystemMessage: true,
           systemMessageType: 'member_removed'
@@ -278,14 +283,18 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
   
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
+    const files = Array.from(event.target.files || []);
+    if (files.length > 0) {
+      setSelectedFiles(prev => [...prev, ...files]);
     }
   };
 
-  const removeSelectedFile = () => {
-    setSelectedFile(null);
+  const removeSelectedFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const clearAllFiles = () => {
+    setSelectedFiles([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -294,16 +303,13 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
   const sendMessage = async () => {
     if (!roomId) return;
     
-    if ((input.trim() || selectedFile) && socketRef.current) {
-      const formData = new FormData();
-      formData.append('content', input);
-      formData.append('roomId', roomId);
-      if (selectedFile) {
-        formData.append('file', selectedFile);
-      }
-
+    if ((input.trim() || selectedFiles.length > 0) && socketRef.current) {
       try {
-        const response = await messageService.createMessage(formData);
+        const response = await messageService.createMessageWithMultipleFiles(
+          input, 
+          roomId, 
+          selectedFiles
+        );
         const message = response.data;
 
         socketRef.current.emit("send_message", message);
@@ -311,7 +317,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
         const normalizedMessage = normalizeMessage(message);
         setMessages((prev) => [...prev, normalizedMessage]);
         setInput("");
-        setSelectedFile(null);
+        setSelectedFiles([]);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
@@ -566,7 +572,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                     )}
                     <span className="font-medium">{msg.content}</span>
                     <span className="text-xs text-blue-500">
-                      {new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                     </span>
                   </div>
                 </div>
@@ -617,13 +623,13 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                             )}
                              {/* Indicador de mensagem editada */}
                              {msg.status === 'EDITED' && (
-                              <span className="text-xs text-gray-400 italic flex items-center gap-1" title={`Editada às ${msg.updatedAt ? new Date(msg.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}`}>
+                              <span className="text-xs text-gray-400 italic flex items-center gap-1" title={`Editada às ${msg.updated_at ? new Date(msg.updated_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}`}>
                                 <Edit2 size={10} />
                                 editada
                               </span>
                             )}
                             <span className="text-xs text-gray-500">
-                              {new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                              {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                             </span>
                           </div>
                         </div>
@@ -694,25 +700,40 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                     </div>
                     
                     {/* Arquivos anexos - só mostrar se a mensagem não foi deletada */}
-                    {msg.fileUrl && msg.status !== 'DELETED' && (
+                    {msg.status !== 'DELETED' && (
                       <div className="mt-2">
-                        {msg.fileType?.startsWith('image/') ? (
-                          <img 
-                          src={`${import.meta.env.VITE_API_URL}${msg.fileUrl}`} 
-                            alt={msg.fileName} 
-                            className="max-w-full rounded-lg"
-                          />
-                        ) : (
-                          <a 
-                          href={`${import.meta.env.VITE_API_URL}${msg.fileUrl}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-violet-600 hover:text-violet-700"
-                          >
-                            <File size={16} />
-                            {msg.fileName}
-                          </a>
+                        {/* Múltiplos arquivos (novo formato) */}
+                        {msg.files && msg.files.length > 0 && (
+                          <div className="space-y-2">
+                            {msg.files.map((file, index) => {
+                              console.log('Arquivo:', file, 'URL completa:', `${import.meta.env.VITE_API_URL}${file.file_url}`);
+                              return (
+                                <div key={file.id || index}>
+                                  {file.file_type?.startsWith('image/') ? (
+                                    <img 
+                                      src={`${import.meta.env.VITE_API_URL}${file.file_url}`} 
+                                      alt={file.file_name} 
+                                      className="max-w-full rounded-lg"
+                                      onError={(e) => console.error('Erro ao carregar imagem:', e.currentTarget.src)}
+                                      onLoad={() => console.log('Imagem carregada com sucesso:', file.file_name)}
+                                    />
+                                  ) : (
+                                    <a 
+                                      href={`${import.meta.env.VITE_API_URL}${file.file_url}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-2 text-violet-600 hover:text-violet-700 p-2 bg-gray-50 rounded-md"
+                                    >
+                                      <File size={16} />
+                                      <span className="truncate">{file.file_name}</span>
+                                    </a>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
                         )}
+                      
                       </div>
                     )}
                   </div>
@@ -725,15 +746,30 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
 
         {!userRemovedFromRoom && (
           <div className="mt-2 md:mt-4 flex flex-col gap-2">
-            {selectedFile && (
-              <div className="flex items-center justify-between p-2 bg-violet-50 rounded-md">
-                <span className="text-xs md:text-sm text-violet-700 truncate">{selectedFile.name}</span>
-                <button
-                  onClick={removeSelectedFile}
-                  className="text-violet-600 hover:text-violet-700"
-                >
-                  <X className="h-4 w-4 md:h-5 md:w-5" />
-                </button>
+            {selectedFiles.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs md:text-sm text-violet-700 font-medium">
+                    {selectedFiles.length} arquivo{selectedFiles.length > 1 ? 's' : ''} selecionado{selectedFiles.length > 1 ? 's' : ''}
+                  </span>
+                  <button
+                    onClick={clearAllFiles}
+                    className="text-xs text-red-600 hover:text-red-700"
+                  >
+                    Limpar todos
+                  </button>
+                </div>
+                {selectedFiles.map((file, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-violet-50 rounded-md">
+                    <span className="text-xs md:text-sm text-violet-700 truncate">{file.name}</span>
+                    <button
+                      onClick={() => removeSelectedFile(index)}
+                      className="text-violet-600 hover:text-violet-700"
+                    >
+                      <X className="h-4 w-4 md:h-5 md:w-5" />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
             <div className="flex gap-1 md:gap-2">
@@ -753,6 +789,8 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                 onChange={handleFileSelect}
                 className="hidden"
                 id="file-upload"
+                multiple
+                accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
               />
               <Button
                 onClick={() => fileInputRef.current?.click()}

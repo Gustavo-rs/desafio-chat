@@ -46,10 +46,10 @@ export interface APIRoom {
 
 export interface RoomMember {
     id: string;
-    userId: string;
-    roomId: string;
+    user_id: string;
+    room_id: string;
     role: 'ADMIN' | 'MEMBER';
-    joinedAt: string;
+    joined_at: string;
     user: {
         id: string;
         username: string;
@@ -68,7 +68,7 @@ export interface APIRooms {
 export interface RoomDetails {
     id: string;
     name: string;
-    createdAt: string;
+    created_at: string;
     creator: {
         id: string;
         username: string;
@@ -107,14 +107,15 @@ export interface APICreateMessage {
 export interface APIMessage {
     id: string;
     content: string;
-    createdAt: string;
-    updatedAt: string;
+    created_at: string;
+    updated_at: string;
     user: User;
     status: MessageStatus;
-    fileName?: string;
-    fileUrl?: string;
-    fileType?: string;
-    fileSize?: number;
+    file_name?: string;
+    file_url?: string;
+    file_type?: string;
+    file_size?: number;
+    files?: MessageFile[];
 }
 
 export interface MessageResponse {
@@ -125,6 +126,15 @@ export interface MessageResponse {
     limit: number;
 }
 
+export interface MessageFile {
+    id: string;
+    file_name: string;
+    file_url: string;
+    file_type: string;
+    file_size: number;
+    created_at: string;
+}
+
 export interface Message {
     id: string;
     user: {
@@ -132,15 +142,10 @@ export interface Message {
       username: string;
     };
     content: string;
-    createdAt: string;
-    updatedAt: string;
+    created_at: string;
+    updated_at: string;
     status: MessageStatus;
-    isDeleted?: boolean;
-    isEdited?: boolean;
-    fileName?: string;
-    fileUrl?: string;
-    fileType?: string;
-    fileSize?: number;
+    files?: MessageFile[];
     isSystemMessage?: boolean;
     systemMessageType?: 'user_joined' | 'user_left' | 'member_added' | 'member_removed';
 }

@@ -18,6 +18,23 @@ class MessageService extends BaseService<MessageResponse, APICreateMessage> {
     });
   }
 
+  async createMessageWithMultipleFiles(content: string, roomId: string, files: File[]) {
+    const formData = new FormData();
+    formData.append('content', content);
+    formData.append('roomId', roomId);
+    
+    // Adiciona múltiplos arquivos
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+
+    return this.api.post<APIMessage>(`${this.basePath}/${roomId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  }
+
   async deleteMessage(messageId: string) {
     return this.api.delete(`${this.basePath}/${messageId}`);
   }

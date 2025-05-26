@@ -22,7 +22,7 @@ interface RoomFile {
 export interface RoomDetails {
   id: string;
   name: string;
-  createdAt: string;
+  created_at: string;
   creator: {
     id: string;
     username: string;

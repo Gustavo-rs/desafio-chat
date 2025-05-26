@@ -113,7 +113,7 @@ export default function RoomDetailsPage({ roomId, roomName }: RoomDetailsPagePro
             <div>
               <span className="text-gray-500 block mb-1">Criada em:</span>
               <p className="font-medium">
-                {new Date(roomDetails.createdAt).toLocaleDateString('pt-BR', {
+                {new Date(roomDetails.created_at).toLocaleDateString('pt-BR', {
                   day: '2-digit',
                   month: '2-digit',
                   year: 'numeric',

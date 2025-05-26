@@ -180,10 +180,20 @@ export default function RoomPage({
                     <>
                       <Edit2 size={12} className="text-blue-500" />
                       <span className="italic">
-                        {room.lastMessage.fileUrl ? (
+                        {room.lastMessage.files && room.lastMessage.files.length > 0 ? (
                           <span>
-                            <span className="hidden sm:inline">Arquivo (editada)</span>
-                            <span className="sm:hidden">Arq. (ed.)</span>
+                            <span className="hidden sm:inline">
+                              {room.lastMessage.files.length > 1 
+                                ? `${room.lastMessage.files.length} arquivos (editada)`
+                                : 'Arquivo (editada)'
+                              }
+                            </span>
+                            <span className="sm:hidden">
+                              {room.lastMessage.files.length > 1 
+                                ? `${room.lastMessage.files.length} arq. (ed.)`
+                                : 'Arq. (ed.)'
+                              }
+                            </span>
                           </span>
                         ) : (
                           <span>
@@ -197,15 +207,25 @@ export default function RoomPage({
                         )}
                       </span>
                     </>
-                  ) : room.lastMessage.fileUrl ? (
+                  ) : room.lastMessage.files && room.lastMessage.files.length > 0 ? (
                     <>
                       <Paperclip size={12} />
-                      <span className="hidden sm:inline">Arquivo</span>
-                      <span className="sm:hidden">Arq.</span>
+                      <span className="hidden sm:inline">
+                        {room.lastMessage.files.length > 1 
+                          ? `${room.lastMessage.files.length} arquivos`
+                          : 'Arquivo'
+                        }
+                      </span>
+                      <span className="sm:hidden">
+                        {room.lastMessage.files.length > 1 
+                          ? `${room.lastMessage.files.length} arq.`
+                          : 'Arq.'
+                        }
+                      </span>
                     </>
                   ) : (
                     <>
-                      <span className="hidden sm:inline">
+                      <span className="sm:inline">
                         <CompactMarkdown content={room.lastMessage.content} maxLength={30} />
                       </span>
                       <span className="sm:hidden">
@@ -225,7 +245,7 @@ export default function RoomPage({
               {/* Hora da última mensagem - sempre visível */}
               {room.lastMessage && (
                 <span className="text-xs text-gray-400">
-                  {new Date(room.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {new Date(room.lastMessage.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               )}
               {/* Badge de notificação - só aparece quando há mensagens não lidas */}
