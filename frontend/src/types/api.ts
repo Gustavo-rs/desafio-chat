@@ -65,6 +65,34 @@ export interface APIRooms {
     rooms: APIRoom[];
 }
 
+export interface RoomDetails {
+    id: string;
+    name: string;
+    createdAt: string;
+    creator: {
+        id: string;
+        username: string;
+    };
+    totalMessages: number;
+    totalUsers: number;
+    members: RoomMember[];
+    userRole: 'ADMIN' | 'MEMBER';
+    sharedFiles?: {
+        id: string;
+        fileName: string;
+        fileUrl: string;
+        fileType: string;
+        uploadedBy: string;
+        uploadedAt: string;
+    }[];
+    participants?: {
+        userId: string;
+        username: string;
+        messageCount: number;
+        lastActiveAt: string;
+    }[];
+}
+
 /////////////////////////////////////////
 // Messages
 /////////////////////////////////////////
