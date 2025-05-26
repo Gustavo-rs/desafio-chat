@@ -45,7 +45,7 @@ export default function RoomDetailsPage({ roomId, roomName }: RoomDetailsPagePro
 
   if (!roomId) {
     return (
-      <div className="w-full bg-white rounded-lg shadow-sm p-4 flex flex-col">
+      <div className="h-full bg-white rounded-lg shadow-sm p-4 flex flex-col">
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <Info size={20} />
           Detalhes da Sala
@@ -63,7 +63,7 @@ export default function RoomDetailsPage({ roomId, roomName }: RoomDetailsPagePro
 
   if (loadingDetails) {
     return (
-      <div className="w-full bg-white rounded-lg shadow-sm p-4 flex flex-col">
+      <div className="h-full bg-white rounded-lg shadow-sm p-4 flex flex-col">
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <Info size={20} />
           Detalhes da Sala
@@ -81,7 +81,7 @@ export default function RoomDetailsPage({ roomId, roomName }: RoomDetailsPagePro
 
   if (!roomDetails) {
     return (
-      <div className="w-full bg-white rounded-lg shadow-sm p-4 flex flex-col">
+      <div className="h-full bg-white rounded-lg shadow-sm p-4 flex flex-col">
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <Info size={20} />
           Detalhes da Sala
@@ -95,7 +95,7 @@ export default function RoomDetailsPage({ roomId, roomName }: RoomDetailsPagePro
   }
 
   return (
-    <div className="w-full bg-white rounded-lg shadow-sm p-4 flex flex-col">
+    <div className="h-full bg-white rounded-lg shadow-sm p-4 flex flex-col">
       <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
         <Info size={20} />
         Detalhes da Sala

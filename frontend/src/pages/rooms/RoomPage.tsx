@@ -82,18 +82,19 @@ export default function RoomPage({
   formatUnreadCount
 }: RoomPageProps) {
   return (
-    <div className="w-[30%] p-4 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-800">Salas</h2>
+    <div className="w-full md:w-[30%] p-3 md:p-4 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
+      <div className="flex items-center justify-between mb-3 md:mb-4">
+        <h2 className="text-lg md:text-xl font-semibold text-gray-800">Salas</h2>
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button
               variant="outline"
               size="sm"
-              className="text-sm text-primary border-primary"
+              className="text-xs md:text-sm text-primary border-primary px-2 md:px-3"
             >
-              Nova sala
+              <span className="hidden sm:inline">Nova sala</span>
+              <span className="sm:hidden">+</span>
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[475px]">
@@ -133,31 +134,31 @@ export default function RoomPage({
         </Dialog>
       </div>
 
-      <div className="mb-4">
+      <div className="mb-3 md:mb-4">
         <input
           type="text"
-          placeholder="Pesquisar sala..."
-          className="w-full px-4 py-2 rounded-full border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm"
+          placeholder="Pesquisar..."
+          className="w-full px-3 md:px-4 py-2 rounded-full border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-violet-500 text-xs md:text-sm"
         />
       </div>
 
-      <div className="space-y-3 overflow-y-auto flex-1 pr-2">
+      <div className="space-y-2 md:space-y-3 overflow-y-auto flex-1 pr-1 md:pr-2">
         {rooms.map((room, index) => (
           <div
             key={room.id}
-            className={`flex items-center gap-4 p-3 bg-violet-50 hover:bg-violet-100 transition rounded-lg cursor-pointer shadow-sm ${selectedRoomId === room.id.toString() ? 'border-2 border-primary' : ''}`}
+            className={`flex items-center gap-2 md:gap-4 p-2 md:p-3 bg-violet-50 hover:bg-violet-100 transition rounded-lg cursor-pointer shadow-sm ${selectedRoomId === room.id.toString() ? 'border-2 border-primary' : ''}`}
             onClick={() => handleRoomSelect(room)}
           >
             <div className="flex-shrink-0">
-              <div className="w-10 h-10 bg-violet-400 text-white flex items-center justify-center rounded-full text-sm font-bold uppercase">
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-violet-400 text-white flex items-center justify-center rounded-full text-xs md:text-sm font-bold uppercase">
                 {room.name.charAt(0)}
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-gray-800 text-sm lg:text-base truncate">
+              <p className="font-medium text-gray-800 text-xs md:text-sm lg:text-base truncate">
                 {room.name}
                 {room.newRoom && (
-                  <span className="ml-2 text-xs bg-green-100 text-green-800 px-1 lg:px-2 py-0.5 rounded-md">
+                  <span className="ml-1 md:ml-2 text-xs bg-green-100 text-green-800 px-1 md:px-2 py-0.5 rounded-md">
                     <span className="hidden sm:inline">(Novo)</span>
                     <span className="sm:hidden">N</span>
                   </span>
@@ -165,21 +166,31 @@ export default function RoomPage({
               </p>
               {room.lastMessage ? (
                 <p className="text-xs text-gray-500 truncate flex items-center gap-1">
-                  <strong>{room.lastMessage.user.username}</strong>:{" "}
+                  <strong className="hidden sm:inline">{room.lastMessage.user.username}</strong>
+                  <span className="hidden sm:inline">:</span>{" "}
                   {room.lastMessage.status === 'DELETED' ? (
                     <>
                       <Trash2 size={12} className="text-red-400" />
-                      <span className="italic">Esta mensagem foi excluída</span>
+                      <span className="italic hidden sm:inline">Esta mensagem foi excluída</span>
+                      <span className="italic sm:hidden">Excluída</span>
                     </>
                   ) : room.lastMessage.status === 'EDITED' ? (
                     <>
                       <Edit2 size={12} className="text-blue-500" />
                       <span className="italic">
                         {room.lastMessage.fileUrl ? (
-                          "Arquivo (editada)"
+                          <span>
+                            <span className="hidden sm:inline">Arquivo (editada)</span>
+                            <span className="sm:hidden">Arq. (ed.)</span>
+                          </span>
                         ) : (
                           <span>
-                            <CompactMarkdown content={room.lastMessage.content} maxLength={25} /> (editada)
+                            <span className="hidden sm:inline">
+                              <CompactMarkdown content={room.lastMessage.content} maxLength={25} /> (editada)
+                            </span>
+                            <span className="sm:hidden">
+                              <CompactMarkdown content={room.lastMessage.content} maxLength={15} /> (ed.)
+                            </span>
                           </span>
                         )}
                       </span>
@@ -187,28 +198,37 @@ export default function RoomPage({
                   ) : room.lastMessage.fileUrl ? (
                     <>
                       <Paperclip size={12} />
-                      <span>Arquivo</span>
+                      <span className="hidden sm:inline">Arquivo</span>
+                      <span className="sm:hidden">Arq.</span>
                     </>
                   ) : (
-                    <CompactMarkdown content={room.lastMessage.content} maxLength={30} />
+                    <>
+                      <span className="hidden sm:inline">
+                        <CompactMarkdown content={room.lastMessage.content} maxLength={30} />
+                      </span>
+                      <span className="sm:hidden">
+                        <CompactMarkdown content={room.lastMessage.content} maxLength={20} />
+                      </span>
+                    </>
                   )}
                 </p>
               ) : (
                 <p className="text-xs text-gray-500 truncate">
-                  Nenhuma mensagem ainda
+                  <span className="hidden sm:inline">Nenhuma mensagem ainda</span>
+                  <span className="sm:hidden">Vazia</span>
                 </p>
               )}
             </div>
             <div className="flex-shrink-0 flex flex-col items-end gap-1">
               {/* Hora da última mensagem - sempre visível */}
               {room.lastMessage && (
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-gray-400 hidden sm:block">
                   {new Date(room.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               )}
               {/* Badge de notificação - só aparece quando há mensagens não lidas */}
               {unreadCounts[room.id.toString()] > 0 && (
-                <Badge variant="default" className="text-white text-xs">
+                <Badge variant="default" className="text-white text-xs min-w-[20px] h-5 flex items-center justify-center">
                   {formatUnreadCount(unreadCounts[room.id.toString()])}
                 </Badge>
               )}

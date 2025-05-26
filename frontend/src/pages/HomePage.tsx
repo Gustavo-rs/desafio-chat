@@ -7,6 +7,7 @@ import ChatPage from "./chat/ChatPage";
 import { io } from "socket.io-client";
 import RoomPage from "./rooms/RoomPage";
 import RoomDetailsPage from "./room-details/RoomDetailsPage";
+import { MessageSquare, Users, Info } from "lucide-react";
 
 const Home: React.FC = () => {
   const [rooms, setRooms] = useState<APIRoom[]>([]);
@@ -18,6 +19,7 @@ const Home: React.FC = () => {
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const { user } = useUser();
   const [open, setOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'rooms' | 'chat' | 'details'>('rooms');
 
 
 
@@ -238,6 +240,7 @@ const Home: React.FC = () => {
     
     setSelectedRoomId(room.id.toString());
     setSelectedRoomName(room.name);
+    setActiveTab('chat'); // Automatically switch to chat when a room is selected on mobile
     setRooms(prev => prev.map(r => ({ ...r, newRoom: r.id === room.id ? false : r.newRoom })));
     setUnreadCounts(prev => {
       const newCounts = {
@@ -257,31 +260,140 @@ const Home: React.FC = () => {
 
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] gap-4">
-      {/* Lista de salas (30%) */}
-      <RoomPage 
-        rooms={rooms}
-        selectedRoomId={selectedRoomId}
-        unreadCounts={unreadCounts}
-        open={open}
-        setOpen={setOpen}
-        roomName={roomName}
-        setRoomName={setRoomName}
-        isCreatingRoom={isCreatingRoom}
-        handleCreateRoom={handleCreateRoom}
-        handleRoomSelect={handleRoomSelect}
-        formatUnreadCount={formatUnreadCount}
-      />
-
-      {/* Área do chat (50%) */}
-      <ChatPage key={selectedRoomId} roomId={selectedRoomId} roomName={selectedRoomName} />
-
-      {/* Área lateral direita (20%) - AQUI vão os detalhes */}
-      <div className="w-[20%]">
-        <RoomDetailsPage 
-          roomId={selectedRoomId || ""} 
-          roomName={selectedRoomName}
+    <div className="h-[calc(100vh-8rem)]">
+      {/* Desktop Layout */}
+      <div className="hidden lg:flex h-full gap-4">
+        {/* Lista de salas (30%) */}
+        <RoomPage 
+          rooms={rooms}
+          selectedRoomId={selectedRoomId}
+          unreadCounts={unreadCounts}
+          open={open}
+          setOpen={setOpen}
+          roomName={roomName}
+          setRoomName={setRoomName}
+          isCreatingRoom={isCreatingRoom}
+          handleCreateRoom={handleCreateRoom}
+          handleRoomSelect={handleRoomSelect}
+          formatUnreadCount={formatUnreadCount}
         />
+
+        {/* Área do chat (50%) */}
+        <ChatPage key={selectedRoomId} roomId={selectedRoomId} roomName={selectedRoomName} />
+
+        {/* Área lateral direita (20%) - Detalhes */}
+        <div className="w-[20%]">
+          <RoomDetailsPage 
+            roomId={selectedRoomId || ""} 
+            roomName={selectedRoomName}
+          />
+        </div>
+      </div>
+
+      {/* Mobile/Tablet Layout */}
+      <div className="lg:hidden flex flex-col h-full">
+        {/* Navigation Tabs */}
+        <div className="flex bg-white border-b border-gray-200 rounded-t-lg">
+          <button
+            onClick={() => setActiveTab('rooms')}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-medium transition-colors ${
+              activeTab === 'rooms'
+                ? 'text-violet-600 border-b-2 border-violet-600 bg-violet-50'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Users size={18} />
+            <span>Salas</span>
+            {Object.values(unreadCounts).reduce((total, count) => total + count, 0) > 0 && (
+              <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 min-w-[20px] h-5 flex items-center justify-center">
+                {Object.values(unreadCounts).reduce((total, count) => total + count, 0) > 99 
+                  ? '99+' 
+                  : Object.values(unreadCounts).reduce((total, count) => total + count, 0)
+                }
+              </span>
+            )}
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('chat')}
+            disabled={!selectedRoomId}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-medium transition-colors ${
+              activeTab === 'chat'
+                ? 'text-violet-600 border-b-2 border-violet-600 bg-violet-50'
+                : selectedRoomId 
+                  ? 'text-gray-500 hover:text-gray-700' 
+                  : 'text-gray-300 cursor-not-allowed'
+            }`}
+          >
+            <MessageSquare size={18} />
+            <span>Chat</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('details')}
+            disabled={!selectedRoomId}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-medium transition-colors ${
+              activeTab === 'details'
+                ? 'text-violet-600 border-b-2 border-violet-600 bg-violet-50'
+                : selectedRoomId 
+                  ? 'text-gray-500 hover:text-gray-700' 
+                  : 'text-gray-300 cursor-not-allowed'
+            }`}
+          >
+            <Info size={18} />
+            <span>Detalhes</span>
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        <div className="flex-1 overflow-hidden">
+          {activeTab === 'rooms' && (
+            <RoomPage 
+              rooms={rooms}
+              selectedRoomId={selectedRoomId}
+              unreadCounts={unreadCounts}
+              open={open}
+              setOpen={setOpen}
+              roomName={roomName}
+              setRoomName={setRoomName}
+              isCreatingRoom={isCreatingRoom}
+              handleCreateRoom={handleCreateRoom}
+              handleRoomSelect={handleRoomSelect}
+              formatUnreadCount={formatUnreadCount}
+            />
+          )}
+          
+          {activeTab === 'chat' && (
+            selectedRoomId ? (
+              <ChatPage key={selectedRoomId} roomId={selectedRoomId} roomName={selectedRoomName} />
+            ) : (
+              <div className="flex items-center justify-center h-full bg-white">
+                <div className="text-center text-gray-500">
+                  <MessageSquare size={48} className="mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium mb-2">Nenhuma sala selecionada</p>
+                  <p className="text-sm">Vá para a aba "Salas" e selecione uma sala para começar a conversar</p>
+                </div>
+              </div>
+            )
+          )}
+          
+          {activeTab === 'details' && (
+            selectedRoomId ? (
+              <RoomDetailsPage 
+                roomId={selectedRoomId} 
+                roomName={selectedRoomName}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full bg-white">
+                <div className="text-center text-gray-500">
+                  <Info size={48} className="mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium mb-2">Nenhuma sala selecionada</p>
+                  <p className="text-sm">Selecione uma sala para ver os detalhes</p>
+                </div>
+              </div>
+            )
+          )}
+        </div>
       </div>
     </div>
   );
