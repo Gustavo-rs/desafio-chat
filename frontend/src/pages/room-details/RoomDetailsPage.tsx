@@ -45,8 +45,8 @@ export default function RoomDetailsPage({ roomId, roomName }: RoomDetailsPagePro
 
   if (!roomId) {
     return (
-      <div className="h-full bg-white rounded-lg shadow-sm p-4 flex flex-col">
-        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+      <div className="h-full bg-white rounded-lg shadow-sm p-3 md:p-4 flex flex-col">
+        <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 flex items-center gap-2">
           <Info size={20} />
           Detalhes da Sala
         </h2>
@@ -54,7 +54,7 @@ export default function RoomDetailsPage({ roomId, roomName }: RoomDetailsPagePro
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center text-gray-500">
             <Info size={32} className="mx-auto mb-2 opacity-50" />
-            <p className="text-sm">Selecione uma sala para ver os detalhes</p>
+            <p className="text-xs md:text-sm">Selecione uma sala para ver os detalhes</p>
           </div>
         </div>
       </div>
@@ -63,8 +63,8 @@ export default function RoomDetailsPage({ roomId, roomName }: RoomDetailsPagePro
 
   if (loadingDetails) {
     return (
-      <div className="h-full bg-white rounded-lg shadow-sm p-4 flex flex-col">
-        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+      <div className="h-full bg-white rounded-lg shadow-sm p-3 md:p-4 flex flex-col">
+        <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 flex items-center gap-2">
           <Info size={20} />
           Detalhes da Sala
         </h2>
@@ -72,7 +72,7 @@ export default function RoomDetailsPage({ roomId, roomName }: RoomDetailsPagePro
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <Loader2 size={24} className="animate-spin text-violet-500 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">Carregando...</p>
+            <p className="text-xs md:text-sm text-gray-500">Carregando...</p>
           </div>
         </div>
       </div>
@@ -81,31 +81,31 @@ export default function RoomDetailsPage({ roomId, roomName }: RoomDetailsPagePro
 
   if (!roomDetails) {
     return (
-      <div className="h-full bg-white rounded-lg shadow-sm p-4 flex flex-col">
-        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+      <div className="h-full bg-white rounded-lg shadow-sm p-3 md:p-4 flex flex-col">
+        <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 flex items-center gap-2">
           <Info size={20} />
           Detalhes da Sala
         </h2>
         
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-sm text-gray-500">Erro ao carregar detalhes</p>
+          <p className="text-xs md:text-sm text-gray-500">Erro ao carregar detalhes</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full bg-white rounded-lg shadow-sm p-4 flex flex-col">
-      <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+    <div className="h-full bg-white rounded-lg shadow-sm p-3 md:p-4 flex flex-col">
+      <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 flex items-center gap-2">
         <Info size={20} />
         Detalhes da Sala
       </h2>
       
-      <div className="flex-1 overflow-y-auto space-y-4">
+      <div className="flex-1 overflow-y-auto space-y-3 md:space-y-4 min-h-0">
         {/* Informações básicas */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="font-semibold text-gray-800 mb-3 text-base">Informações</h3>
-          <div className="space-y-3 text-sm">
+        <div className="bg-gray-50 rounded-lg p-3 md:p-4">
+          <h3 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">Informações</h3>
+          <div className="space-y-2 md:space-y-3 text-xs md:text-sm">
             <div>
               <span className="text-gray-500 block mb-1">Nome:</span>
               <p className="font-medium">{roomDetails.name}</p>
@@ -130,16 +130,16 @@ export default function RoomDetailsPage({ roomId, roomName }: RoomDetailsPagePro
         </div>
 
         {/* Estatísticas */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-violet-50 rounded-lg p-4 text-center">
-            <MessageSquare className="mx-auto mb-2 text-violet-600" size={24} />
-            <p className="text-2xl font-bold text-violet-700">{roomDetails.totalMessages}</p>
-            <p className="text-sm text-violet-600">Mensagens</p>
+        <div className="grid grid-cols-2 gap-2 md:gap-4">
+          <div className="bg-violet-50 rounded-lg p-3 md:p-4 text-center">
+            <MessageSquare className="mx-auto mb-1 md:mb-2 text-violet-600" size={24} />
+            <p className="text-lg md:text-2xl font-bold text-violet-700">{roomDetails.totalMessages}</p>
+            <p className="text-xs md:text-sm text-violet-600">Mensagens</p>
           </div>
-          <div className="bg-blue-50 rounded-lg p-4 text-center">
-            <Users className="mx-auto mb-2 text-blue-600" size={24} />
-            <p className="text-2xl font-bold text-blue-700">{roomDetails.totalUsers}</p>
-            <p className="text-sm text-blue-600">Participantes</p>
+          <div className="bg-blue-50 rounded-lg p-3 md:p-4 text-center">
+            <Users className="mx-auto mb-1 md:mb-2 text-blue-600" size={24} />
+            <p className="text-lg md:text-2xl font-bold text-blue-700">{roomDetails.totalUsers}</p>
+            <p className="text-xs md:text-sm text-blue-600">Participantes</p>
           </div>
         </div>
 

@@ -17,7 +17,8 @@ import {
   Loader2, 
   Paperclip, 
   Edit2, 
-  Trash2
+  Trash2,
+  Plus
 } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 
@@ -82,7 +83,7 @@ export default function RoomPage({
   formatUnreadCount
 }: RoomPageProps) {
   return (
-    <div className="w-full md:w-[30%] p-3 md:p-4 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
+    <div className="w-full lg:w-[30%] h-full p-3 md:p-4 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
       <div className="flex items-center justify-between mb-3 md:mb-4">
         <h2 className="text-lg md:text-xl font-semibold text-gray-800">Salas</h2>
 
@@ -94,7 +95,8 @@ export default function RoomPage({
               className="text-xs md:text-sm text-primary border-primary px-2 md:px-3"
             >
               <span className="hidden sm:inline">Nova sala</span>
-              <span className="sm:hidden">+</span>
+              {/* <span className="sm:hidden">+</span> */}
+              <Plus className="sm:hidden" />
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[475px]">
@@ -117,7 +119,7 @@ export default function RoomPage({
               </DialogClose>
               <Button
                 variant="default"
-                className="text-white"
+                className="text-white mb-2 sm:mb-0"
                 onClick={handleCreateRoom}
                 disabled={isCreatingRoom}
               >
@@ -142,7 +144,7 @@ export default function RoomPage({
         />
       </div>
 
-      <div className="space-y-2 md:space-y-3 overflow-y-auto flex-1 pr-1 md:pr-2">
+      <div className="space-y-2 md:space-y-3 overflow-y-auto flex-1 pr-1 md:pr-2 min-h-0">
         {rooms.map((room, index) => (
           <div
             key={room.id}
@@ -166,8 +168,8 @@ export default function RoomPage({
               </p>
               {room.lastMessage ? (
                 <p className="text-xs text-gray-500 truncate flex items-center gap-1">
-                  <strong className="hidden sm:inline">{room.lastMessage.user.username}</strong>
-                  <span className="hidden sm:inline">:</span>{" "}
+                  <strong>{room.lastMessage.user.username}</strong>
+                  <span>:</span>{" "}
                   {room.lastMessage.status === 'DELETED' ? (
                     <>
                       <Trash2 size={12} className="text-red-400" />
@@ -222,7 +224,7 @@ export default function RoomPage({
             <div className="flex-shrink-0 flex flex-col items-end gap-1">
               {/* Hora da última mensagem - sempre visível */}
               {room.lastMessage && (
-                <span className="text-xs text-gray-400 hidden sm:block">
+                <span className="text-xs text-gray-400">
                   {new Date(room.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               )}

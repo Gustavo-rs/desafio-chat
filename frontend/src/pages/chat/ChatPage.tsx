@@ -438,14 +438,14 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
 
   if (!roomId) {
     return (
-      <div className="w-full lg:w-[50%] bg-white rounded-lg shadow-sm p-3 md:p-4 flex items-center justify-center">
+      <div className="w-full lg:w-[50%] h-full bg-white rounded-lg shadow-sm p-3 md:p-4 flex items-center justify-center">
         <p className="text-gray-500 text-sm md:text-base">Selecione uma sala para começar a conversar</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full lg:w-[50%] bg-white rounded-lg shadow-sm p-3 md:p-4">
+    <div className="w-full lg:w-[50%] h-full bg-white rounded-lg shadow-sm p-3 md:p-4">
       <div className="h-full flex flex-col">
         <div className="border-b pb-3 md:pb-4">
           <div className="flex justify-between items-center">
@@ -521,7 +521,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
 
         <div 
           ref={messagesContainerRef} 
-          className="flex-1 py-2 md:py-4 space-y-1 md:space-y-2 overflow-y-auto"
+          className="flex-1 py-2 md:py-4 space-y-1 md:space-y-2 overflow-y-auto min-h-0"
           onScroll={handleScroll}
         >
           {loading && page > 1 && (
@@ -565,7 +565,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                       <UserMinus size={14} className="text-orange-600" />
                     )}
                     <span className="font-medium">{msg.content}</span>
-                    <span className="text-xs text-blue-500 hidden sm:inline">
+                    <span className="text-xs text-blue-500">
                       {new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                     </span>
                   </div>
@@ -622,7 +622,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                                 editada
                               </span>
                             )}
-                            <span className="text-xs text-gray-500 hidden sm:inline">
+                            <span className="text-xs text-gray-500">
                               {new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                             </span>
                           </div>
@@ -651,7 +651,6 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                               >
                                 <Check size={16} />
                                 <span className="hidden sm:inline">Salvar</span>
-                                <span className="sm:hidden">OK</span>
                               </button>
                               <button
                                 onClick={cancelEditing}
@@ -660,7 +659,6 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                               >
                                 <X size={16} />
                                 <span className="hidden sm:inline">Cancelar</span>
-                                <span className="sm:hidden">X</span>
                               </button>
                             </div>
                           </div>
