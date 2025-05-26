@@ -15,39 +15,6 @@ import { Loader2, Edit2, Trash2, Check, X, Paperclip, AlertTriangle, Users, User
 import ReactMarkdown from 'react-markdown';
 import type { Message, ChatPageProps, MessageStatus, OnlineUser } from "@/types/api";
 
-// Componente Skeleton simples
-const Skeleton = ({ className }: { className?: string }) => (
-  <div className={`animate-pulse rounded-md bg-gray-200 ${className}`} />
-);
-
-// Componente de skeleton para simular mensagens
-const MessageSkeleton = ({ isOwnMessage = false }: { isOwnMessage?: boolean }) => (
-  <div className={`p-2 rounded-md max-w-[80%] ${isOwnMessage ? "ml-auto" : ""}`}>
-    <div className={`p-2 rounded-md ${isOwnMessage ? "bg-violet-100" : "bg-gray-100"}`}>
-      <div className="flex justify-between mb-2">
-        <Skeleton className="h-4 w-20" />
-        <Skeleton className="h-3 w-12" />
-      </div>
-      <Skeleton className={`h-4 ${Math.random() > 0.5 ? 'w-3/4' : 'w-full'}`} />
-      {Math.random() > 0.7 && <Skeleton className="h-4 w-1/2 mt-1" />}
-    </div>
-  </div>
-);
-
-// Função para gerar skeletons de mensagens
-const generateMessageSkeletons = () => {
-  const skeletons = [];
-  for (let i = 0; i < 20; i++) {
-    skeletons.push(
-      <MessageSkeleton 
-        key={`skeleton-${i}`} 
-        isOwnMessage={Math.random() > 0.5} 
-      />
-    );
-  }
-  return skeletons;
-};
-
 export default function ChatPage({ roomId, roomName }: ChatPageProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -62,7 +29,6 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
   const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
   const [userRemovedFromRoom, setUserRemovedFromRoom] = useState(false);
   
-  // Estados melhorados para usuários online
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [showOnlineUsers, setShowOnlineUsers] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -75,7 +41,6 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const { user } = useUser();
 
-  // Função para normalizar mensagens vindas da API ou Socket
   const normalizeMessage = (msg: any): Message => {
     return {
       id: msg.id,
@@ -114,9 +79,8 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
     setPage(1);
     setMessages([]);
     setHasMore(true);
-    setUserRemovedFromRoom(false); // Reset quando trocar de sala
+    setUserRemovedFromRoom(false);
     
-    // Não resetar onlineUsers imediatamente, apenas marcar como loading
     setLoadingUsers(true);
     
     listMessagesFromRoom();
@@ -130,11 +94,9 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
     socket.on("connect", () => {
       console.log("ChatPage: Socket conectado");
       socket.emit("join_room", roomId);
-      // Notificar que começou a visualizar a sala
       socket.emit("start_viewing_room", roomId);
     });
 
-    // Listener para detectar mudanças de visibilidade da aba
     const handleVisibilityChange = () => {
       if (socket.connected) {
         if (document.hidden) {
@@ -154,7 +116,6 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
       
       const { roomId: eventRoomId, message } = data;
       
-      // Só processar se for da sala atual e não for do próprio usuário
       if (eventRoomId === roomId && message.user.id !== user?.user.id) {
         const normalizedMessage = normalizeMessage(message);
         setMessages((prev) => [...prev, normalizedMessage]);
@@ -182,12 +143,11 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
       }
     });
 
-    // Eventos de usuários online melhorados
     socket.on("room_users_updated", ({ roomId: updatedRoomId, users, count }) => {
       if (updatedRoomId === roomId) {
         console.log("ChatPage: Lista de usuários atualizada:", users);
         setOnlineUsers(users);
-        setLoadingUsers(false); // Parar loading quando receber dados
+        setLoadingUsers(false);
       }
     });
 
@@ -195,7 +155,6 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
       if (joinedRoomId === roomId && userId !== user?.user.id) {
         console.log("ChatPage: Usuário entrou na sala:", username);
         
-        // Criar mensagem do sistema
         const systemMessage: Message = {
           id: `system-join-${Date.now()}-${userId}`,
           user: {
@@ -216,10 +175,9 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
     });
 
     socket.on("user_left_room", ({ userId, username, roomId: leftRoomId }) => {
-      if (leftRoomId === roomId && userId !== user?.user.id) {
+      if (leftRoomId === roomId && userId !== user?.user.id && !userRemovedFromRoom) {
         console.log("ChatPage: Usuário saiu da sala:", username);
         
-        // Criar mensagem do sistema
         const systemMessage: Message = {
           id: `system-leave-${Date.now()}-${userId}`,
           user: {
@@ -239,12 +197,10 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
       }
     });
 
-    // Eventos de membros de sala
     socket.on("member_added", ({ roomId: eventRoomId, member }) => {
       if (eventRoomId === roomId) {
         console.log("ChatPage: Membro adicionado à sala:", member);
         
-        // Criar mensagem do sistema
         const systemMessage: Message = {
           id: `system-member-added-${Date.now()}-${member.user.id}`,
           user: {
