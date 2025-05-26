@@ -438,26 +438,26 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
 
   if (!roomId) {
     return (
-      <div className="w-[50%] bg-white rounded-lg shadow-sm p-4 flex items-center justify-center">
-        <p className="text-gray-500">Selecione uma sala para começar a conversar</p>
+      <div className="w-full lg:w-[50%] bg-white rounded-lg shadow-sm p-3 md:p-4 flex items-center justify-center">
+        <p className="text-gray-500 text-sm md:text-base">Selecione uma sala para começar a conversar</p>
       </div>
     );
   }
 
   return (
-    <div className="w-[50%] bg-white rounded-lg shadow-sm p-4">
+    <div className="w-full lg:w-[50%] bg-white rounded-lg shadow-sm p-3 md:p-4">
       <div className="h-full flex flex-col">
-        <div className="border-b pb-4">
+        <div className="border-b pb-3 md:pb-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Chat</h2>
-            <h2 className="text-xl font-semibold">{roomName}</h2>
+            <h2 className="text-lg md:text-xl font-semibold">Chat</h2>
+            <h2 className="text-lg md:text-xl font-semibold truncate ml-2">{roomName}</h2>
           </div>
           
           {!userRemovedFromRoom && (
             <div className="flex items-center justify-between mt-2">
               <button
                 onClick={() => setShowOnlineUsers(!showOnlineUsers)}
-                className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                className="flex items-center gap-1 md:gap-2 text-xs md:text-sm text-gray-600 hover:text-gray-800 transition-colors"
               >
                 {loadingUsers ? (
                   <>
@@ -466,8 +466,9 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                 ) : (
                   <>
                     <Users size={16} />
-                    <span>{onlineUsers.length} usuário{onlineUsers.length !== 1 ? 's' : ''} online</span>
-                    <span className="text-xs">({showOnlineUsers ? 'ocultar' : 'mostrar'})</span>
+                    <span className="hidden sm:inline">{onlineUsers.length} usuário{onlineUsers.length !== 1 ? 's' : ''} online</span>
+                    <span className="sm:hidden">{onlineUsers.length} online</span>
+                    <span className="text-xs hidden md:inline">({showOnlineUsers ? 'ocultar' : 'mostrar'})</span>
                   </>
                 )}
                 
@@ -476,40 +477,41 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
           )}
 
           {showOnlineUsers && !userRemovedFromRoom && (
-            <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-              <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+            <div className="mt-2 md:mt-3 p-2 md:p-3 bg-gray-50 rounded-lg">
+              <h4 className="text-xs md:text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                 {loadingUsers ? (
                   <>
                     <Loader2 size={14} className="animate-spin text-violet-500" />
-                    <span>Carregando usuários...</span>
+                    <span>Carregando...</span>
                   </>
                 ) : (
                   <>
                     <Users size={14} />
-                    <span>Usuários Online ({onlineUsers.length})</span>
+                    <span className="hidden sm:inline">Usuários Online ({onlineUsers.length})</span>
+                    <span className="sm:hidden">Online ({onlineUsers.length})</span>
                   </>
                 )}
               </h4>
               
               {loadingUsers ? (
-                <div className="flex items-center justify-center py-4">
+                <div className="flex items-center justify-center py-2 md:py-4">
                   <Loader2 size={20} className="animate-spin text-violet-500" />
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 md:gap-2">
                   {onlineUsers.map((onlineUser) => (
                     <div
                       key={onlineUser.userId}
-                      className="flex items-center gap-2 text-sm transition-all duration-200 ease-in-out"
+                      className="flex items-center gap-2 text-xs md:text-sm transition-all duration-200 ease-in-out"
                     >
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className={onlineUser.userId === user?.user.id ? "font-semibold text-violet-700" : "text-gray-700"}>
+                      <span className={`truncate ${onlineUser.userId === user?.user.id ? "font-semibold text-violet-700" : "text-gray-700"}`}>
                         {onlineUser.userId === user?.user.id ? "Você" : onlineUser.username}
                       </span>
                     </div>
                   ))}
                   {onlineUsers.length === 0 && (
-                    <p className="text-sm text-gray-500 italic col-span-2">Nenhum usuário online</p>
+                    <p className="text-xs md:text-sm text-gray-500 italic col-span-full">Nenhum usuário online</p>
                   )}
                 </div>
               )}
@@ -519,7 +521,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
 
         <div 
           ref={messagesContainerRef} 
-          className="flex-1 py-4 space-y-2 overflow-y-auto"
+          className="flex-1 py-2 md:py-4 space-y-1 md:space-y-2 overflow-y-auto"
           onScroll={handleScroll}
         >
           {loading && page > 1 && (
@@ -529,11 +531,11 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
           )}
           
           {userRemovedFromRoom ? (
-            <div className="h-full flex items-center justify-center">
-              <div className="text-center text-red-500 bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-                <AlertTriangle size={48} className="mx-auto mb-4 text-red-400" />
-                <h3 className="text-lg font-semibold mb-2">Acesso Removido</h3>
-                <p className="text-sm text-red-600">
+            <div className="h-full flex items-center justify-center p-4">
+              <div className="text-center text-red-500 bg-red-50 border border-red-200 rounded-lg p-4 md:p-6 max-w-sm md:max-w-md">
+                <AlertTriangle size={40} className="mx-auto mb-3 md:mb-4 text-red-400" />
+                <h3 className="text-base md:text-lg font-semibold mb-2">Acesso Removido</h3>
+                <p className="text-xs md:text-sm text-red-600">
                   Você foi removido desta sala e não pode mais visualizar ou enviar mensagens.
                 </p>
                 <p className="text-xs text-red-500 mt-2">
@@ -543,14 +545,14 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
             </div>
           ) : messages.length === 0 ? (
             <div className="h-full flex items-center justify-center">
-              <p className="text-gray-500">Nenhuma mensagem encontrada nesta sala</p>
+              <p className="text-gray-500 text-sm md:text-base">Nenhuma mensagem encontrada nesta sala</p>
             </div>
           ) : (
             messages.map((msg, idx) => 
               // Renderização especial para mensagens do sistema
               msg.isSystemMessage ? (
-                <div key={idx} className="flex justify-center my-2">
-                  <div className="bg-blue-50 border border-blue-200 rounded-md px-4 py-2 text-sm text-blue-700 flex items-center gap-2">
+                <div key={idx} className="flex justify-center my-1 md:my-2">
+                  <div className="bg-blue-50 border border-blue-200 rounded-md px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm text-blue-700 flex items-center gap-1 md:gap-2">
                     {msg.systemMessageType === 'user_joined' ? (
                       <UserCheck size={14} className="text-green-600" />
                     ) : msg.systemMessageType === 'user_left' ? (
@@ -563,7 +565,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                       <UserMinus size={14} className="text-orange-600" />
                     )}
                     <span className="font-medium">{msg.content}</span>
-                    <span className="text-xs text-blue-500">
+                    <span className="text-xs text-blue-500 hidden sm:inline">
                       {new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                     </span>
                   </div>
@@ -572,13 +574,13 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                 // Renderização normal para mensagens de usuário
                 <div
                   key={idx}
-                  className={`p-2 rounded-md max-w-[80%] ${
+                  className={`p-1 md:p-2 rounded-md max-w-[90%] md:max-w-[80%] ${
                     msg.user.id === user?.user.id ? "ml-auto" : ""
                   } group transition-all duration-200 ease-in-out ${
                     editingMessageId === msg.id ? "ring-2 ring-violet-300 ring-opacity-50" : ""
                   } ${msg.status === 'DELETED' ? "opacity-60" : ""}`}
                 >
-                  <div className={`p-3 rounded-lg break-words transition-all duration-200 ${
+                  <div className={`p-2 md:p-3 rounded-lg break-words transition-all duration-200 ${
                     msg.status === 'DELETED'
                       ? "bg-red-50 border border-red-100 border-dashed" 
                       : msg.user.id === user?.user.id 
@@ -587,8 +589,8 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                   } ${editingMessageId === msg.id ? "bg-violet-50 border-2 border-violet-200" : ""}`}>
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="font-semibold text-sm">
+                        <div className="flex justify-between items-center mb-1 md:mb-2">
+                          <span className="font-semibold text-xs md:text-sm truncate">
                             {msg.user.id === user?.user.id ? "Você" : msg.user.username}
                           </span>
                           <div className="flex items-center gap-2">
@@ -596,17 +598,17 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                             
                             {/* Botões de ação para mensagens próprias - apenas se não for deletada */}
                             {msg.user.id === user?.user.id && editingMessageId !== msg.id && msg.status !== 'DELETED' && (
-                              <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out">
+                              <div className="flex gap-1 md:gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 ease-in-out">
                                 <button
                                   onClick={() => startEditing(msg.id, msg.content)}
-                                  className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 transition-all duration-200 ease-in-out hover:scale-110 active:scale-95 shadow-sm hover:shadow-md"
+                                  className="flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 transition-all duration-200 ease-in-out hover:scale-110 active:scale-95 shadow-sm hover:shadow-md"
                                   title="Editar mensagem"
                                 >
                                   <Edit2 size={14} />
                                 </button>
                                 <button
                                   onClick={() => handleDeleteMessage(msg.id)}
-                                  className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-all duration-200 ease-in-out hover:scale-110 active:scale-95 shadow-sm hover:shadow-md"
+                                  className="flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-all duration-200 ease-in-out hover:scale-110 active:scale-95 shadow-sm hover:shadow-md"
                                   title="Deletar mensagem"
                                 >
                                   <Trash2 size={14} />
@@ -620,42 +622,45 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
                                 editada
                               </span>
                             )}
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-gray-500 hidden sm:inline">
                               {new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                             </span>
                           </div>
                         </div>
                         
                         {editingMessageId === msg.id ? (
-                          <div className="mt-3 space-y-3">
+                          <div className="mt-2 md:mt-3 space-y-2 md:space-y-3">
                             <div className="flex items-center gap-2 text-xs text-violet-600 font-medium">
                               <Edit2 size={12} />
-                              Editando mensagem...
+                              <span className="hidden sm:inline">Editando mensagem...</span>
+                              <span className="sm:hidden">Editando...</span>
                             </div>
                             <textarea
                               value={editingContent}
                               onChange={(e) => setEditingContent(e.target.value)}
-                              className="w-full p-3 border-2 border-violet-200 rounded-lg resize-none text-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all duration-200"
-                              rows={3}
+                              className="w-full p-2 md:p-3 border-2 border-violet-200 rounded-lg resize-none text-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all duration-200"
+                              rows={2}
                               autoFocus
                               placeholder="Digite sua mensagem..."
                             />
-                            <div className="flex gap-2 justify-end">
+                            <div className="flex gap-1 md:gap-2 justify-end">
                               <button
                                 onClick={() => handleEditMessage(msg.id)}
-                                className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all duration-200 ease-in-out hover:scale-105 active:scale-95 text-sm font-medium shadow-sm hover:shadow-md"
+                                className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all duration-200 ease-in-out hover:scale-105 active:scale-95 text-xs md:text-sm font-medium shadow-sm hover:shadow-md"
                                 title="Salvar alterações"
                               >
                                 <Check size={16} />
-                                Salvar
+                                <span className="hidden sm:inline">Salvar</span>
+                                <span className="sm:hidden">OK</span>
                               </button>
                               <button
                                 onClick={cancelEditing}
-                                className="flex items-center gap-2 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all duration-200 ease-in-out hover:scale-105 active:scale-95 text-sm font-medium shadow-sm hover:shadow-md"
+                                className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all duration-200 ease-in-out hover:scale-105 active:scale-95 text-xs md:text-sm font-medium shadow-sm hover:shadow-md"
                                 title="Cancelar edição"
                               >
                                 <X size={16} />
-                                Cancelar
+                                <span className="hidden sm:inline">Cancelar</span>
+                                <span className="sm:hidden">X</span>
                               </button>
                             </div>
                           </div>
@@ -721,23 +726,23 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
         </div>
 
         {!userRemovedFromRoom && (
-          <div className="mt-4 flex flex-col gap-2">
+          <div className="mt-2 md:mt-4 flex flex-col gap-2">
             {selectedFile && (
               <div className="flex items-center justify-between p-2 bg-violet-50 rounded-md">
-                <span className="text-sm text-violet-700 truncate">{selectedFile.name}</span>
+                <span className="text-xs md:text-sm text-violet-700 truncate">{selectedFile.name}</span>
                 <button
                   onClick={removeSelectedFile}
                   className="text-violet-600 hover:text-violet-700"
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-4 w-4 md:h-5 md:w-5" />
                 </button>
               </div>
             )}
-            <div className="flex gap-2">
+            <div className="flex gap-1 md:gap-2">
               <input
                 type="text"
                 placeholder="Digite sua mensagem..."
-                className="flex-1 p-2 border rounded-md"
+                className="flex-1 p-2 md:p-3 border rounded-md text-sm md:text-base"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -754,16 +759,18 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
               <Button
                 onClick={() => fileInputRef.current?.click()}
                 variant="outline"
-                className="border-violet-200 hover:bg-violet-50"
+                size="sm"
+                className="border-violet-200 hover:bg-violet-50 px-2 md:px-3"
               >
-                <Paperclip className="h-5 w-5 text-violet-600" />
+                <Paperclip className="h-4 w-4 md:h-5 md:w-5 text-violet-600" />
               </Button>
               <Button
                 onClick={sendMessage}
                 variant="default"
-                className="bg-violet-600 hover:bg-violet-700"
+                size="sm"
+                className="bg-violet-600 hover:bg-violet-700 px-3 md:px-4"
               >
-                <span className="text-white">Enviar</span>
+                <span className="text-white text-sm md:text-base">Enviar</span>
               </Button>
             </div>
           </div>
