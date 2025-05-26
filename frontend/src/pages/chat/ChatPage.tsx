@@ -60,6 +60,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
   const [editingContent, setEditingContent] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
+  const [userRemovedFromRoom, setUserRemovedFromRoom] = useState(false);
   
   // Estados melhorados para usuários online
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
@@ -113,6 +114,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
     setPage(1);
     setMessages([]);
     setHasMore(true);
+    setUserRemovedFromRoom(false); // Reset quando trocar de sala
     
     // Não resetar onlineUsers imediatamente, apenas marcar como loading
     setLoadingUsers(true);
@@ -266,7 +268,16 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
       if (eventRoomId === roomId) {
         console.log("ChatPage: Membro removido da sala:", removedUserId);
         
-        // Buscar o nome do usuário removido nas mensagens existentes
+        // Se o usuário atual foi removido, não mostrar mais mensagens
+        if (removedUserId === user?.user?.id) {
+          console.log("ChatPage: Usuário atual foi removido da sala, limpando chat");
+          setMessages([]);
+          setUserRemovedFromRoom(true);
+          // Não precisamos fazer mais nada aqui, pois a HomePage já vai lidar com a remoção da sala
+          return;
+        }
+        
+        // Para outros usuários removidos, mostrar mensagem do sistema
         const removedUserMessage = messages.find(msg => msg.user.id === removedUserId);
         const removedUsername = removedUserMessage?.user.username || 'Usuário';
         
@@ -486,27 +497,29 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
             <h2 className="text-xl font-semibold">{roomName}</h2>
           </div>
           
-          <div className="flex items-center justify-between mt-2">
-            <button
-              onClick={() => setShowOnlineUsers(!showOnlineUsers)}
-              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              {loadingUsers ? (
-                <>
-                  <Loader2 size={16} className="animate-spin text-violet-500" />
-                </>
-              ) : (
-                <>
-                  <Users size={16} />
-                  <span>{onlineUsers.length} usuário{onlineUsers.length !== 1 ? 's' : ''} online</span>
-                  <span className="text-xs">({showOnlineUsers ? 'ocultar' : 'mostrar'})</span>
-                </>
-              )}
-              
-            </button>
-          </div>
+          {!userRemovedFromRoom && (
+            <div className="flex items-center justify-between mt-2">
+              <button
+                onClick={() => setShowOnlineUsers(!showOnlineUsers)}
+                className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                {loadingUsers ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin text-violet-500" />
+                  </>
+                ) : (
+                  <>
+                    <Users size={16} />
+                    <span>{onlineUsers.length} usuário{onlineUsers.length !== 1 ? 's' : ''} online</span>
+                    <span className="text-xs">({showOnlineUsers ? 'ocultar' : 'mostrar'})</span>
+                  </>
+                )}
+                
+              </button>
+            </div>
+          )}
 
-          {showOnlineUsers && (
+          {showOnlineUsers && !userRemovedFromRoom && (
             <div className="mt-3 p-3 bg-gray-50 rounded-lg">
               <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                 {loadingUsers ? (
@@ -559,7 +572,20 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
             </div>
           )}
           
-          {messages.length === 0 ? (
+          {userRemovedFromRoom ? (
+            <div className="h-full flex items-center justify-center">
+              <div className="text-center text-red-500 bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+                <AlertTriangle size={48} className="mx-auto mb-4 text-red-400" />
+                <h3 className="text-lg font-semibold mb-2">Acesso Removido</h3>
+                <p className="text-sm text-red-600">
+                  Você foi removido desta sala e não pode mais visualizar ou enviar mensagens.
+                </p>
+                <p className="text-xs text-red-500 mt-2">
+                  Selecione outra sala para continuar conversando.
+                </p>
+              </div>
+            </div>
+          ) : messages.length === 0 ? (
             <div className="h-full flex items-center justify-center">
               <p className="text-gray-500">Nenhuma mensagem encontrada nesta sala</p>
             </div>
@@ -738,52 +764,54 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
           <div ref={bottomRef} />
         </div>
 
-        <div className="mt-4 flex flex-col gap-2">
-          {selectedFile && (
-            <div className="flex items-center justify-between p-2 bg-violet-50 rounded-md">
-              <span className="text-sm text-violet-700 truncate">{selectedFile.name}</span>
-              <button
-                onClick={removeSelectedFile}
-                className="text-violet-600 hover:text-violet-700"
+        {!userRemovedFromRoom && (
+          <div className="mt-4 flex flex-col gap-2">
+            {selectedFile && (
+              <div className="flex items-center justify-between p-2 bg-violet-50 rounded-md">
+                <span className="text-sm text-violet-700 truncate">{selectedFile.name}</span>
+                <button
+                  onClick={removeSelectedFile}
+                  className="text-violet-600 hover:text-violet-700"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Digite sua mensagem..."
+                className="flex-1 p-2 border rounded-md"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") sendMessage();
+                }}
+              />
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                className="hidden"
+                id="file-upload"
+              />
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                variant="outline"
+                className="border-violet-200 hover:bg-violet-50"
               >
-                <X className="h-5 w-5" />
-              </button>
+                <Paperclip className="h-5 w-5 text-violet-600" />
+              </Button>
+              <Button
+                onClick={sendMessage}
+                variant="default"
+                className="bg-violet-600 hover:bg-violet-700"
+              >
+                <span className="text-white">Enviar</span>
+              </Button>
             </div>
-          )}
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Digite sua mensagem..."
-              className="flex-1 p-2 border rounded-md"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") sendMessage();
-              }}
-            />
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileSelect}
-              className="hidden"
-              id="file-upload"
-            />
-            <Button
-              onClick={() => fileInputRef.current?.click()}
-              variant="outline"
-              className="border-violet-200 hover:bg-violet-50"
-            >
-              <Paperclip className="h-5 w-5 text-violet-600" />
-            </Button>
-            <Button
-              onClick={sendMessage}
-              variant="default"
-              className="bg-violet-600 hover:bg-violet-700"
-            >
-              <span className="text-white">Enviar</span>
-            </Button>
           </div>
-        </div>
+        )}
       </div>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
