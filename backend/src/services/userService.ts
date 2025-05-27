@@ -69,8 +69,8 @@ export class UserService {
           select: {
             id: true,
             content: true,
-            createdAt: true,
-            roomId: true,
+            created_at: true,
+            room_id: true,
           },
         },
       },
