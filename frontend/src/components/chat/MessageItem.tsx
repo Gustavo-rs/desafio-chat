@@ -2,6 +2,8 @@ import React from "react";
 import { Edit2, Trash2, Check, X, UserCheck, UserMinus, UserPlus, File, Download } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import type { Message } from "@/types/api";
+import { useLinkPreview } from "../../hooks/useLinkPreview";
+import { LinkPreview } from "./LinkPreview";
 
 interface MessageItemProps {
   message: Message;
@@ -28,6 +30,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   setMessageToDelete,
   setDeleteDialogOpen,
 }) => {
+  const linkPreviews = useLinkPreview(msg.content);
   const handleDeleteMessage = (messageId: string) => {
     setMessageToDelete(messageId);
     setDeleteDialogOpen(true);
@@ -72,13 +75,13 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   // Renderização normal para mensagens de usuário
   return (
     <div
-      className={`p-1 md:p-2 rounded-md max-w-[90%] md:max-w-[80%] ${
+      className={`p-1 md:p-2 rounded-md max-w-[95%] md:max-w-[80%] w-full ${
         msg.user.id === currentUserId ? "ml-auto" : ""
       } group transition-all duration-200 ease-in-out ${
         editingMessageId === msg.id ? "ring-2 ring-violet-300 ring-opacity-50" : ""
       } ${msg.status === 'DELETED' ? "opacity-60" : ""}`}
     >
-      <div className={`p-2 md:p-3 rounded-lg break-words transition-all duration-200 ${
+      <div className={`p-2 md:p-3 rounded-lg break-words transition-all duration-200 overflow-hidden ${
         msg.status === 'DELETED'
           ? "bg-red-50 border border-red-100 border-dashed" 
           : msg.user.id === currentUserId 
@@ -164,27 +167,38 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                 <span className="text-sm">Esta mensagem foi excluída</span>
               </div>
             ) : (
-              <ReactMarkdown 
-                components={{
-                  // Links abrem em nova aba
-                  a: (props) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:text-violet-700 underline decoration-2 underline-offset-2 transition-colors duration-200" />,
-                  // Código inline com estilo
-                  code: (props) => <code {...props} className="bg-violet-50 border border-violet-200 px-2 py-1 rounded-md text-sm font-mono text-violet-800" />,
-                  // Citações com estilo
-                  blockquote: (props) => <blockquote {...props} className="border-l-4 border-violet-300 pl-4 my-2 italic text-gray-700 bg-violet-25 py-2 rounded-r-md" />,
-                  // Quebras de linha
-                  p: (props) => <p {...props} className="mb-1 last:mb-0 leading-relaxed" />,
-                  // Listas
-                  ul: (props) => <ul {...props} className="list-disc list-inside ml-2 space-y-1" />,
-                  ol: (props) => <ol {...props} className="list-decimal list-inside ml-2 space-y-1" />,
-                  // Headers
-                  h1: (props) => <h1 {...props} className="text-lg font-bold text-gray-800 mb-2" />,
-                  h2: (props) => <h2 {...props} className="text-base font-semibold text-gray-800 mb-1" />,
-                  h3: (props) => <h3 {...props} className="text-sm font-semibold text-gray-800 mb-1" />
-                }}
-              >
-                {msg.content}
-              </ReactMarkdown>
+              <>
+                <ReactMarkdown 
+                  components={{
+                    // Links abrem em nova aba
+                    a: (props) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:text-violet-700 underline decoration-2 underline-offset-2 transition-colors duration-200" />,
+                    // Código inline com estilo
+                    code: (props) => <code {...props} className="bg-violet-50 border border-violet-200 px-2 py-1 rounded-md text-sm font-mono text-violet-800" />,
+                    // Citações com estilo
+                    blockquote: (props) => <blockquote {...props} className="border-l-4 border-violet-300 pl-4 my-2 italic text-gray-700 bg-violet-25 py-2 rounded-r-md" />,
+                    // Quebras de linha
+                    p: (props) => <p {...props} className="mb-1 last:mb-0 leading-relaxed" />,
+                    // Listas
+                    ul: (props) => <ul {...props} className="list-disc list-inside ml-2 space-y-1" />,
+                    ol: (props) => <ol {...props} className="list-decimal list-inside ml-2 space-y-1" />,
+                    // Headers
+                    h1: (props) => <h1 {...props} className="text-lg font-bold text-gray-800 mb-2" />,
+                    h2: (props) => <h2 {...props} className="text-base font-semibold text-gray-800 mb-1" />,
+                    h3: (props) => <h3 {...props} className="text-sm font-semibold text-gray-800 mb-1" />
+                  }}
+                >
+                  {msg.content}
+                </ReactMarkdown>
+
+                {/* Renderizar previews de links */}
+                {linkPreviews.length > 0 && (
+                  <div className="space-y-2 w-full overflow-hidden">
+                    {linkPreviews.map((preview, index) => (
+                      <LinkPreview key={`${preview.url}-${index}`} preview={preview} />
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

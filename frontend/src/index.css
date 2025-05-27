@@ -12,3 +12,18 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Classes personalizadas para line-clamp */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Prevenir overflow horizontal em mobile */
+@media (max-width: 768px) {
+  .max-w-40 {
+    max-width: 10rem;
+  }
+}
