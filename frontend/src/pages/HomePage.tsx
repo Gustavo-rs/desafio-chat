@@ -18,6 +18,7 @@ const Home: React.FC = () => {
   const [selectedRoomId, setSelectedRoomId] = useState<string>();
   const [selectedRoomName, setSelectedRoomName] = useState<string>();
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  const [searchTerm, setSearchTerm] = useState("");
   const { user } = useUser();
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"rooms" | "chat" | "details">(
@@ -130,6 +131,8 @@ const Home: React.FC = () => {
             handleCreateRoom={handleCreateRoom}
             handleRoomSelect={handleRoomSelect}
             formatUnreadCount={formatUnreadCount}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
           />
         </div>
 
@@ -217,6 +220,8 @@ const Home: React.FC = () => {
               handleCreateRoom={handleCreateRoom}
               handleRoomSelect={handleRoomSelect}
               formatUnreadCount={formatUnreadCount}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
             />
           )}
 
