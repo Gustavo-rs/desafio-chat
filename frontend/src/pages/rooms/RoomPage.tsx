@@ -22,20 +22,16 @@ import {
 } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 
-// Componente para renderizar markdown compacto na lista de salas
 const CompactMarkdown = ({ content, maxLength = 30 }: { content: string; maxLength?: number }) => {
   const truncatedContent = content.length > maxLength ? `${content.slice(0, maxLength)}...` : content;
   
   return (
     <ReactMarkdown
       components={{
-        // Remove paragraphs wrapper
         p: ({ children }) => <span>{children}</span>,
-        // Inline styles for compact display
         strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
         em: ({ children }) => <em className="italic">{children}</em>,
         code: ({ children }) => <code className="bg-gray-200 px-1 rounded text-xs">{children}</code>,
-        // Remove other block elements
         h1: ({ children }) => <span className="font-bold">{children}</span>,
         h2: ({ children }) => <span className="font-bold">{children}</span>,
         h3: ({ children }) => <span className="font-bold">{children}</span>,
@@ -83,7 +79,7 @@ export default function RoomPage({
   formatUnreadCount
 }: RoomPageProps) {
   return (
-    <div className="w-full lg:w-[30%] h-full p-3 md:p-4 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
+    <div className="w-full h-full p-3 md:p-4 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
       <div className="flex items-center justify-between mb-3 md:mb-4">
         <h2 className="text-lg md:text-xl font-semibold text-gray-800">Salas</h2>
 
@@ -95,7 +91,6 @@ export default function RoomPage({
               className="text-xs md:text-sm text-primary border-primary px-2 md:px-3"
             >
               <span className="hidden sm:inline">Nova sala</span>
-              {/* <span className="sm:hidden">+</span> */}
               <Plus className="sm:hidden" />
             </Button>
           </DialogTrigger>
@@ -242,13 +237,11 @@ export default function RoomPage({
               )}
             </div>
             <div className="flex-shrink-0 flex flex-col items-end gap-1">
-              {/* Hora da última mensagem - sempre visível */}
               {room.lastMessage && (
                 <span className="text-xs text-gray-400">
                   {new Date(room.lastMessage.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               )}
-              {/* Badge de notificação - só aparece quando há mensagens não lidas */}
               {unreadCounts[room.id.toString()] > 0 && (
                 <Badge variant="default" className="text-white text-xs min-w-[20px] h-5 flex items-center justify-center">
                   {formatUnreadCount(unreadCounts[room.id.toString()])}

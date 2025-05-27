@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { useUser } from "../store/auth-store";
 import type { APIRoom } from "@/types/api";
 import roomsService from "@/services/rooms-service";
@@ -20,13 +20,9 @@ const Home: React.FC = () => {
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const { user } = useUser();
   const [open, setOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'rooms' | 'chat' | 'details'>('rooms');
-  const [chatInstanceId, setChatInstanceId] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth >= 1024 ? 'desktop' : 'mobile';
-    }
-    return 'desktop';
-  });
+  const [activeTab, setActiveTab] = useState<"rooms" | "chat" | "details">(
+    "rooms"
+  );
   const { socket, stopViewingRoom } = useSocket();
 
   const handleRooms = async () => {
@@ -56,7 +52,6 @@ const Home: React.FC = () => {
 
     try {
       await roomsService.create({ name: roomName });
-
       setOpen(false);
       setRoomName("");
     } finally {
@@ -71,7 +66,7 @@ const Home: React.FC = () => {
     setUnreadCounts,
     setSelectedRoomId,
     setSelectedRoomName,
-    handleRooms
+    handleRooms,
   });
 
   useEffect(() => {
@@ -79,100 +74,77 @@ const Home: React.FC = () => {
   }, []);
 
   const handleRoomSelect = (room: APIRoom) => {
-    console.log("HomePage: Selecionando sala:", room);
-    
     // Se havia uma sala selecionada anteriormente, parar de visualizá-la
     if (selectedRoomId && socket?.connected) {
       stopViewingRoom(selectedRoomId);
     }
-    
+
     setSelectedRoomId(room.id.toString());
     setSelectedRoomName(room.name);
-    setActiveTab('chat'); // Automatically switch to chat when a room is selected on mobile
-    
-    // Determine which ChatPage instance should be active
-    const isDesktop = window.innerWidth >= 1024;
-    const newInstanceId = isDesktop ? 'desktop' : 'mobile';
-    console.log("🎯 Setting chatInstanceId:", newInstanceId, "isDesktop:", isDesktop, "windowWidth:", window.innerWidth);
-    setChatInstanceId(newInstanceId);
-    setRooms(prev => prev.map(r => ({ ...r, newRoom: r.id === room.id ? false : r.newRoom })));
-    setUnreadCounts(prev => {
-      const newCounts = {
-        ...prev,
-        [room.id.toString()]: 0
-      };
-      console.log("HomePage: Zerando contador para sala", room.id);
-      console.log("Novos contadores:", newCounts);
-      return newCounts;
-    });
+    setActiveTab("chat"); // Automatically switch to chat when a room is selected on mobile
+
+    // Mark room as read and remove new room indicator
+    setRooms((prev) =>
+      prev.map((r) => ({ ...r, newRoom: r.id === room.id ? false : r.newRoom }))
+    );
+    setUnreadCounts((prev) => ({
+      ...prev,
+      [room.id.toString()]: 0,
+    }));
   };
 
   const formatUnreadCount = (count: number) => {
-    return count > 99 ? '99+' : count.toString();
+    return count > 99 ? "99+" : count.toString();
   };
 
-  // Add effect to handle window resize
-  useEffect(() => {
-    const handleResize = () => {
-      if (selectedRoomId) {
-        const isDesktop = window.innerWidth >= 1024;
-        setChatInstanceId(isDesktop ? 'desktop' : 'mobile');
-      }
-    };
+  const renderEmptyState = (message: string, subtitle: string) => (
+    <div className="flex items-center justify-center h-full bg-white rounded-lg">
+      <div className="text-center text-gray-500">
+        <MessageSquare size={48} className="mx-auto mb-4 opacity-50" />
+        <p className="text-lg font-medium mb-2">{message}</p>
+        <p className="text-sm">{subtitle}</p>
+      </div>
+    </div>
+  );
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [selectedRoomId]);
-
-
+  const totalUnreadCount = Object.values(unreadCounts).reduce(
+    (total, count) => total + count,
+    0
+  );
 
   return (
     <div className="h-[calc(100vh-8rem)] relative">
-
-
       {/* Desktop Layout */}
       <div className="hidden lg:flex h-full gap-4 relative">
         {/* Lista de salas (30%) */}
-        <RoomPage 
-          rooms={rooms}
-          selectedRoomId={selectedRoomId}
-          unreadCounts={unreadCounts}
-          open={open}
-          setOpen={setOpen}
-          roomName={roomName}
-          setRoomName={setRoomName}
-          isCreatingRoom={isCreatingRoom}
-          handleCreateRoom={handleCreateRoom}
-          handleRoomSelect={handleRoomSelect}
-          formatUnreadCount={formatUnreadCount}
-        />
+        <div className="w-[30%]">
+          <RoomPage
+            rooms={rooms}
+            selectedRoomId={selectedRoomId}
+            unreadCounts={unreadCounts}
+            open={open}
+            setOpen={setOpen}
+            roomName={roomName}
+            setRoomName={setRoomName}
+            isCreatingRoom={isCreatingRoom}
+            handleCreateRoom={handleCreateRoom}
+            handleRoomSelect={handleRoomSelect}
+            formatUnreadCount={formatUnreadCount}
+          />
+        </div>
 
         {/* Área do chat (50%) */}
         <div className="w-[50%]">
-          {(() => {
-            console.log("Desktop render check:", { selectedRoomId, chatInstanceId });
-            if (selectedRoomId && chatInstanceId === 'desktop') {
-              console.log("🖥️ Rendering ChatPage for DESKTOP");
-              return <ChatPage key={`desktop-${selectedRoomId}`} roomId={selectedRoomId} roomName={selectedRoomName} />;
-            } else if (!selectedRoomId) {
-              return (
-                <div className="flex items-center justify-center h-full bg-white rounded-lg">
-                  <div className="text-center text-gray-500">
-                    <MessageSquare size={48} className="mx-auto mb-4 opacity-50" />
-                    <p className="text-lg font-medium mb-2">Nenhuma sala selecionada</p>
-                    <p className="text-sm">Selecione uma sala para começar a conversar</p>
-                  </div>
-                </div>
-              );
-            }
-            return null;
-          })()}
+          {!selectedRoomId && renderEmptyState(
+            "Nenhuma sala selecionada",
+            "Selecione uma sala para começar a conversar"
+          )}
         </div>
 
         {/* Área lateral direita (20%) - Detalhes */}
         <div className="w-[20%]">
-          <RoomDetailsPage 
-            roomId={selectedRoomId || ""} 
+          <RoomDetailsPage
+            roomId={selectedRoomId || ""}
             roomName={selectedRoomName}
           />
         </div>
@@ -183,49 +155,46 @@ const Home: React.FC = () => {
         {/* Navigation Tabs */}
         <div className="flex bg-white border-b border-gray-200 rounded-t-lg">
           <button
-            onClick={() => setActiveTab('rooms')}
+            onClick={() => setActiveTab("rooms")}
             className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-medium transition-colors ${
-              activeTab === 'rooms'
-                ? 'text-violet-600 border-b-2 border-violet-600 bg-violet-50'
-                : 'text-gray-500 hover:text-gray-700'
+              activeTab === "rooms"
+                ? "text-violet-600 border-b-2 border-violet-600 bg-violet-50"
+                : "text-gray-500 hover:text-gray-700"
             }`}
           >
             <Users size={18} />
             <span>Salas</span>
-            {Object.values(unreadCounts).reduce((total, count) => total + count, 0) > 0 && (
+            {totalUnreadCount > 0 && (
               <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 min-w-[20px] h-5 flex items-center justify-center">
-                {Object.values(unreadCounts).reduce((total, count) => total + count, 0) > 99 
-                  ? '99+' 
-                  : Object.values(unreadCounts).reduce((total, count) => total + count, 0)
-                }
+                {formatUnreadCount(totalUnreadCount)}
               </span>
             )}
           </button>
-          
+
           <button
-            onClick={() => setActiveTab('chat')}
+            onClick={() => setActiveTab("chat")}
             disabled={!selectedRoomId}
             className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-medium transition-colors ${
-              activeTab === 'chat'
-                ? 'text-violet-600 border-b-2 border-violet-600 bg-violet-50'
-                : selectedRoomId 
-                  ? 'text-gray-500 hover:text-gray-700' 
-                  : 'text-gray-300 cursor-not-allowed'
+              activeTab === "chat"
+                ? "text-violet-600 border-b-2 border-violet-600 bg-violet-50"
+                : selectedRoomId
+                ? "text-gray-500 hover:text-gray-700"
+                : "text-gray-300 cursor-not-allowed"
             }`}
           >
             <MessageSquare size={18} />
             <span>Chat</span>
           </button>
-          
+
           <button
-            onClick={() => setActiveTab('details')}
+            onClick={() => setActiveTab("details")}
             disabled={!selectedRoomId}
             className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-medium transition-colors ${
-              activeTab === 'details'
-                ? 'text-violet-600 border-b-2 border-violet-600 bg-violet-50'
-                : selectedRoomId 
-                  ? 'text-gray-500 hover:text-gray-700' 
-                  : 'text-gray-300 cursor-not-allowed'
+              activeTab === "details"
+                ? "text-violet-600 border-b-2 border-violet-600 bg-violet-50"
+                : selectedRoomId
+                ? "text-gray-500 hover:text-gray-700"
+                : "text-gray-300 cursor-not-allowed"
             }`}
           >
             <Info size={18} />
@@ -235,8 +204,8 @@ const Home: React.FC = () => {
 
         {/* Tab Content */}
         <div className="flex-1 overflow-hidden">
-          {activeTab === 'rooms' && (
-            <RoomPage 
+          {activeTab === "rooms" && (
+            <RoomPage
               rooms={rooms}
               selectedRoomId={selectedRoomId}
               unreadCounts={unreadCounts}
@@ -250,44 +219,53 @@ const Home: React.FC = () => {
               formatUnreadCount={formatUnreadCount}
             />
           )}
-          
-          {activeTab === 'chat' && (() => {
-            console.log("Mobile render check:", { selectedRoomId, chatInstanceId, activeTab });
-            if (selectedRoomId && chatInstanceId === 'mobile') {
-              console.log("📱 Rendering ChatPage for MOBILE");
-              return <ChatPage key={`mobile-${selectedRoomId}`} roomId={selectedRoomId} roomName={selectedRoomName} />;
-            } else if (!selectedRoomId) {
-              return (
-                <div className="flex items-center justify-center h-full bg-white">
-                  <div className="text-center text-gray-500">
-                    <MessageSquare size={48} className="mx-auto mb-4 opacity-50" />
-                    <p className="text-lg font-medium mb-2">Nenhuma sala selecionada</p>
-                    <p className="text-sm">Vá para a aba "Salas" e selecione uma sala para começar a conversar</p>
-                  </div>
-                </div>
-              );
-            }
-            return null;
-          })()}
-          
-          {activeTab === 'details' && (
-            selectedRoomId ? (
-              <RoomDetailsPage 
-                roomId={selectedRoomId} 
+
+          {activeTab === "chat" && !selectedRoomId && (
+            <div className="flex items-center justify-center h-full bg-white">
+              <div className="text-center text-gray-500">
+                <MessageSquare size={48} className="mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium mb-2">
+                  Nenhuma sala selecionada
+                </p>
+                <p className="text-sm">
+                  Vá para a aba "Salas" e selecione uma sala para começar a
+                  conversar
+                </p>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "details" &&
+            (selectedRoomId ? (
+              <RoomDetailsPage
+                roomId={selectedRoomId}
                 roomName={selectedRoomName}
               />
             ) : (
               <div className="flex items-center justify-center h-full bg-white">
                 <div className="text-center text-gray-500">
                   <Info size={48} className="mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium mb-2">Nenhuma sala selecionada</p>
-                  <p className="text-sm">Selecione uma sala para ver os detalhes</p>
+                  <p className="text-lg font-medium mb-2">
+                    Nenhuma sala selecionada
+                  </p>
+                  <p className="text-sm">
+                    Selecione uma sala para ver os detalhes
+                  </p>
                 </div>
               </div>
-            )
-          )}
+            ))}
         </div>
       </div>
+
+      {/* ÚNICA INSTÂNCIA do ChatPage */}
+      {selectedRoomId && (
+        <div className={`
+          lg:absolute lg:left-[calc(30%+1rem)] lg:top-0 lg:w-[50%] lg:h-full lg:block
+          ${activeTab === "chat" ? "block" : "hidden"} lg:!block
+        `}>
+          <ChatPage roomId={selectedRoomId} roomName={selectedRoomName} />
+        </div>
+      )}
     </div>
   );
 };

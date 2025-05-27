@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Edit2, Trash2, Check, X, Paperclip, AlertTriangle, Users, UserCheck, UserMinus, UserPlus, File } from "lucide-react";
+import { Loader2, Edit2, Trash2, Check, X, Paperclip, AlertTriangle, Users, UserCheck, UserMinus, UserPlus, File, MessageSquare } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import type { Message, ChatPageProps, MessageStatus, OnlineUser } from "@/types/api";
 
@@ -419,19 +419,30 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
 
   if (!roomId) {
     return (
-      <div className="w-full lg:w-[50%] h-full bg-white rounded-lg shadow-sm p-3 md:p-4 flex items-center justify-center">
-        <p className="text-gray-500 text-sm md:text-base">Selecione uma sala para começar a conversar</p>
+      <div className="w-full h-full bg-white rounded-lg shadow-sm p-3 md:p-4 flex items-center justify-center">
+        <div className="text-center text-gray-500">
+          <MessageSquare size={48} className="mx-auto mb-4 opacity-50" />
+          <p className="text-lg font-medium mb-2">Nenhuma sala selecionada</p>
+          <p className="text-sm">Selecione uma sala para começar a conversar</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full lg:w-[50%] h-full bg-white rounded-lg shadow-sm p-3 md:p-4">
+    <div className="w-full h-full bg-white rounded-lg shadow-sm p-3 md:p-4">
       <div className="h-full flex flex-col">
         <div className="border-b pb-3 md:pb-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg md:text-xl font-semibold">Chat</h2>
-            <h2 className="text-lg md:text-xl font-semibold truncate ml-2">{roomName}</h2>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <h2 className="text-lg md:text-xl font-semibold text-gray-800">Chat</h2>
+              {roomName && (
+                <>
+                  <span className="text-gray-400">•</span>
+                  <h3 className="text-base md:text-lg font-medium text-gray-600 truncate">{roomName}</h3>
+                </>
+              )}
+            </div>
           </div>
           
           {!userRemovedFromRoom && (
