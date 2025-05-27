@@ -238,11 +238,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         </div>
       )}
       
-      <div className="flex gap-1 md:gap-2">
+      <div className="flex items-center gap-2">
         <input
           type="text"
           placeholder="Digite sua mensagem..."
-          className={`flex-1 p-2 md:p-3 border rounded-md text-sm md:text-base transition-all duration-200 ${
+          className={`flex-1 h-10 md:h-12 px-3 md:px-4 border rounded-lg text-sm md:text-base transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400 ${
             isDragOver ? 'border-violet-400 bg-violet-50 shadow-lg ring-2 ring-violet-200' : 'border-gray-300 hover:border-violet-300'
           }`}
           value={input}
@@ -260,22 +260,19 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           multiple
           accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
         />
-        <Button
+        <button
           onClick={() => fileInputRef.current?.click()}
-          variant="outline"
-          size="sm"
-          className="border-violet-200 hover:bg-violet-50 px-2 md:px-3"
+          className="h-10 md:h-12 w-10 md:w-12 flex items-center justify-center border border-violet-200 hover:bg-violet-50 hover:border-violet-300 rounded-lg transition-all duration-200 ease-in-out hover:scale-105 active:scale-95"
+          title="Anexar arquivo"
         >
           <Paperclip className="h-4 w-4 md:h-5 md:w-5 text-violet-600" />
-        </Button>
-        <Button
+        </button>
+        <button
           onClick={sendMessage}
-          variant="default"
-          size="sm"
-          className="bg-violet-600 hover:bg-violet-700 px-3 md:px-4"
+          className="h-10 md:h-12 px-4 md:px-6 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium text-sm md:text-base transition-all duration-200 ease-in-out hover:scale-105 active:scale-95 shadow-sm hover:shadow-md"
         >
-          <span className="text-white text-sm md:text-base">Enviar</span>
-        </Button>
+          Enviar
+        </button>
       </div>
     </div>
   );
