@@ -4,6 +4,7 @@ import { validate } from "../middlewares/validation";
 import { createUserSchema, loginSchema } from "../schemas/validation";
 import { UserResponse, LoginResponse } from "../models/user.model";
 import { AppError } from "../utils/errors";
+import { authenticate } from "../middlewares/auth";
 
 const router = Router();
 const userService = new UserService();
@@ -52,6 +53,17 @@ router.post("/login", validate(loginSchema), async (req: Request, res: Response<
 router.post("/logout", (req: Request, res: Response) => {
   res.clearCookie('token');
   res.status(200).json({ message: "Logged out successfully" });
+});
+
+router.get("/verify", authenticate, (req: Request, res: Response) => {
+  // Se chegou até aqui, o middleware authenticate passou, então o usuário está autenticado
+  res.status(200).json({
+    message: "authenticated",
+    user: {
+      id: req.user?.userId,
+      username: req.user?.username,
+    },
+  });
 });
 
 export default router;

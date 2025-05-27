@@ -14,6 +14,14 @@ class AuthService extends BaseService<APIUser, APIAuthUser> {
   async auth(data: APIAuthUser) {
     return this.api.post<APIUser>(this.basePath + '/login', data);
   }
+
+  async verify() {
+    return this.api.get<APIUser>(this.basePath + '/verify');
+  }
+
+  async logout() {
+    return this.api.post(this.basePath + '/logout');
+  }
 }
 
 export default new AuthService();
