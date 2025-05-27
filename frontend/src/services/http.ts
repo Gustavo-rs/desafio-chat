@@ -21,14 +21,14 @@ api.interceptors.response.use(
   (error) => {
     const message = error.response?.data?.message || "Erro desconhecido";
 
-    if (error.response?.status === 401) {
-      localStorage.removeItem("user");
-      if (!window.location.pathname.includes("/login")) {
-        window.location.href = '/login';
-      }
-    } else if (message) {
+    // if (error.response?.status === 401) {
+    //   localStorage.removeItem("user");
+    //   if (!window.location.pathname.includes("/login")) {
+    //     window.location.href = '/login';
+    //   }
+    // } else if (message) {
       toast.error(message);
-    }
+    // }
 
     return Promise.reject(error);
   }
