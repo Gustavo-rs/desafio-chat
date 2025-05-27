@@ -166,21 +166,28 @@ export default function RoomMembersManager({
                         {filteredUsers.map((user) => (
                           <div
                             key={user.id}
-                            className={`flex items-center justify-between p-2 rounded-lg border cursor-pointer hover:bg-gray-50 ${
+                            className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer hover:bg-gray-50 min-w-0 ${
                               selectedUserId === user.id ? 'bg-violet-50 border-violet-200' : 'border-gray-200'
                             }`}
                             onClick={() => setSelectedUserId(user.id)}
                           >
-                            <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
-                                <span className="text-gray-700 font-semibold text-xs">
-                                  {user.username.charAt(0).toUpperCase()}
-                                </span>
-                              </div>
-                              <span className="text-sm font-medium">{user.username}</span>
+                            {/* Avatar */}
+                            <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-gray-700 font-semibold text-xs">
+                                {user.username.charAt(0).toUpperCase()}
+                              </span>
                             </div>
+                            
+                            {/* Nome do usuário - área flexível */}
+                            <div className="flex-1 min-w-0">
+                              <span className="text-sm font-medium truncate block" title={user.username}>
+                                {user.username}
+                              </span>
+                            </div>
+                            
+                            {/* Indicador de seleção - tamanho fixo */}
                             {selectedUserId === user.id && (
-                              <div className="w-4 h-4 bg-violet-500 rounded-full flex items-center justify-center">
+                              <div className="w-4 h-4 bg-violet-500 rounded-full flex items-center justify-center flex-shrink-0">
                                 <div className="w-2 h-2 bg-white rounded-full"></div>
                               </div>
                             )}
@@ -230,48 +237,55 @@ export default function RoomMembersManager({
         {members.map((member) => (
           <div
             key={member.id}
-            className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+            className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg min-w-0"
           >
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-violet-100 rounded-full flex items-center justify-center">
-                <span className="text-violet-700 font-semibold text-xs">
-                  {member.user.username.charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-xs truncate">
-                  {member.user.username}
-                  {member.user.id === user?.user?.id && (
-                    <span className="text-gray-500 ml-1">(você)</span>
-                  )}
-                </p>
-              </div>
-              <div className="flex items-center gap-1">
-                {member.role === 'ADMIN' ? (
-                  <Badge variant="outline" className="text-xs">
-                    <Crown size={10} className="mr-1" />
-                    Admin
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-xs">
-                    <User size={10} className="mr-1" />
-                    Membro
-                  </Badge>
-                )}
-              </div>
+            {/* Avatar */}
+            <div className="w-6 h-6 bg-violet-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-violet-700 font-semibold text-xs">
+                {member.user.username.charAt(0).toUpperCase()}
+              </span>
             </div>
+            
+            {/* Nome do usuário - área flexível que pode ser truncada */}
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-xs truncate" title={member.user.username}>
+                {member.user.username}
+                {member.user.id === user?.user?.id && (
+                  <span className="text-gray-500 ml-1">(você)</span>
+                )}
+              </p>
+            </div>
+            
+            {/* Badge do papel - tamanho fixo */}
+            <div className="flex-shrink-0">
+              {member.role === 'ADMIN' ? (
+                <Badge variant="outline" className="text-xs whitespace-nowrap">
+                  <Crown size={10} className="mr-1" />
+                  Admin
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-xs whitespace-nowrap">
+                  <User size={10} className="mr-1" />
+                  Membro
+                </Badge>
+              )}
+            </div>
+            
+            {/* Botão de remover - tamanho fixo */}
             {isCurrentUserAdmin && 
              member.role !== 'ADMIN' && 
              member.user.id !== user?.user?.id && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => handleRemoveMember(member.user.id, member.user.username)}
-                className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600"
-                title={`Remover ${member.user.username}`}
-              >
-                <UserMinus size={12} />
-              </Button>
+              <div className="flex-shrink-0">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => handleRemoveMember(member.user.id, member.user.username)}
+                  className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600"
+                  title={`Remover ${member.user.username}`}
+                >
+                  <UserMinus size={12} />
+                </Button>
+              </div>
             )}
           </div>
         ))}

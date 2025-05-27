@@ -10,11 +10,13 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({ roomDetails }) => {
     <div className="bg-gray-50 rounded-lg p-3 md:p-4">
       <h3 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">Informações</h3>
       <div className="space-y-2 md:space-y-3 text-xs md:text-sm">
-        <div>
+        <div className="min-w-0">
           <span className="text-gray-500 block mb-1">Nome:</span>
-          <p className="font-medium">{roomDetails.name}</p>
+          <p className="font-medium truncate" title={roomDetails.name}>
+            {roomDetails.name}
+          </p>
         </div>
-        <div>
+        <div className="min-w-0">
           <span className="text-gray-500 block mb-1">Criada em:</span>
           <p className="font-medium">
             {new Date(roomDetails.created_at).toLocaleDateString('pt-BR', {
@@ -26,9 +28,11 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({ roomDetails }) => {
             })}
           </p>
         </div>
-        <div>
+        <div className="min-w-0">
           <span className="text-gray-500 block mb-1">Criador:</span>
-          <p className="font-medium">{roomDetails.creator.username}</p>
+          <p className="font-medium truncate" title={roomDetails.creator.username}>
+            {roomDetails.creator.username}
+          </p>
         </div>
       </div>
     </div>

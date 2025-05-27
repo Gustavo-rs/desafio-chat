@@ -11,6 +11,7 @@ interface MessageListProps {
   currentUserId?: string;
   editingMessageId: string | null;
   editingContent: string;
+  editingMessage: boolean;
   setEditingContent: (content: string) => void;
   startEditing: (messageId: string, currentContent: string) => void;
   cancelEditing: () => void;
@@ -30,6 +31,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   currentUserId,
   editingMessageId,
   editingContent,
+  editingMessage,
   setEditingContent,
   startEditing,
   cancelEditing,
@@ -83,6 +85,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             currentUserId={currentUserId}
             editingMessageId={editingMessageId}
             editingContent={editingContent}
+            editingMessage={editingMessage}
             setEditingContent={setEditingContent}
             startEditing={startEditing}
             cancelEditing={cancelEditing}

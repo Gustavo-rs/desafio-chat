@@ -1,5 +1,5 @@
 import React from "react";
-import { Edit2, Trash2, Check, X, UserCheck, UserMinus, UserPlus, File, Download } from "lucide-react";
+import { Edit2, Trash2, Check, X, UserCheck, UserMinus, UserPlus, File, Download, Loader2 } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import type { Message } from "@/types/api";
 import { useLinkPreview } from "../../hooks/useLinkPreview";
@@ -10,6 +10,7 @@ interface MessageItemProps {
   currentUserId?: string;
   editingMessageId: string | null;
   editingContent: string;
+  editingMessage: boolean;
   setEditingContent: (content: string) => void;
   startEditing: (messageId: string, currentContent: string) => void;
   cancelEditing: () => void;
@@ -23,6 +24,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   currentUserId,
   editingMessageId,
   editingContent,
+  editingMessage,
   setEditingContent,
   startEditing,
   cancelEditing,
@@ -145,15 +147,23 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                 <div className="flex gap-1 md:gap-2 justify-end">
                   <button
                     onClick={() => handleEditMessage(msg.id)}
-                    className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all duration-200 ease-in-out hover:scale-105 active:scale-95 text-xs md:text-sm font-medium shadow-sm hover:shadow-md"
-                    title="Salvar alterações"
+                    disabled={editingMessage}
+                    className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-green-500 hover:bg-green-600 disabled:bg-green-400 disabled:cursor-not-allowed text-white rounded-lg transition-all duration-200 ease-in-out hover:scale-105 active:scale-95 disabled:hover:scale-100 text-xs md:text-sm font-medium shadow-sm hover:shadow-md"
+                    title={editingMessage ? "Salvando..." : "Salvar alterações"}
                   >
-                    <Check size={16} />
-                    <span className="hidden sm:inline">Salvar</span>
+                    {editingMessage ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Check size={16} />
+                    )}
+                    <span className="hidden sm:inline">
+                      {editingMessage ? "Salvando..." : "Salvar"}
+                    </span>
                   </button>
                   <button
                     onClick={cancelEditing}
-                    className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all duration-200 ease-in-out hover:scale-105 active:scale-95 text-xs md:text-sm font-medium shadow-sm hover:shadow-md"
+                    disabled={editingMessage}
+                    className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-gray-500 hover:bg-gray-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg transition-all duration-200 ease-in-out hover:scale-105 active:scale-95 disabled:hover:scale-100 text-xs md:text-sm font-medium shadow-sm hover:shadow-md"
                     title="Cancelar edição"
                   >
                     <X size={16} />

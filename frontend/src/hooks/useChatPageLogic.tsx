@@ -20,6 +20,8 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
   const [editingContent, setEditingContent] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
+  const [deletingMessage, setDeletingMessage] = useState(false);
+  const [editingMessage, setEditingMessage] = useState(false);
   const [userRemovedFromRoom, setUserRemovedFromRoom] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [showOnlineUsers, setShowOnlineUsers] = useState(false);
@@ -272,12 +274,15 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
   const confirmDeleteMessage = async () => {
     if (!messageToDelete) return;
 
+    setDeletingMessage(true);
     try {
       await messageService.deleteMessage(messageToDelete);
       setDeleteDialogOpen(false);
       setMessageToDelete(null);
     } catch (error) {
       console.error("Erro ao deletar mensagem:", error);
+    } finally {
+      setDeletingMessage(false);
     }
   };
 
@@ -289,12 +294,15 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
   const handleEditMessage = async (messageId: string) => {
     if (!editingContent.trim()) return;
 
+    setEditingMessage(true);
     try {
       await messageService.updateMessage(messageId, editingContent);
       setEditingMessageId(null);
       setEditingContent("");
     } catch (error) {
       console.error("Erro ao editar mensagem:", error);
+    } finally {
+      setEditingMessage(false);
     }
   };
 
@@ -380,6 +388,8 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
     editingContent,
     deleteDialogOpen,
     messageToDelete,
+    deletingMessage,
+    editingMessage,
     userRemovedFromRoom,
     onlineUsers,
     showOnlineUsers,

@@ -11,13 +11,15 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
   const {
     // State
     messages,
-          input, 
+    input, 
     selectedFiles,
     page,
     loading,
     editingMessageId,
     editingContent,
     deleteDialogOpen,
+    deletingMessage,
+    editingMessage,
     userRemovedFromRoom,
     onlineUsers,
     showOnlineUsers,
@@ -82,6 +84,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
           currentUserId={user?.user?.id}
           editingMessageId={editingMessageId}
           editingContent={editingContent}
+          editingMessage={editingMessage}
           setEditingContent={setEditingContent}
           startEditing={startEditing}
           cancelEditing={cancelEditing}
@@ -109,6 +112,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
           open={deleteDialogOpen}
           onConfirm={confirmDeleteMessage}
           onCancel={cancelDeleteMessage}
+          isLoading={deletingMessage}
         />
       </div>
     </div>

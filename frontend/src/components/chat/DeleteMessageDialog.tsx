@@ -13,12 +13,14 @@ interface DeleteMessageDialogProps {
   open: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  isLoading?: boolean;
 }
 
 export const DeleteMessageDialog: React.FC<DeleteMessageDialogProps> = ({
   open,
   onConfirm,
   onCancel,
+  isLoading = false,
 }) => {
   return (
     <Dialog open={open} onOpenChange={onCancel}>
@@ -30,11 +32,16 @@ export const DeleteMessageDialog: React.FC<DeleteMessageDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={onCancel}>
+          <Button variant="outline" onClick={onCancel} disabled={isLoading}>
             Cancelar
           </Button>
-          <Button variant="default" onClick={onConfirm} className="text-white">
-            Excluir
+          <Button 
+            variant="default" 
+            onClick={onConfirm} 
+            className="text-white"
+            disabled={isLoading}
+          >
+            {isLoading ? "Excluindo..." : "Excluir"}
           </Button>
         </DialogFooter>
       </DialogContent>
