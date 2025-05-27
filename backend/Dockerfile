@@ -15,6 +15,8 @@ COPY . .
 # Gera o Prisma Client (necessário para rodar depois)
 RUN npx prisma generate
 
+RUN npx prisma migrate deploy
+
 # Compila o projeto TypeScript
 RUN npm run build
 
