@@ -4,6 +4,7 @@ import ChatPage from "@/pages/chat/ChatPage";
 import RoomDetailsPage from "@/pages/room-details/RoomDetailsPage";
 import { EmptyState } from "./EmptyState";
 import { NavigationTabs } from "./NavigationTabs";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { APIRoom } from "@/types/api";
 
 interface ResponsiveLayoutProps {
@@ -45,8 +46,16 @@ export const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
   setActiveTab,
   totalUnreadCount,
 }) => {
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
+
+  // Determinar quando mostrar o chat
+  const shouldShowChat = selectedRoomId && (
+    isDesktop || // Desktop: sempre mostrar se há sala selecionada
+    (!isDesktop && activeTab === "chat") // Mobile: só mostrar na tab chat
+  );
+
   return (
-    <>
+    <div className="h-full relative">
       {/* Desktop Layout - 3 colunas lado a lado */}
       <div className="hidden lg:flex h-full gap-4 relative">
         {/* Lista de salas (30%) */}
@@ -70,14 +79,14 @@ export const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
 
         {/* Área do chat (50%) */}
         <div className="w-[50%]">
-          {selectedRoomId ? (
+          {shouldShowChat && isDesktop ? (
             <ChatPage roomId={selectedRoomId} roomName={selectedRoomName} />
-          ) : (
+          ) : !selectedRoomId ? (
             <EmptyState
               message="Nenhuma sala selecionada"
               subtitle="Selecione uma sala para começar a conversar"
             />
-          )}
+          ) : null}
         </div>
 
         {/* Área lateral direita (20%) - Detalhes */}
@@ -127,7 +136,7 @@ export const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
             />
           )}
 
-          {activeTab === "chat" && selectedRoomId && (
+          {activeTab === "chat" && shouldShowChat && !isDesktop && (
             <ChatPage roomId={selectedRoomId} roomName={selectedRoomName} />
           )}
 
@@ -146,6 +155,6 @@ export const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }; 
