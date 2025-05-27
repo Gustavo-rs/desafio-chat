@@ -49,6 +49,8 @@ const FilePreview: React.FC<{ file: File; index: number; onRemove: (index: numbe
     }
   }, [file]);
 
+
+
   return (
     <div className="relative group">
       <div className="w-20 h-20 bg-violet-50 border-2 border-violet-200 rounded-lg overflow-hidden flex items-center justify-center hover:border-violet-300 transition-colors">
@@ -67,6 +69,8 @@ const FilePreview: React.FC<{ file: File; index: number; onRemove: (index: numbe
           </div>
         )}
       </div>
+      
+
       
       {/* Botão de remover */}
       <button
@@ -96,12 +100,116 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   handleFileSelect,
   userRemovedFromRoom,
 }) => {
+  const [isDragOver, setIsDragOver] = React.useState(false);
+  const [dragCounter, setDragCounter] = React.useState(0);
+
   if (userRemovedFromRoom) {
     return null;
   }
 
+  // Função para processar arquivos (tanto do input quanto do drag and drop)
+  const processFiles = (files: FileList) => {
+    const event = {
+      target: {
+        files: files
+      }
+    } as React.ChangeEvent<HTMLInputElement>;
+    handleFileSelect(event);
+  };
+
+  // Handlers para drag and drop
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragCounter(prev => prev + 1);
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      setIsDragOver(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Verifica se realmente saiu da área (não é um elemento filho)
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+      setDragCounter(0);
+      setIsDragOver(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    setDragCounter(0);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processFiles(e.dataTransfer.files);
+    }
+  };
+
+  // Reset do estado quando a operação de drag termina globalmente
+  React.useEffect(() => {
+    const handleGlobalDragEnd = () => {
+      // Pequeno delay para permitir que o drop local seja processado primeiro
+      setTimeout(() => {
+        setIsDragOver(false);
+        setDragCounter(0);
+      }, 100);
+    };
+
+    const handleGlobalDrop = (e: DragEvent) => {
+      // Se o drop não foi na nossa área, reset o estado
+      if (!e.target || !(e.target as Element).closest('[data-drop-zone]')) {
+        setIsDragOver(false);
+        setDragCounter(0);
+      }
+    };
+
+    // Apenas listeners essenciais para cleanup
+    document.addEventListener('dragend', handleGlobalDragEnd);
+    document.addEventListener('drop', handleGlobalDrop);
+
+    return () => {
+      document.removeEventListener('dragend', handleGlobalDragEnd);
+      document.removeEventListener('drop', handleGlobalDrop);
+    };
+  }, []);
+
   return (
-    <div className="mt-2 md:mt-4 flex flex-col gap-3">
+    <div 
+      data-drop-zone
+      className={`mt-2 md:mt-4 flex flex-col gap-3 relative transition-all duration-200 ${
+        isDragOver ? 'transform scale-[1.02]' : ''
+      }`}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {/* Overlay de drag and drop */}
+      {isDragOver && (
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-50 to-violet-100 border-2 border-dashed border-violet-300 rounded-xl flex items-center justify-center z-10 backdrop-blur-sm">
+          <div className="text-center p-6">
+            <div className="w-16 h-16 bg-violet-200 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+              <Paperclip className="h-8 w-8 text-violet-600" />
+            </div>
+            <p className="text-violet-800 font-semibold text-lg mb-1">Solte os arquivos aqui</p>
+            <p className="text-violet-600 text-sm opacity-80">Imagens, PDFs, documentos...</p>
+          </div>
+        </div>
+      )}
+
       {selectedFiles.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -134,7 +242,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         <input
           type="text"
           placeholder="Digite sua mensagem..."
-          className="flex-1 p-2 md:p-3 border rounded-md text-sm md:text-base"
+          className={`flex-1 p-2 md:p-3 border rounded-md text-sm md:text-base transition-all duration-200 ${
+            isDragOver ? 'border-violet-400 bg-violet-50 shadow-lg ring-2 ring-violet-200' : 'border-gray-300 hover:border-violet-300'
+          }`}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {

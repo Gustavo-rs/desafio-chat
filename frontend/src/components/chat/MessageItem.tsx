@@ -1,5 +1,5 @@
 import React from "react";
-import { Edit2, Trash2, Check, X, UserCheck, UserMinus, UserPlus, File } from "lucide-react";
+import { Edit2, Trash2, Check, X, UserCheck, UserMinus, UserPlus, File, Download } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import type { Message } from "@/types/api";
 
@@ -31,6 +31,17 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   const handleDeleteMessage = (messageId: string) => {
     setMessageToDelete(messageId);
     setDeleteDialogOpen(true);
+  };
+
+  const handleDownloadFile = (file: any) => {
+    const downloadUrl = `${import.meta.env.VITE_API_URL}${file.file_url}`;
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = file.file_name;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Renderização especial para mensagens do sistema
@@ -187,25 +198,37 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                 {msg.files.map((file, index) => {
                   console.log('Arquivo:', file, 'URL completa:', `${import.meta.env.VITE_API_URL}${file.file_url}`);
                   return (
-                    <div key={file.id || index}>
+                    <div key={file.id || index} className="relative group">
                       {file.file_type?.startsWith('image/') ? (
-                        <img 
-                          src={`${import.meta.env.VITE_API_URL}${file.file_url}`} 
-                          alt={file.file_name} 
-                          className="max-w-full rounded-lg"
-                          onError={(e) => console.error('Erro ao carregar imagem:', e.currentTarget.src)}
-                          onLoad={() => console.log('Imagem carregada com sucesso:', file.file_name)}
-                        />
+                        <div className="relative">
+                          <img 
+                            src={`${import.meta.env.VITE_API_URL}${file.file_url}`} 
+                            alt={file.file_name} 
+                            className="max-w-full rounded-lg"
+                            onError={(e) => console.error('Erro ao carregar imagem:', e.currentTarget.src)}
+                            onLoad={() => console.log('Imagem carregada com sucesso:', file.file_name)}
+                          />
+                          {/* Botão de download para imagem */}
+                          <button
+                            onClick={() => handleDownloadFile(file)}
+                            className="absolute top-2 right-2 w-8 h-8 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shadow-lg"
+                            title={`Baixar ${file.file_name}`}
+                          >
+                            <Download className="h-4 w-4" />
+                          </button>
+                        </div>
                       ) : (
-                        <a 
-                          href={`${import.meta.env.VITE_API_URL}${file.file_url}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-violet-600 hover:text-violet-700 p-2 bg-gray-50 rounded-md"
-                        >
-                          <File size={16} />
-                          <span className="truncate">{file.file_name}</span>
-                        </a>
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md">
+                          <File size={16} className="text-violet-600 flex-shrink-0" />
+                          <span className="truncate text-violet-600 flex-1">{file.file_name}</span>
+                          <button
+                            onClick={() => handleDownloadFile(file)}
+                            className="flex items-center justify-center w-8 h-8 bg-violet-100 hover:bg-violet-200 text-violet-600 rounded-lg transition-all duration-200 ease-in-out hover:scale-110 active:scale-95 shadow-sm hover:shadow-md"
+                            title={`Baixar ${file.file_name}`}
+                          >
+                            <Download className="h-4 w-4" />
+                          </button>
+                        </div>
                       )}
                     </div>
                   );
