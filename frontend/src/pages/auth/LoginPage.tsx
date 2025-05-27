@@ -45,7 +45,7 @@ export default function LoginPage() {
 
   return (
     <div className="h-[100vh] w-full flex">
-      <div className="w-1/2 bg-white flex items-center justify-center px-4">
+      <div className="w-full sm:w-1/2 bg-white flex items-center justify-center px-4">
         <div className="p-10 min-w-[400px]">
           <h2 className="text-3xl font-bold text-center text-primary mb-1">
             Login
@@ -115,7 +115,7 @@ export default function LoginPage() {
           </form>
         </div>
       </div>
-      <div className="w-1/2 bg-primary flex flex-col items-center justify-center">
+      <div className="hidden sm:flex w-1/2 bg-primary flex-col items-center justify-center">
         <img src={logo} alt="Logo" className="w-1/2" />
       </div>
     </div>
