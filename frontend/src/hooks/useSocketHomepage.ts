@@ -38,7 +38,7 @@ export const useSocketHomepage = ({
     setSelectedRoomIdRef.current = setSelectedRoomId;
     setSelectedRoomNameRef.current = setSelectedRoomName;
     handleRoomsRef.current = handleRooms;
-  });
+  }, [setRooms, setUnreadCounts, setSelectedRoomId, setSelectedRoomName, handleRooms]);
 
   useEffect(() => {
     if (!user || !socket || !isConnected) return;

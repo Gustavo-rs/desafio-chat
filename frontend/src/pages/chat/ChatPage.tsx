@@ -11,7 +11,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
   const {
     // State
     messages,
-    input,
+          input, 
     selectedFiles,
     page,
     loading,
@@ -41,14 +41,13 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
     removeSelectedFile,
     clearAllFiles,
     sendMessage,
-    handleDeleteMessage,
     confirmDeleteMessage,
     cancelDeleteMessage,
     handleEditMessage,
     startEditing,
     cancelEditing,
     handleScroll,
-  } = useChatPageLogic({ roomId });
+  } = useChatPageLogic({ roomId: roomId || "" });
 
   if (!roomId) {
     return (
@@ -89,8 +88,8 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
           handleEditMessage={handleEditMessage}
           setMessageToDelete={setMessageToDelete}
           setDeleteDialogOpen={setDeleteDialogOpen}
-          messagesContainerRef={messagesContainerRef}
-          bottomRef={bottomRef}
+          messagesContainerRef={messagesContainerRef as React.RefObject<HTMLDivElement>}
+          bottomRef={bottomRef as React.RefObject<HTMLDivElement>}
           handleScroll={handleScroll}
         />
 
@@ -101,7 +100,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
           removeSelectedFile={removeSelectedFile}
           clearAllFiles={clearAllFiles}
           sendMessage={sendMessage}
-          fileInputRef={fileInputRef}
+          fileInputRef={fileInputRef as React.RefObject<HTMLInputElement>}
           handleFileSelect={handleFileSelect}
           userRemovedFromRoom={userRemovedFromRoom}
         />

@@ -1,6 +1,5 @@
 import React from "react";
-import { DesktopLayout } from "@/components/home/DesktopLayout";
-import { MobileLayout } from "@/components/home/MobileLayout";
+import { ResponsiveLayout } from "@/components/home/ResponsiveLayout";
 import { useHomePageLogic } from "@/hooks/useHomePageLogic";
 
 const Home: React.FC = () => {
@@ -31,31 +30,23 @@ const Home: React.FC = () => {
     formatUnreadCount,
   } = useHomePageLogic();
 
-  const commonProps = {
-    rooms,
-    selectedRoomId,
-    selectedRoomName,
-    unreadCounts,
-    open,
-    setOpen,
-    roomName,
-    setRoomName,
-    isCreatingRoom,
-    handleCreateRoom,
-    handleRoomSelect,
-    formatUnreadCount,
-    searchTerm,
-    setSearchTerm,
-  };
-
   return (
     <div className="h-[calc(100vh-8rem)] relative">
-      {/* Desktop Layout */}
-      <DesktopLayout {...commonProps} />
-
-      {/* Mobile/Tablet Layout */}
-      <MobileLayout
-        {...commonProps}
+      <ResponsiveLayout
+        rooms={rooms}
+        selectedRoomId={selectedRoomId}
+        selectedRoomName={selectedRoomName}
+        unreadCounts={unreadCounts}
+        open={open}
+        setOpen={setOpen}
+        roomName={roomName}
+        setRoomName={setRoomName}
+        isCreatingRoom={isCreatingRoom}
+        handleCreateRoom={handleCreateRoom}
+        handleRoomSelect={handleRoomSelect}
+        formatUnreadCount={formatUnreadCount}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         totalUnreadCount={totalUnreadCount}
