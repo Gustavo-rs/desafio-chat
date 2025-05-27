@@ -1,7 +1,7 @@
 import { useUser } from "@/store/auth-store";
-import { useEffect, useRef, useState } from "react";
-import { io, Socket } from "socket.io-client";
+import { useEffect, useRef, useState, useCallback } from "react";
 import messageService from "@/services/message-service";
+import { useSocketMessages } from "@/hooks/useSocketMessages";
 import { Button } from "@/components/ui/button";
 import { 
   Dialog,
@@ -36,7 +36,6 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
   const isLoadingOlderMessages = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const socketRef = useRef<Socket | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { user } = useUser();
@@ -52,7 +51,6 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
       created_at: msg.created_at,
       updated_at: msg.updated_at,
       status: msg.status || 'ACTIVE',
-      // New multiple files support
       files: msg.files ? msg.files.map((file: any) => ({
         id: file.id,
         file_name: file.file_name,
@@ -78,111 +76,46 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
     }
   };  
 
-  useEffect(() => {
-    if (!roomId) return;
-
-    setPage(1);
-    setMessages([]);
-    setHasMore(true);
-    setUserRemovedFromRoom(false);
-    
-    setLoadingUsers(true);
-    
-    listMessagesFromRoom();
-
-    const socket = io(import.meta.env.VITE_SOCKET_URL, {
-      withCredentials: true
-    });
-
-    socketRef.current = socket;
-
-    socket.on("connect", () => {
-      console.log("ChatPage: Socket conectado");
-      socket.emit("join_room", roomId);
-      socket.emit("start_viewing_room", roomId);
-    });
-
-    const handleVisibilityChange = () => {
-      if (socket.connected) {
-        if (document.hidden) {
-          console.log("ChatPage: Aba ficou inativa, parando visualização");
-          socket.emit("stop_viewing_room", roomId);
-        } else {
-          console.log("ChatPage: Aba ficou ativa, iniciando visualização");
-          socket.emit("start_viewing_room", roomId);
-        }
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    socket.on("receive_message", (data: any) => {
-      console.log("ChatPage: Nova mensagem recebida:", data);
-      
-      const { roomId: eventRoomId, message } = data;
-      
-      if (eventRoomId === roomId && message.user.id !== user?.user.id) {
-        const normalizedMessage = normalizeMessage(message);
-        setMessages((prev) => [...prev, normalizedMessage]);
-        scrollToBottom();
-      }
-    });
-
-    socket.on("message_deleted", ({ messageId, message: updatedMessage }) => {
-      console.log("ChatPage: Mensagem deletada:", messageId, updatedMessage);
+  // Callbacks para o hook de socket - usando useRef para evitar dependências
+  const callbacksRef = useRef({
+    handleMessageReceived: (message: Message) => {
+      setMessages((prev) => [...prev, message]);
+      scrollToBottom();
+    },
+    handleMessageDeleted: (messageId: string, updatedMessage?: Message) => {
       if (updatedMessage) {
-        const normalizedMessage = normalizeMessage(updatedMessage);
         setMessages((prev) => prev.map(msg => 
-          msg.id === messageId ? normalizedMessage : msg
+          msg.id === messageId ? updatedMessage : msg
         ));
       }
-    });
-
-    socket.on("message_updated", ({ messageId, content, message: updatedMessage }) => {
-      console.log("ChatPage: Mensagem editada:", messageId, content, updatedMessage);
+    },
+    handleMessageUpdated: (messageId: string, content: string, updatedMessage?: Message) => {
       if (updatedMessage) {
-        const normalizedMessage = normalizeMessage(updatedMessage);
         setMessages((prev) => prev.map(msg => 
-          msg.id === messageId ? normalizedMessage : msg
+          msg.id === messageId ? updatedMessage : msg
         ));
       }
-    });
-
-    socket.on("room_users_updated", ({ roomId: updatedRoomId, users, count }) => {
-      if (updatedRoomId === roomId) {
-        console.log("ChatPage: Lista de usuários atualizada:", users);
-        setOnlineUsers(users);
-        setLoadingUsers(false);
-      }
-    });
-
-    socket.on("user_joined_room", ({ userId, username, roomId: joinedRoomId }) => {
-      if (joinedRoomId === roomId && userId !== user?.user.id) {
-        console.log("ChatPage: Usuário entrou na sala:", username);
-        
-        const systemMessage: Message = {
-          id: `system-join-${Date.now()}-${userId}`,
-          user: {
-            id: 'system',
-            username: 'Sistema'
-          },
-          content: `${username} entrou na sala`,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          status: 'ACTIVE',
-          isSystemMessage: true,
-          systemMessageType: 'user_joined'
-        };
-        
-        setMessages((prev) => [...prev, systemMessage]);
-        scrollToBottom();
-      }
-    });
-
-    socket.on("user_left_room", ({ userId, username, roomId: leftRoomId }) => {
-      if (leftRoomId === roomId && userId !== user?.user.id && !userRemovedFromRoom) {
-        console.log("ChatPage: Usuário saiu da sala:", username);
-        
+    },
+    handleUserJoined: (userId: string, username: string, roomId: string) => {
+      const systemMessage: Message = {
+        id: `system-join-${Date.now()}-${userId}`,
+        user: {
+          id: 'system',
+          username: 'Sistema'
+        },
+        content: `${username} entrou na sala`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        status: 'ACTIVE',
+        isSystemMessage: true,
+        systemMessageType: 'user_joined'
+      };
+      
+      setMessages((prev) => [...prev, systemMessage]);
+      scrollToBottom();
+    },
+    handleUserLeft: (userId: string, username: string, roomId: string) => {
+      setMessages((prev) => {
         const systemMessage: Message = {
           id: `system-leave-${Date.now()}-${userId}`,
           user: {
@@ -197,52 +130,42 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
           systemMessageType: 'user_left'
         };
         
-        setMessages((prev) => [...prev, systemMessage]);
-        scrollToBottom();
+        return [...prev, systemMessage];
+      });
+      scrollToBottom();
+    },
+    handleMemberAdded: (roomId: string, member: any) => {
+      const systemMessage: Message = {
+        id: `system-member-added-${Date.now()}-${member.user.id}`,
+        user: {
+          id: 'system',
+          username: 'Sistema'
+        },
+        content: `${member.user.username} foi adicionado à sala`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        status: 'ACTIVE',
+        isSystemMessage: true,
+        systemMessageType: 'member_added'
+      };
+      
+      setMessages((prev) => [...prev, systemMessage]);
+      scrollToBottom();
+    },
+    handleMemberRemoved: (roomId: string, removedUserId: string) => {
+      // Se o usuário atual foi removido, não mostrar mais mensagens
+      if (removedUserId === user?.user?.id) {
+        console.log("ChatPage: Usuário atual foi removido da sala, limpando chat");
+        setMessages([]);
+        setUserRemovedFromRoom(true);
+        return;
       }
-    });
-
-    socket.on("member_added", ({ roomId: eventRoomId, member }) => {
-      if (eventRoomId === roomId) {
-        console.log("ChatPage: Membro adicionado à sala:", member);
-        
-        const systemMessage: Message = {
-          id: `system-member-added-${Date.now()}-${member.user.id}`,
-          user: {
-            id: 'system',
-            username: 'Sistema'
-          },
-          content: `${member.user.username} foi adicionado à sala`,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          status: 'ACTIVE',
-          isSystemMessage: true,
-          systemMessageType: 'member_added'
-        };
-        
-        setMessages((prev) => [...prev, systemMessage]);
-        scrollToBottom();
-      }
-    });
-
-    socket.on("member_removed", ({ roomId: eventRoomId, removedUserId }) => {
-      if (eventRoomId === roomId) {
-        console.log("ChatPage: Membro removido da sala:", removedUserId);
-        
-        // Se o usuário atual foi removido, não mostrar mais mensagens
-        if (removedUserId === user?.user?.id) {
-          console.log("ChatPage: Usuário atual foi removido da sala, limpando chat");
-          setMessages([]);
-          setUserRemovedFromRoom(true);
-          // Não precisamos fazer mais nada aqui, pois a HomePage já vai lidar com a remoção da sala
-          return;
-        }
-        
+      
+      setMessages((prev) => {
         // Para outros usuários removidos, mostrar mensagem do sistema
-        const removedUserMessage = messages.find(msg => msg.user.id === removedUserId);
+        const removedUserMessage = prev.find(msg => msg.user.id === removedUserId);
         const removedUsername = removedUserMessage?.user.username || 'Usuário';
         
-        // Criar mensagem do sistema
         const systemMessage: Message = {
           id: `system-member-removed-${Date.now()}-${removedUserId}`,
           user: {
@@ -257,21 +180,74 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
           systemMessageType: 'member_removed'
         };
         
-        setMessages((prev) => [...prev, systemMessage]);
-        scrollToBottom();
-      }
-    });
+        return [...prev, systemMessage];
+      });
+      scrollToBottom();
+    },
+    handleRoomUsersUpdated: (roomId: string, users: any[], count: number) => {
+      setOnlineUsers(users);
+      setLoadingUsers(false);
+    }
+  });
 
-    return () => {
-      console.log("ChatPage: Desconectando socket e saindo da sala");
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      if (socket.connected) {
-        socket.emit("leave_room", roomId);
-        // Notificar que parou de visualizar a sala
-        socket.emit("stop_viewing_room", roomId);
-      }
-      socket.disconnect();
-    };
+  // Callbacks estáveis para o hook
+  const handleMessageReceived = useCallback((message: Message) => {
+    callbacksRef.current.handleMessageReceived(message);
+  }, []);
+
+  const handleMessageDeleted = useCallback((messageId: string, updatedMessage?: Message) => {
+    callbacksRef.current.handleMessageDeleted(messageId, updatedMessage);
+  }, []);
+
+  const handleMessageUpdated = useCallback((messageId: string, content: string, updatedMessage?: Message) => {
+    callbacksRef.current.handleMessageUpdated(messageId, content, updatedMessage);
+  }, []);
+
+  const handleUserJoined = useCallback((userId: string, username: string, roomId: string) => {
+    callbacksRef.current.handleUserJoined(userId, username, roomId);
+  }, []);
+
+  const handleUserLeft = useCallback((userId: string, username: string, roomId: string) => {
+    callbacksRef.current.handleUserLeft(userId, username, roomId);
+  }, []);
+
+  const handleMemberAdded = useCallback((roomId: string, member: any) => {
+    callbacksRef.current.handleMemberAdded(roomId, member);
+  }, []);
+
+  const handleMemberRemoved = useCallback((roomId: string, removedUserId: string) => {
+    callbacksRef.current.handleMemberRemoved(roomId, removedUserId);
+  }, []);
+
+  const handleRoomUsersUpdated = useCallback((roomId: string, users: any[], count: number) => {
+    callbacksRef.current.handleRoomUsersUpdated(roomId, users, count);
+  }, []);
+
+  // Hook para gerenciar socket
+  const { sendMessage: socketSendMessage, isConnected } = useSocketMessages({
+    roomId,
+    currentUserId: user?.user?.id,
+    onMessageReceived: handleMessageReceived,
+    onMessageDeleted: handleMessageDeleted,
+    onMessageUpdated: handleMessageUpdated,
+    onUserJoined: handleUserJoined,
+    onUserLeft: handleUserLeft,
+    onMemberAdded: handleMemberAdded,
+    onMemberRemoved: handleMemberRemoved,
+    onRoomUsersUpdated: handleRoomUsersUpdated
+  });
+
+  // Inicializar dados da sala
+  useEffect(() => {
+    if (!roomId) return;
+
+    setPage(1);
+    setMessages([]);
+    setHasMore(true);
+    setUserRemovedFromRoom(false);
+    setLoadingUsers(true);
+    
+    listMessagesFromRoom();
   }, [roomId]);
 
   useEffect(() => {
@@ -303,7 +279,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
   const sendMessage = async () => {
     if (!roomId) return;
     
-    if ((input.trim() || selectedFiles.length > 0) && socketRef.current) {
+    if ((input.trim() || selectedFiles.length > 0) && isConnected) {
       try {
         const response = await messageService.createMessageWithMultipleFiles(
           input, 
@@ -312,16 +288,13 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
         );
         const message = response.data;
 
-        socketRef.current.emit("send_message", message);
+        socketSendMessage(message);
 
-        const normalizedMessage = normalizeMessage(message);
-        setMessages((prev) => [...prev, normalizedMessage]);
         setInput("");
         setSelectedFiles([]);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
-        scrollToBottom();
       } catch (error) {
         console.error("Erro ao enviar mensagem:", error);
       }
@@ -387,6 +360,8 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
     setEditingMessageId(null);
     setEditingContent("");
   };
+
+  
 
   const listMessagesFromRoom = async (pageNumber = 1) => {
     if (!roomId) return;

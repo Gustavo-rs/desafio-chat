@@ -5,9 +5,7 @@ import './index.css';
 import { AuthProvider } from './store/auth-store';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
     <AuthProvider>
       <App />
     </AuthProvider>
-  </React.StrictMode>
 );
