@@ -1,4 +1,4 @@
-import React from "react";
+
 import type { APIRoom } from "@/types/api";
 import { RoomHeader } from "@/components/rooms/RoomHeader";
 import { RoomSearch } from "@/components/rooms/RoomSearch";

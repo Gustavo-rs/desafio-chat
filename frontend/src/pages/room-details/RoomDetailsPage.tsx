@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Loader2 } from "lucide-react";
 import { RoomDetailsHeader } from "@/components/room-details/RoomDetailsHeader";
 import { RoomInfo } from "@/components/room-details/RoomInfo";
@@ -12,7 +12,7 @@ interface RoomDetailsPageProps {
   roomName?: string;
 }
 
-export default function RoomDetailsPage({ roomId, roomName }: RoomDetailsPageProps) {
+export default function RoomDetailsPage({ roomId }: RoomDetailsPageProps) {
   const { roomDetails, loadingDetails, fetchRoomDetails } = useRoomDetailsLogic({ roomId });
 
   if (!roomId) {

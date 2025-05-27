@@ -1,5 +1,4 @@
-import type { AxiosRequestConfig, AxiosResponse } from 'axios';
-
+import axios from 'axios';
 import http from './http';
 
 interface ListOptions {
@@ -20,7 +19,7 @@ export abstract class BaseService<T, C = Partial<T>> {
     ).toString();
   }
 
-  protected parse<R>(response: AxiosResponse<R>) {
+  protected parse<R>(response: any) {
     return response.data;
   }
 
@@ -36,7 +35,7 @@ export abstract class BaseService<T, C = Partial<T>> {
     return this.parse<T>(response);
   }
 
-  async create(data: C, config?: AxiosRequestConfig<C>) {
+  async create(data: C, config?: any) {
     const response = await this.api.post(this.basePath, data, config);
     return this.parse<T>(response);
   }

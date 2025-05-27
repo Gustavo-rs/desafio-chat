@@ -6,7 +6,6 @@ const Home: React.FC = () => {
   const {
     // State
     rooms,
-    loading,
     isCreatingRoom,
     roomName,
     selectedRoomId,
@@ -16,7 +15,6 @@ const Home: React.FC = () => {
     open,
     activeTab,
     totalUnreadCount,
-    user,
     
     // Setters
     setRoomName,
