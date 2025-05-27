@@ -1,4 +1,3 @@
-import axios from 'axios';
 import http from './http';
 
 interface ListOptions {
@@ -19,25 +18,25 @@ export abstract class BaseService<T, C = Partial<T>> {
     ).toString();
   }
 
-  protected parse<R>(response: any) {
+  protected parse(response: any) {
     return response.data;
   }
 
   async get(id: string | number) {
     const response = await this.api.get(this.path(`${id}`));
-    return this.parse<T>(response);
+    return this.parse(response);
   }
 
   async list(options?: ListOptions) {
     const response = await this.api.get(this.basePath, {
       params: { page: 1, rpp: 10, ...options },
     });
-    return this.parse<T>(response);
+    return this.parse(response);
   }
 
   async create(data: C, config?: any) {
     const response = await this.api.post(this.basePath, data, config);
-    return this.parse<T>(response);
+    return this.parse(response);
   }
 
   async delete(id: string | number) {
