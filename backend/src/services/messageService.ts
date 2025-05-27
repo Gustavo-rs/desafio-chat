@@ -252,6 +252,7 @@ export class MessageService {
             username: true,
           },
         },
+        files: true,
       },
     });
 
@@ -299,6 +300,7 @@ export class MessageService {
             username: true,
           },
         },
+        files: true,
       },
     });
    
