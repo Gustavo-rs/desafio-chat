@@ -120,7 +120,7 @@ describe('useMediaQuery', () => {
   });
 
   it('deve reagir a mudanças na query', () => {
-    const { result, rerender } = renderHook(
+    const { rerender } = renderHook(
       ({ query }) => useMediaQuery(query),
       { initialProps: { query: '(min-width: 768px)' } }
     );
