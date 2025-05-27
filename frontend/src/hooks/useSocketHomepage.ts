@@ -77,16 +77,16 @@ export const useSocketHomepage = ({
       if (selectedRoomId && selectedRoomId === roomId.toString()) {
         console.log("useSocketHomepage: Mensagem da sala atual, não incrementando contador");
       } else {
-        setUnreadCountsRef.current(prev => {
-          const newCount = (prev[roomId.toString()] || 0) + 1;
-          console.log("Novo contador calculado:", newCount);
-          const newCounts = {
-            ...prev,
-            [roomId.toString()]: newCount
-          };
-          console.log("Novos contadores:", newCounts);
-          return newCounts;
-        });
+      setUnreadCountsRef.current(prev => {
+        const newCount = (prev[roomId.toString()] || 0) + 1;
+        console.log("Novo contador calculado:", newCount);
+        const newCounts = {
+          ...prev,
+          [roomId.toString()]: newCount
+        };
+        console.log("Novos contadores:", newCounts);
+        return newCounts;
+      });
       }
 
       // Atualiza a última mensagem da sala e move para o topo
