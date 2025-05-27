@@ -52,7 +52,7 @@ export const RoomList: React.FC<RoomListProps> = ({
 
   return (
     <div className="space-y-2 md:space-y-3 overflow-y-auto flex-1 pr-1 md:pr-2 min-h-0">
-      {filteredRooms.map((room, index) => (
+      {filteredRooms.map((room) => (
         <RoomItem
           key={room.id}
           room={room}

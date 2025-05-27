@@ -1,5 +1,4 @@
 import React from "react";
-import { Button } from "@/components/ui/button";
 import { Paperclip, X, File, FileText, FileSpreadsheet, Image } from "lucide-react";
 
 interface MessageInputProps {
@@ -101,7 +100,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   userRemovedFromRoom,
 }) => {
   const [isDragOver, setIsDragOver] = React.useState(false);
-  const [dragCounter, setDragCounter] = React.useState(0);
 
   if (userRemovedFromRoom) {
     return null;
@@ -121,7 +119,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setDragCounter(prev => prev + 1);
     if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
       setIsDragOver(true);
     }
@@ -137,7 +134,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     const y = e.clientY;
     
     if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
-      setDragCounter(0);
       setIsDragOver(false);
     }
   };
@@ -151,7 +147,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
-    setDragCounter(0);
     
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       processFiles(e.dataTransfer.files);
@@ -164,7 +159,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       // Pequeno delay para permitir que o drop local seja processado primeiro
       setTimeout(() => {
         setIsDragOver(false);
-        setDragCounter(0);
       }, 100);
     };
 
@@ -172,7 +166,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       // Se o drop não foi na nossa área, reset o estado
       if (!e.target || !(e.target as Element).closest('[data-drop-zone]')) {
         setIsDragOver(false);
-        setDragCounter(0);
       }
     };
 

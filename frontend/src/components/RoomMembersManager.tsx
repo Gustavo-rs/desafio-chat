@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -32,7 +32,7 @@ export default function RoomMembersManager({
   onMembersUpdate,
 }: RoomMembersManagerProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [availableUsers, setAvailableUsers] = useState<AvailableUser[]>([]);
+
   const [allUsers, setAllUsers] = useState<AvailableUser[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -49,7 +49,6 @@ export default function RoomMembersManager({
     try {
       // Buscar usuários disponíveis (que não são membros da sala)
       const response = await roomsService.getAvailableUsers(roomId);
-      setAvailableUsers(response.data);
       console.log('Usuários disponíveis:', response.data);
       
       // Buscar todos os usuários para permitir busca por nome

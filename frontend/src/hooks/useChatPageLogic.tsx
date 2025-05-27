@@ -80,14 +80,14 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
         ));
       }
     },
-    handleMessageUpdated: (messageId: string, content: string, updatedMessage?: Message) => {
+    handleMessageUpdated: (messageId: string, _content: string, updatedMessage?: Message) => {
       if (updatedMessage) {
         setMessages((prev) => prev.map(msg => 
           msg.id === messageId ? updatedMessage : msg
         ));
       }
     },
-    handleUserJoined: (userId: string, username: string, roomId: string) => {
+    handleUserJoined: (userId: string, username: string, _roomId: string) => {
       const systemMessage: Message = {
         id: `system-join-${Date.now()}-${userId}`,
         user: {
@@ -105,7 +105,7 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
       setMessages((prev) => [...prev, systemMessage]);
       scrollToBottom();
     },
-    handleUserLeft: (userId: string, username: string, roomId: string) => {
+    handleUserLeft: (userId: string, username: string, _roomId: string) => {
       setMessages((prev) => {
         const systemMessage: Message = {
           id: `system-leave-${Date.now()}-${userId}`,
@@ -125,7 +125,7 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
       });
       scrollToBottom();
     },
-    handleMemberAdded: (roomId: string, member: any) => {
+    handleMemberAdded: (_roomId: string, member: any) => {
       const systemMessage: Message = {
         id: `system-member-added-${Date.now()}-${member.user.id}`,
         user: {
@@ -143,7 +143,7 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
       setMessages((prev) => [...prev, systemMessage]);
       scrollToBottom();
     },
-    handleMemberRemoved: (roomId: string, removedUserId: string) => {
+    handleMemberRemoved: (_roomId: string, removedUserId: string) => {
       // Se o usuário atual foi removido, não mostrar mais mensagens
       if (removedUserId === user?.user?.id) {
         console.log("ChatPage: Usuário atual foi removido da sala, limpando chat");
@@ -175,7 +175,7 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
       });
       scrollToBottom();
     },
-    handleRoomUsersUpdated: (roomId: string, users: any[], count: number) => {
+    handleRoomUsersUpdated: (_roomId: string, users: any[], _count: number) => {
       setOnlineUsers(users);
       setLoadingUsers(false);
     }
