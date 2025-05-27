@@ -164,7 +164,7 @@ export class MessageService {
       pages,
       currentPage: page,
       limit,
-      messages: orderedMessages.map(msg => ({
+      messages: orderedMessages.map((msg: any) => ({
         ...msg,
         roomId: msg.room_id,
         userId: msg.user_id,
