@@ -1,20 +1,25 @@
-# Usa imagem oficial do Node
+# Dockerfile
 FROM node:18
 
-# Cria diretório da aplicação
 WORKDIR /app
 
-# Copia apenas arquivos de dependência primeiro para usar cache do Docker
+# Copia apenas os arquivos de dependência primeiro para usar o cache de build
 COPY package*.json ./
 
-# Instala as dependências
+# Instala dependências (inclui @prisma/client e prisma)
 RUN npm install
 
-# Copia todo o código da aplicação
+# Copia o restante do código
 COPY . .
 
-# Compila TypeScript para JavaScript
+# Gera o Prisma Client (necessário para rodar depois)
+RUN npx prisma generate
+
+# Compila o projeto TypeScript
 RUN npm run build
 
-# Inicia o servidor
+# Expõe a porta (ajuste se necessário)
+EXPOSE 3000
+
+# Inicia o servidor com o código já compilado
 CMD ["node", "dist/server.js"]
