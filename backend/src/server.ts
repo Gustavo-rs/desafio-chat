@@ -117,6 +117,9 @@ const removeUserFromAllRooms = async (socketId: string, userId: string) => {
   }
 };
 
+// Trust proxy for Railway/Heroku/etc
+app.set('trust proxy', 1);
+
 app.use(cookieParser());
 app.use(express.json());
 app.use(cors(corsOptions));
@@ -250,6 +253,9 @@ app.use(errorHandler);
 
 server.listen(config.port, () => {
   console.log(`🚀 Server running on port ${config.port}`);
+  console.log(`📊 Environment: ${process.env.NODE_ENV}`);
+  console.log(`🔗 Database: ${config.database.url ? 'Connected' : 'Not configured'}`);
+  console.log(`🌐 CORS Origins: ${JSON.stringify(allowedOrigins)}`);
 });
 
 // Função para obter visualizadores ativos de uma sala
