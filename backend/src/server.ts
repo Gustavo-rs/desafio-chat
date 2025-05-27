@@ -19,8 +19,21 @@ const app = express();
 const server = http.createServer(app);
 
 // Configure CORS
+const allowedOrigins = [
+  process.env.BASE_URL_FRONTEND
+].filter(Boolean);
+
 const corsOptions = {
-  origin: process.env.BASE_URL_FRONTEND,
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'), false);
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
