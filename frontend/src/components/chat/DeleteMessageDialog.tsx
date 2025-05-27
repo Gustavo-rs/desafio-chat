@@ -33,7 +33,7 @@ export const DeleteMessageDialog: React.FC<DeleteMessageDialogProps> = ({
           <Button variant="outline" onClick={onCancel}>
             Cancelar
           </Button>
-          <Button variant="destructive" onClick={onConfirm}>
+          <Button variant="default" onClick={onConfirm} className="text-white">
             Excluir
           </Button>
         </DialogFooter>

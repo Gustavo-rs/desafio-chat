@@ -3,6 +3,7 @@ import Login from "../pages/auth/LoginPage.tsx";
 import HomePage from "../pages/HomePage.tsx";
 
 import { PrivateRoute } from "../components/PrivateRoute";
+import { PublicRoute } from "../components/PublicRoute";
 import RegisterPage from "../pages/auth/RegisterPage.tsx";
 import MainLayout from "../layouts/MainLayout";
 import { useUser } from "../store/auth-store";
@@ -26,8 +27,8 @@ export const AppRoutes = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<RootRedirect />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
 
         <Route element={<PrivateRoute><MainLayout /></PrivateRoute>}>
           <Route path="/home" element={<HomePage />} />
