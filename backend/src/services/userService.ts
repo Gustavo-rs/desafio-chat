@@ -11,16 +11,13 @@ export class UserService {
   private setAuthCookie(res: Response, userId: string, username: string) {
     const token = jwt.sign({ userId, username }, config.jwtSecret!, { expiresIn: "24h" });
     
-    // Configuração específica para produção cross-origin (Vercel + Railway)
-    const isProduction = process.env.NODE_ENV === 'production';
     
     res.cookie('token', token, {
       httpOnly: true,
-      secure: isProduction, // HTTPS obrigatório em produção
-      sameSite: isProduction ? 'none' : 'lax', // 'none' permite cross-origin em produção
-      domain: isProduction ? undefined : undefined, // Sem domain específico para permitir cross-origin
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      path: '/' // Garantir que o cookie funciona em todas as rotas
+      secure: true,
+      sameSite: 'none',
+      maxAge: 24 * 60 * 60 * 1000,
+      path: '/'
     });
     return token;
   }
