@@ -261,7 +261,7 @@ const Home: React.FC = () => {
       {selectedRoomId && (
         <div className={`
           lg:absolute lg:left-[calc(30%+1rem)] lg:top-0 lg:w-[50%] lg:h-full lg:block
-          ${activeTab === "chat" ? "block" : "hidden"} lg:!block
+          ${activeTab === "chat" ? "absolute top-[60px] left-0 right-0 bottom-0 z-10" : "hidden"} lg:!block
         `}>
           <ChatPage roomId={selectedRoomId} roomName={selectedRoomName} />
         </div>
