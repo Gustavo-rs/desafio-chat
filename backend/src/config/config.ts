@@ -7,7 +7,7 @@ if (!process.env.JWT_SECRET) {
 }
 
 export const config = {
-  port: process.env.PORT,
+  port: process.env.PORT || 3000,
   jwtSecret: process.env.JWT_SECRET,
   corsOrigin: process.env.CORS_ORIGIN,
   database: {
