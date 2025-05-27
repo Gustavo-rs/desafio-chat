@@ -49,7 +49,7 @@ export class RoomService {
     });
 
     // Emitir evento apenas para os membros da sala
-    const memberIds = room.members.map(member => member.user_id);
+    const memberIds = room.members.map((member: { user_id: string }) => member.user_id);
     io.to(memberIds).emit('room_created', room);
     
     return room;
@@ -170,7 +170,7 @@ export class RoomService {
     });
 
     // Map rooms and calculate last activity
-    const roomsWithActivity = rooms.map(room => {
+    const roomsWithActivity = rooms.map((room: any) => {
       const lastMessage = room.messages[0] || null;
       const lastActivity = lastMessage ? lastMessage.created_at : room.created_at;
       
@@ -185,12 +185,12 @@ export class RoomService {
     });
 
     // Sort by last activity (most recent first)
-    roomsWithActivity.sort((a, b) => {
+    roomsWithActivity.sort((a: any, b: any) => {
       return new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime();
     });
 
     // Remove the temporary lastActivity field before returning
-    return roomsWithActivity.map(({ lastActivity, ...room }) => room);
+    return roomsWithActivity.map(({ lastActivity, ...room }: { lastActivity: any; [key: string]: any }) => room);
   }
 
   async getRoomMessages(roomId: string, userId: string) {
@@ -241,20 +241,20 @@ export class RoomService {
     }
 
     // Verificar se o usuário é membro da sala
-    const userMembership = room.members.find(member => member.user_id === userId);
+    const userMembership = room.members.find((member: { user_id: string; role: string }) => member.user_id === userId);
     if (!userMembership) {
       throw new ForbiddenError('You are not a member of this room');
     }
 
     // Calculate statistics
     const totalMessages = room.messages.length;
-    const activeMessages = room.messages.filter(msg => msg.status === 'ACTIVE').length;
-    const editedMessages = room.messages.filter(msg => msg.status === 'EDITED').length;
-    const deletedMessages = room.messages.filter(msg => msg.status === 'DELETED').length;
+    const activeMessages = room.messages.filter((msg: { status: string }) => msg.status === 'ACTIVE').length;
+    const editedMessages = room.messages.filter((msg: { status: string }) => msg.status === 'EDITED').length;
+    const deletedMessages = room.messages.filter((msg: { status: string }) => msg.status === 'DELETED').length;
 
     // Get participants with message count
     const participantMap = new Map();
-    room.messages.forEach(msg => {
+    room.messages.forEach((msg: { user: { id: string; username: string }; created_at: Date }) => {
       const userId = msg.user.id;
       if (participantMap.has(userId)) {
         participantMap.get(userId).messageCount++;
@@ -273,9 +273,9 @@ export class RoomService {
 
     // Get shared files (messages with files)
     const sharedFiles = room.messages
-      .filter(msg => msg.files && msg.files.length > 0 && msg.status !== 'DELETED')
-      .flatMap(msg => 
-        msg.files.map(file => ({
+      .filter((msg: { files: any[]; status: string }) => msg.files && msg.files.length > 0 && msg.status !== 'DELETED')
+      .flatMap((msg: { files: any[]; user: { username: string }; created_at: Date }) => 
+        msg.files.map((file: { id: string; file_name?: string; file_type?: string; file_url: string; file_size?: number }) => ({
           id: file.id,
           fileName: file.file_name || 'Arquivo',
           fileType: file.file_type || 'application/octet-stream',
@@ -321,7 +321,7 @@ export class RoomService {
     }
 
     // Verificar se o usuário que está adicionando é ADMIN
-    const adminMembership = room.members.find(member => member.user_id === adminUserId);
+    const adminMembership = room.members.find((member: { user_id: string; role: string }) => member.user_id === adminUserId);
     if (!adminMembership || adminMembership.role !== 'ADMIN') {
       throw new ForbiddenError('Only room admins can add members');
     }
@@ -379,7 +379,7 @@ export class RoomService {
       select: { user_id: true },
     });
     
-    const memberIds = allMembers.map(member => member.user_id);
+    const memberIds = allMembers.map((member: { user_id: string }) => member.user_id);
     io.to(memberIds).emit('member_added', {
       roomId,
       member: newMember,
@@ -402,7 +402,7 @@ export class RoomService {
     }
 
     // Verificar se o usuário que está removendo é ADMIN
-    const adminMembership = room.members.find(member => member.user_id === adminUserId);
+    const adminMembership = room.members.find((member: { user_id: string; role: string }) => member.user_id === adminUserId);
     if (!adminMembership || adminMembership.role !== 'ADMIN') {
       throw new ForbiddenError('Only room admins can remove members');
     }
@@ -413,7 +413,7 @@ export class RoomService {
     }
 
     // Verificar se o usuário é membro
-    const memberToRemove = room.members.find(member => member.user_id === userIdToRemove);
+    const memberToRemove = room.members.find((member: { user_id: string; role: string }) => member.user_id === userIdToRemove);
     if (!memberToRemove) {
       throw new NotFoundError('User is not a member of this room');
     }
@@ -434,7 +434,7 @@ export class RoomService {
       select: { user_id: true },
     });
     
-    const memberIds = remainingMembers.map(member => member.user_id);
+    const memberIds = remainingMembers.map((member: { user_id: string }) => member.user_id);
     // Adicionar o usuário removido à lista para que ele também receba a notificação
     const allNotificationIds = [...memberIds, userIdToRemove];
     
@@ -464,7 +464,7 @@ export class RoomService {
     }
 
     // Verificar se o usuário é ADMIN
-    const adminMembership = room.members.find(member => member.user_id === adminUserId);
+    const adminMembership = room.members.find((member: { user_id: string; role: string }) => member.user_id === adminUserId);
     console.log(`👤 Admin membership:`, adminMembership);
     
     if (!adminMembership || adminMembership.role !== 'ADMIN') {

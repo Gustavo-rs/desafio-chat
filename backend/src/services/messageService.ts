@@ -191,7 +191,7 @@ export class MessageService {
       },
     });
 
-    return unreadCounts.map((count: any) => ({
+    return unreadCounts.map((count: { room_id: string; _count: { _all: number } }) => ({
       roomId: count.room_id,
       count: count._count._all,
     }));
