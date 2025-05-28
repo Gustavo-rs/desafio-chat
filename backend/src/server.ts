@@ -13,7 +13,10 @@ import { authenticate } from "./middlewares/auth";
 import roomsRoutes from "./routes/rooms";
 import usersRoutes from "./routes/users";
 import messagesRoutes from "./routes/messages";
+import monitoringRoutes from "./routes/monitoring";
 import { MessageService } from "./services/messageService";
+import { redisAdapter } from "./config/redis";
+import { ScalingService } from "./services/scalingService";
 
 const app = express();
 const server = http.createServer(app);
@@ -43,12 +46,18 @@ const io = new Server(server, {
   cors: corsOptions
 });
 
+// Configurar Redis Adapter para escalabilidade
+io.adapter(redisAdapter);
+
 export { io };
 
-// Mapa para rastrear usuários online por sala
+// Instância do serviço de escalabilidade
+const scalingService = ScalingService.getInstance();
+
+// Mapa para rastrear usuários online por sala (mantido para compatibilidade)
 const roomUsers = new Map<string, Map<string, {userId: string, username: string, socketId: string}>>();
 
-// Mapa para rastrear usuários que estão atualmente visualizando cada sala
+// Mapa para rastrear usuários que estão atualmente visualizando cada sala (mantido para compatibilidade)
 const activeViewers = new Map<string, Set<string>>(); // roomId -> Set<userId>
 
 // Função para atualizar lista de usuários online de uma sala
@@ -144,6 +153,7 @@ app.use((req, res, next) => {
 app.use("/rooms", authenticate, roomsRoutes);
 app.use("/users", usersRoutes);
 app.use("/messages", authenticate, messagesRoutes);
+app.use("/monitoring", monitoringRoutes);
 
 app.get("/", (req, res) => {
   res.send("Chat server is running!");
