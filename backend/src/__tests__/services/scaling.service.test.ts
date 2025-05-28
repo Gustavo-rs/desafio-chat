@@ -1,11 +1,9 @@
-// Mock do server.ts para evitar dependência circular
 jest.mock('../../server', () => ({
   io: {
     engine: { clientsCount: 0 },
   },
 }));
 
-// Mock do módulo Redis config
 jest.mock('../../config/redis', () => ({
   redisClient: {
     hset: jest.fn(),
@@ -26,7 +24,6 @@ jest.mock('../../config/redis', () => ({
   },
 }));
 
-// Mock process.env
 const mockEnv = process.env;
 beforeAll(() => {
   process.env = { ...mockEnv, SERVER_ID: 'test-server' };
@@ -51,7 +48,6 @@ describe('ScalingService', () => {
 
   describe('addUserToRoom', () => {
     it('should add user to room successfully', async () => {
-      // Arrange
       const roomId = 'room-123';
       const userId = 'user-456';
       const username = 'testuser';
@@ -59,10 +55,8 @@ describe('ScalingService', () => {
       (mockRedis.hset as jest.Mock).mockResolvedValue(1);
       (mockRedis.expire as jest.Mock).mockResolvedValue(1);
 
-      // Act
       await scalingService.addUserToRoom(roomId, userId, username);
 
-      // Assert
       expect(mockRedis.hset).toHaveBeenCalledWith(
         'room:room-123:users',
         'user-456',
@@ -72,12 +66,10 @@ describe('ScalingService', () => {
     });
 
     it('should reject invalid input parameters', async () => {
-      // Arrange
       const invalidRoomId = '';
       const userId = 'user-456';
       const username = 'testuser';
 
-      // Act & Assert
       await expect(
         scalingService.addUserToRoom(invalidRoomId, userId, username)
       ).rejects.toThrow('Invalid input parameters');
@@ -86,7 +78,6 @@ describe('ScalingService', () => {
     });
 
     it('should sanitize room ID and user ID', async () => {
-      // Arrange
       const roomId = 'room@#$123';
       const userId = 'user!@#456';
       const username = 'testuser';
@@ -94,10 +85,8 @@ describe('ScalingService', () => {
       (mockRedis.hset as jest.Mock).mockResolvedValue(1);
       (mockRedis.expire as jest.Mock).mockResolvedValue(1);
 
-      // Act
       await scalingService.addUserToRoom(roomId, userId, username);
 
-      // Assert
       expect(mockRedis.hset).toHaveBeenCalledWith(
         'room:room123:users',
         'user456',
@@ -108,25 +97,20 @@ describe('ScalingService', () => {
 
   describe('removeUserFromRoom', () => {
     it('should remove user from room successfully', async () => {
-      // Arrange
       const roomId = 'room-123';
       const userId = 'user-456';
 
       (mockRedis.hdel as jest.Mock).mockResolvedValue(1);
 
-      // Act
       await scalingService.removeUserFromRoom(roomId, userId);
 
-      // Assert
       expect(mockRedis.hdel).toHaveBeenCalledWith('room:room-123:users', 'user-456');
     });
 
     it('should reject invalid parameters', async () => {
-      // Arrange
       const roomId = '';
       const userId = 'user-456';
 
-      // Act & Assert
       await expect(
         scalingService.removeUserFromRoom(roomId, userId)
       ).rejects.toThrow('Invalid input parameters');
@@ -135,7 +119,6 @@ describe('ScalingService', () => {
 
   describe('getRoomUsers', () => {
     it('should return list of users in room', async () => {
-      // Arrange
       const roomId = 'room-123';
       const mockUsers = {
         'user-1': JSON.stringify({ userId: 'user-1', username: 'user1', connectedAt: new Date().toISOString() }),
@@ -144,10 +127,8 @@ describe('ScalingService', () => {
 
       (mockRedis.hgetall as jest.Mock).mockResolvedValue(mockUsers);
 
-      // Act
       const result = await scalingService.getRoomUsers(roomId);
 
-      // Assert
       expect(mockRedis.hgetall).toHaveBeenCalledWith('room:room-123:users');
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual(expect.objectContaining({
@@ -157,7 +138,6 @@ describe('ScalingService', () => {
     });
 
     it('should handle invalid JSON gracefully', async () => {
-      // Arrange
       const roomId = 'room-123';
       const mockUsers = {
         'user-1': 'invalid-json',
@@ -165,23 +145,17 @@ describe('ScalingService', () => {
       };
 
       (mockRedis.hgetall as jest.Mock).mockResolvedValue(mockUsers);
-
-      // Act
       const result = await scalingService.getRoomUsers(roomId);
 
-      // Assert
-      expect(result).toHaveLength(1); // Apenas o user-2 válido
+      expect(result).toHaveLength(1);
       expect(result[0].userId).toBe('user-2');
     });
 
     it('should return empty array for invalid room ID', async () => {
-      // Arrange
       const invalidRoomId = '';
-
-      // Act
+      
       const result = await scalingService.getRoomUsers(invalidRoomId);
 
-      // Assert
       expect(result).toEqual([]);
       expect(mockRedis.hgetall).not.toHaveBeenCalled();
     });
@@ -189,43 +163,34 @@ describe('ScalingService', () => {
 
   describe('getUserRoomCount', () => {
     it('should return correct user count', async () => {
-      // Arrange
       const roomId = 'room-123';
       (mockRedis.hlen as jest.Mock).mockResolvedValue(5);
 
-      // Act
       const result = await scalingService.getUserRoomCount(roomId);
 
-      // Assert
       expect(mockRedis.hlen).toHaveBeenCalledWith('room:room-123:users');
       expect(result).toBe(5);
     });
 
     it('should return 0 for invalid room ID', async () => {
-      // Arrange
       const invalidRoomId = '';
-
-      // Act
+      
       const result = await scalingService.getUserRoomCount(invalidRoomId);
 
-      // Assert
       expect(result).toBe(0);
     });
   });
 
   describe('addActiveViewer', () => {
     it('should add viewer to room', async () => {
-      // Arrange
       const roomId = 'room-123';
       const userId = 'user-456';
 
       (mockRedis.sadd as jest.Mock).mockResolvedValue(1);
       (mockRedis.expire as jest.Mock).mockResolvedValue(1);
-
-      // Act
+      
       await scalingService.addActiveViewer(roomId, userId);
 
-      // Assert
       expect(mockRedis.sadd).toHaveBeenCalledWith('room:room-123:viewers', 'user-456');
       expect(mockRedis.expire).toHaveBeenCalledWith('room:room-123:viewers', 3600);
     });
@@ -233,31 +198,25 @@ describe('ScalingService', () => {
 
   describe('isUserActiveViewer', () => {
     it('should return true if user is active viewer', async () => {
-      // Arrange
       const roomId = 'room-123';
       const userId = 'user-456';
 
       (mockRedis.sismember as jest.Mock).mockResolvedValue(1);
 
-      // Act
       const result = await scalingService.isUserActiveViewer(roomId, userId);
 
-      // Assert
       expect(mockRedis.sismember).toHaveBeenCalledWith('room:room-123:viewers', 'user-456');
       expect(result).toBe(true);
     });
 
     it('should return false if user is not active viewer', async () => {
-      // Arrange
       const roomId = 'room-123';
       const userId = 'user-456';
 
       (mockRedis.sismember as jest.Mock).mockResolvedValue(0);
 
-      // Act
       const result = await scalingService.isUserActiveViewer(roomId, userId);
 
-      // Assert
       expect(result).toBe(false);
     });
   });
