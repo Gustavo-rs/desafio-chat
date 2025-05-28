@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useUser } from "@/store/auth-store";
 import { useSocketMessages } from "@/hooks/useSocketMessages";
+import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 import messageService from "@/services/message-service";
 import type { Message, OnlineUser } from "@/types/api";
 
@@ -32,6 +33,11 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { user } = useUser();
+
+  const { typingUsers, handleTyping, stopTyping } = useTypingIndicator({
+    roomId,
+    currentUserId: user?.user?.id
+  });
 
   const normalizeMessage = (msg: any): Message => {
     return {
@@ -69,7 +75,6 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
     }
   };
 
-  // Callbacks para o hook de socket - usando useRef para evitar dependências
   const callbacksRef = useRef({
     handleMessageReceived: (message: Message) => {
       setMessages((prev) => [...prev, message]);
@@ -146,16 +151,13 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
       scrollToBottom();
     },
     handleMemberRemoved: (_roomId: string, removedUserId: string) => {
-      // Se o usuário atual foi removido, não mostrar mais mensagens
       if (removedUserId === user?.user?.id) {
-        console.log("ChatPage: Usuário atual foi removido da sala, limpando chat");
         setMessages([]);
         setUserRemovedFromRoom(true);
         return;
       }
       
       setMessages((prev) => {
-        // Para outros usuários removidos, mostrar mensagem do sistema
         const removedUserMessage = prev.find(msg => msg.user.id === removedUserId);
         const removedUsername = removedUserMessage?.user.username || 'Usuário';
         
@@ -183,7 +185,6 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
     }
   });
 
-  // Callbacks estáveis para o hook
   const handleMessageReceived = useCallback((message: Message) => {
     callbacksRef.current.handleMessageReceived(message);
   }, []);
@@ -216,7 +217,6 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
     callbacksRef.current.handleRoomUsersUpdated(roomId, users, count);
   }, []);
 
-  // Use the custom hook for socket management
   useSocketMessages({
     roomId,
     currentUserId: user?.user?.id,
@@ -376,7 +376,6 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
   }, [roomId]);
 
   return {
-    // State
     messages,
     input,
     selectedFiles,
@@ -395,20 +394,15 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
     showOnlineUsers,
     loadingUsers,
     user,
-
-    // Refs
+    typingUsers,
     fileInputRef,
     messagesContainerRef,
     bottomRef,
-
-    // Setters
     setInput,
     setEditingContent,
     setMessageToDelete,
     setDeleteDialogOpen,
     setShowOnlineUsers,
-
-    // Handlers
     handleFileSelect,
     removeSelectedFile,
     clearAllFiles,
@@ -420,5 +414,7 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
     startEditing,
     cancelEditing,
     handleScroll,
+    handleTyping,
+    stopTyping,
   };
-}; 
+};

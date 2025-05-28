@@ -10,10 +10,8 @@ export interface LinkPreview {
   error?: string;
 }
 
-// Regex para detectar URLs
 const URL_REGEX = /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gi;
 
-// Cache simples para evitar requisições desnecessárias
 const previewCache = new Map<string, LinkPreview>();
 
 export const useLinkPreview = (content: string) => {
@@ -24,70 +22,57 @@ export const useLinkPreview = (content: string) => {
     const matches = text.match(URL_REGEX);
     if (!matches) return [];
     
-    // Normalizar URLs (adicionar https:// se necessário)
     return matches.map(url => {
       if (!url.startsWith('http://') && !url.startsWith('https://')) {
         return `https://${url}`;
       }
       return url;
-    }).filter((url, index, array) => array.indexOf(url) === index); // Remove duplicatas
+    }).filter((url, index, array) => array.indexOf(url) === index);
   };
 
   const fetchLinkPreview = async (url: string): Promise<LinkPreview> => {
     try {
-      // Detectar tipos específicos de sites e conteúdo
       const hostname = new URL(url).hostname.toLowerCase();
       
-      // Primeiro, verificar se é uma imagem direta
       if (await isImageUrl(url)) {
         return await fetchImagePreview(url);
       }
       
-      // Verificar se é um vídeo direto
       if (await isVideoUrl(url)) {
         return await fetchVideoPreview(url);
       }
       
-      // Preview customizado para YouTube
       if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
         return await fetchYouTubePreview(url);
       }
       
-      // Preview customizado para GitHub
       if (hostname.includes('github.com')) {
         return await fetchGitHubPreview(url);
       }
       
-      // Preview customizado para Twitter/X
       if (hostname.includes('twitter.com') || hostname.includes('x.com')) {
         return await fetchTwitterPreview(url);
       }
       
-      // Preview customizado para Instagram
       if (hostname.includes('instagram.com')) {
         return await fetchInstagramPreview(url);
       }
       
-      // Preview customizado para Imgur
       if (hostname.includes('imgur.com')) {
         return await fetchImgurPreview(url);
       }
       
-      // Preview customizado para Google Drive
       if (hostname.includes('drive.google.com')) {
         return await fetchGoogleDrivePreview(url);
       }
       
-      // Preview customizado para Dropbox
       if (hostname.includes('dropbox.com')) {
         return await fetchDropboxPreview(url);
       }
       
-      // Preview genérico usando uma API simples ou fallback
       return await fetchGenericPreview(url);
       
     } catch (error) {
-      console.error('Erro ao buscar preview do link:', error);
       return {
         url,
         loading: false,
@@ -96,10 +81,8 @@ export const useLinkPreview = (content: string) => {
     }
   };
 
-  // Verificar se URL é uma imagem
   const isImageUrl = async (url: string): Promise<boolean> => {
     try {
-      // Verificar extensão do arquivo
       const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'];
       const urlPath = new URL(url).pathname.toLowerCase();
       
@@ -107,7 +90,6 @@ export const useLinkPreview = (content: string) => {
         return true;
       }
 
-      // Fazer uma requisição HEAD para verificar o Content-Type
       const response = await fetch(url, { method: 'HEAD' });
       const contentType = response.headers.get('content-type');
       return contentType ? contentType.startsWith('image/') : false;
@@ -116,7 +98,6 @@ export const useLinkPreview = (content: string) => {
     }
   };
 
-  // Verificar se URL é um vídeo
   const isVideoUrl = async (url: string): Promise<boolean> => {
     try {
       const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi'];
@@ -134,7 +115,6 @@ export const useLinkPreview = (content: string) => {
     }
   };
 
-  // Preview para imagens
   const fetchImagePreview = async (url: string): Promise<LinkPreview> => {
     const filename = url.split('/').pop() || 'Imagem';
     return {
@@ -147,7 +127,6 @@ export const useLinkPreview = (content: string) => {
     };
   };
 
-  // Preview para vídeos
   const fetchVideoPreview = async (url: string): Promise<LinkPreview> => {
     const filename = url.split('/').pop() || 'Vídeo';
     return {
@@ -159,7 +138,6 @@ export const useLinkPreview = (content: string) => {
     };
   };
 
-  // Preview para Twitter/X
   const fetchTwitterPreview = async (url: string): Promise<LinkPreview> => {
     return {
       url,
@@ -170,7 +148,6 @@ export const useLinkPreview = (content: string) => {
     };
   };
 
-  // Preview para Instagram
   const fetchInstagramPreview = async (url: string): Promise<LinkPreview> => {
     return {
       url,
@@ -181,10 +158,8 @@ export const useLinkPreview = (content: string) => {
     };
   };
 
-  // Preview para Imgur
   const fetchImgurPreview = async (url: string): Promise<LinkPreview> => {
     try {
-      // Converter URL do Imgur para thumbnail se necessário
       let imageUrl = url;
       const imgurId = url.match(/imgur\.com\/(?:a\/)?([a-zA-Z0-9]+)/)?.[1];
       
@@ -205,7 +180,6 @@ export const useLinkPreview = (content: string) => {
     }
   };
 
-  // Preview para Google Drive
   const fetchGoogleDrivePreview = async (url: string): Promise<LinkPreview> => {
     try {
       const fileId = url.match(/\/d\/([a-zA-Z0-9-_]+)/)?.[1];
@@ -220,14 +194,11 @@ export const useLinkPreview = (content: string) => {
           loading: false
         };
       }
-    } catch {
-      // Fallback se não conseguir extrair o ID
-    }
+    } catch {}
     
     return fetchGenericPreview(url);
   };
 
-  // Preview para Dropbox
   const fetchDropboxPreview = async (url: string): Promise<LinkPreview> => {
     return {
       url,
@@ -240,10 +211,8 @@ export const useLinkPreview = (content: string) => {
 
   const fetchYouTubePreview = async (url: string): Promise<LinkPreview> => {
     try {
-      // Extrair ID do vídeo do YouTube
       const videoId = extractYouTubeId(url);
       if (videoId) {
-        // Tentar obter título via oEmbed (API pública do YouTube)
         try {
           const oEmbedResponse = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
           if (oEmbedResponse.ok) {
@@ -257,9 +226,7 @@ export const useLinkPreview = (content: string) => {
               loading: false
             };
           }
-        } catch {
-          // Se oEmbed falhar, usar informações básicas
-        }
+        } catch {}
 
         return {
           url,
@@ -270,9 +237,7 @@ export const useLinkPreview = (content: string) => {
           loading: false
         };
       }
-    } catch (error) {
-      console.error('Erro ao processar link do YouTube:', error);
-    }
+    } catch {}
     
     return fetchGenericPreview(url);
   };
@@ -291,16 +256,13 @@ export const useLinkPreview = (content: string) => {
           loading: false
         };
       }
-    } catch (error) {
-      console.error('Erro ao processar link do GitHub:', error);
-    }
+    } catch {}
     
     return fetchGenericPreview(url);
   };
 
   const fetchGenericPreview = async (url: string): Promise<LinkPreview> => {
     try {
-      // Para uma implementação mais simples, retornar informações básicas
       const hostname = new URL(url).hostname;
       
       return {
@@ -310,7 +272,7 @@ export const useLinkPreview = (content: string) => {
         siteName: hostname,
         loading: false
       };
-    } catch (error) {
+    } catch {
       return {
         url,
         loading: false,
@@ -326,7 +288,6 @@ export const useLinkPreview = (content: string) => {
   };
 
   useEffect(() => {
-    // Cancelar requisições pendentes
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -338,7 +299,6 @@ export const useLinkPreview = (content: string) => {
       return;
     }
 
-    // Verificar cache primeiro
     const cachedPreviews: LinkPreview[] = [];
     const urlsToFetch: string[] = [];
 
@@ -356,22 +316,18 @@ export const useLinkPreview = (content: string) => {
 
     if (urlsToFetch.length === 0) return;
 
-    // Criar novo AbortController para esta requisição
     abortControllerRef.current = new AbortController();
 
-    // Buscar metadados para URLs não cacheadas
     const fetchPreviews = async () => {
       try {
         const newPreviews = await Promise.all(
           urlsToFetch.map(url => fetchLinkPreview(url))
         );
 
-        // Atualizar cache
         newPreviews.forEach(preview => {
           previewCache.set(preview.url, preview);
         });
 
-        // Combinar previews cacheados com novos
         const allPreviews = urls.map(url => {
           return previewCache.get(url) || { url, loading: false, error: 'Erro ao carregar' };
         });
@@ -379,15 +335,13 @@ export const useLinkPreview = (content: string) => {
         setLinkPreviews(allPreviews);
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
-          return; // Requisição foi cancelada, não fazer nada
+          return;
         }
-        console.error('Erro ao buscar previews:', error);
       }
     };
 
     fetchPreviews();
 
-    // Cleanup
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -396,4 +350,4 @@ export const useLinkPreview = (content: string) => {
   }, [content]);
 
   return linkPreviews;
-}; 
+};

@@ -11,6 +11,8 @@ interface MessageInputProps {
   fileInputRef: React.RefObject<HTMLInputElement>;
   handleFileSelect: (event: React.ChangeEvent<HTMLInputElement>) => void;
   userRemovedFromRoom: boolean;
+  handleTyping: () => void;
+  stopTyping: () => void;
 }
 
 const getFileIcon = (file: File) => {
@@ -93,6 +95,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   fileInputRef,
   handleFileSelect,
   userRemovedFromRoom,
+  handleTyping,
+  stopTyping,
 }) => {
   const [isDragOver, setIsDragOver] = React.useState(false);
 
@@ -225,9 +229,17 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             isDragOver ? 'border-violet-400 bg-violet-50 shadow-lg ring-2 ring-violet-200' : 'border-gray-300 hover:border-violet-300'
           }`}
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => {
+            setInput(e.target.value);
+            if (e.target.value.trim()) {
+              handleTyping();
+            }
+          }}
           onKeyDown={(e) => {
-            if (e.key === "Enter") sendMessage();
+            if (e.key === "Enter") {
+              stopTyping();
+              sendMessage();
+            }
           }}
         />
         <input
@@ -247,7 +259,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           <Paperclip className="h-4 w-4 md:h-5 md:w-5 text-violet-600" />
         </button>
         <button
-          onClick={sendMessage}
+          onClick={() => {
+            stopTyping();
+            sendMessage();
+          }}
           className="h-10 md:h-12 px-4 md:px-6 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium text-sm md:text-base transition-all duration-200 ease-in-out hover:scale-105 active:scale-95 shadow-sm hover:shadow-md"
         >
           Enviar

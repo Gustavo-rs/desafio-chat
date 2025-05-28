@@ -23,11 +23,9 @@ export const useHomePageLogic = () => {
 
   const handleRooms = async () => {
     setLoading(true);
-
     try {
       const response = await roomsService.list();
       setRooms(response);
-      // Initialize unread counts from rooms data
       const counts: Record<string, number> = {};
       response.forEach((room: APIRoom) => {
         counts[room.id.toString()] = room.unreadCount || 0;
@@ -45,7 +43,6 @@ export const useHomePageLogic = () => {
     }
 
     setIsCreatingRoom(true);
-
     try {
       await roomsService.create({ name: roomName });
       setOpen(false);
@@ -56,16 +53,14 @@ export const useHomePageLogic = () => {
   };
 
   const handleRoomSelect = (room: APIRoom) => {
-    // Se havia uma sala selecionada anteriormente, parar de visualizá-la
     if (selectedRoomId && socket?.connected) {
       stopViewingRoom(selectedRoomId);
     }
 
     setSelectedRoomId(room.id.toString());
     setSelectedRoomName(room.name);
-    setActiveTab("chat"); // Automatically switch to chat when a room is selected on mobile
+    setActiveTab("chat");
 
-    // Mark room as read and remove new room indicator
     setRooms((prev) =>
       prev.map((r) => ({ ...r, newRoom: r.id === room.id ? false : r.newRoom }))
     );
@@ -81,7 +76,6 @@ export const useHomePageLogic = () => {
 
   const totalUnreadCount = Object.entries(unreadCounts).reduce(
     (total, [roomId, count]) => {
-      // Não incluir a sala atualmente selecionada no contador total
       if (selectedRoomId && selectedRoomId === roomId) {
         return total;
       }
@@ -90,7 +84,6 @@ export const useHomePageLogic = () => {
     0
   );
 
-  // Use the custom hook for socket management
   useSocketHomepage({
     selectedRoomId,
     setRooms,
@@ -105,7 +98,6 @@ export const useHomePageLogic = () => {
   }, []);
 
   return {
-    // State
     rooms,
     loading,
     isCreatingRoom,
@@ -118,16 +110,12 @@ export const useHomePageLogic = () => {
     activeTab,
     totalUnreadCount,
     user,
-    
-    // Setters
     setRoomName,
     setSearchTerm,
     setOpen,
     setActiveTab,
-    
-    // Handlers
     handleCreateRoom,
     handleRoomSelect,
     formatUnreadCount,
   };
-}; 
+};

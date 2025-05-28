@@ -237,6 +237,31 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Eventos de typing indicators
+  socket.on("start_typing", (data) => {
+    const { roomId } = data;
+    console.log(`⌨️ User ${user.username} started typing in room ${roomId}`);
+    
+    // Notificar outros usuários na sala que este usuário começou a digitar
+    socket.to(roomId).emit("user_start_typing", {
+      roomId,
+      userId: user.userId,
+      username: user.username
+    });
+  });
+
+  socket.on("stop_typing", (data) => {
+    const { roomId } = data;
+    console.log(`⌨️ User ${user.username} stopped typing in room ${roomId}`);
+    
+    // Notificar outros usuários na sala que este usuário parou de digitar
+    socket.to(roomId).emit("user_stop_typing", {
+      roomId,
+      userId: user.userId,
+      username: user.username
+    });
+  });
+
   socket.on("disconnecting", async () => {
     console.log(`🔴 User disconnecting: ${socket.id} (${user.username})`);
     

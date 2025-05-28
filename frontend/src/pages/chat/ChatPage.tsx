@@ -3,6 +3,7 @@ import { MessageSquare } from "lucide-react";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { MessageList } from "@/components/chat/MessageList";
 import { MessageInput } from "@/components/chat/MessageInput";
+import { TypingIndicator } from "@/components/chat/TypingIndicator";
 import { DeleteMessageDialog } from "@/components/chat/DeleteMessageDialog";
 import { useChatPageLogic } from "@/hooks/useChatPageLogic";
 import type { ChatPageProps } from "@/types/api";
@@ -25,6 +26,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
     showOnlineUsers,
     loadingUsers,
     user,
+    typingUsers,
 
     // Refs
     fileInputRef,
@@ -49,6 +51,8 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
     startEditing,
     cancelEditing,
     handleScroll,
+    handleTyping,
+    stopTyping,
   } = useChatPageLogic({ roomId: roomId || "" });
 
   if (!roomId) {
@@ -96,6 +100,8 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
           handleScroll={handleScroll}
         />
 
+        <TypingIndicator typingUsers={typingUsers} />
+
         <MessageInput
           input={input}
           setInput={setInput}
@@ -106,6 +112,8 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
           fileInputRef={fileInputRef as React.RefObject<HTMLInputElement>}
           handleFileSelect={handleFileSelect}
           userRemovedFromRoom={userRemovedFromRoom}
+          handleTyping={handleTyping}
+          stopTyping={stopTyping}
         />
 
         <DeleteMessageDialog
