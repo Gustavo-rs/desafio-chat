@@ -14,7 +14,6 @@ interface FileInfo {
 
 export class MessageService {
   async createMessage(content: string, userId: string, roomId: string, files?: FileInfo[]) {
-    // Verificar se o usuário é membro da sala
     const roomMembership = await prisma.room_member.findUnique({
       where: {
         user_id_room_id: {
@@ -57,7 +56,6 @@ export class MessageService {
       },
     });
 
-    // Get all room members except the sender
     const roomMembers = await prisma.room_member.findMany({
       where: {
         room_id: roomId,
@@ -70,12 +68,9 @@ export class MessageService {
       },
     });
 
-    // Get users currently viewing this room
     const activeViewers = getActiveViewers(roomId);
 
-    // Create unread entries for all other room members who are NOT actively viewing the room
     for (const member of roomMembers) {
-      // Skip notification if user is actively viewing the room
       if (activeViewers.has(member.user.id)) {
         console.log(`⏭️ Skipping notification for ${member.user.username} - actively viewing room ${roomId}`);
         continue;
@@ -89,7 +84,6 @@ export class MessageService {
         },
       });
 
-      // Get unread count for this user and room
       const unreadCount = await prisma.unread_message.count({
         where: {
           user_id: member.user.id,
@@ -104,14 +98,12 @@ export class MessageService {
       });
     }
 
-    // Emitir apenas uma vez globalmente com estrutura adequada para ambos os casos
     io.emit('receive_message', { roomId, message });
     
     return message;
   }
 
   async getMessages(roomId: string, userId: string, page: number, limit: number): Promise<MessageResponse> {
-    // Verificar se o usuário é membro da sala
     const roomMembership = await prisma.room_member.findUnique({
       where: {
         user_id_room_id: {
@@ -151,10 +143,8 @@ export class MessageService {
       }),
     ]);
 
-    // Inverte a ordem das mensagens para que as mais antigas fiquem no topo
     const orderedMessages = messages.reverse();
 
-    // Mark messages as read when user enters the room
     await this.markMessagesAsRead(userId, roomId);
 
     const pages = Math.ceil(total / limit);
@@ -218,7 +208,6 @@ export class MessageService {
   }
 
   async deleteMessage(messageId: string, userId: string) {
-    // Busca a mensagem para obter o roomId antes de marcar como deletada
     const message = await prisma.message.findUnique({
       where: { id: messageId },
       select: { room_id: true, user_id: true, status: true }
@@ -228,22 +217,19 @@ export class MessageService {
       throw new NotFoundError('Message not found');
     }
 
-    // Verifica se o usuário é o dono da mensagem
     if (message.user_id !== userId) {
       throw new Error('You can only delete your own messages');
     }
 
-    // Verifica se a mensagem já foi deletada
     if (message.status === 'DELETED') {
       throw new Error('Message already deleted');
     }
 
-    // Marca a mensagem como deletada (soft delete)
     const updatedMessage = await prisma.message.update({
       where: { id: messageId },
       data: { 
         status: 'DELETED',
-        content: 'Mensagem deletada'  // Substitui o conteúdo
+        content: 'Mensagem deletada'
       },
       include: {
         user: {
@@ -256,7 +242,6 @@ export class MessageService {
       },
     });
 
-    // Emite para toda a sala com os dados atualizados
     io.to(message.room_id).emit('message_deleted', { 
       messageId, 
       message: updatedMessage 
@@ -266,7 +251,6 @@ export class MessageService {
   }
 
   async updateMessage(messageId: string, content: string, userId: string) {
-    // Busca a mensagem para obter o roomId antes de editar
     const message = await prisma.message.findUnique({
       where: { id: messageId },
       select: { room_id: true, user_id: true, status: true }
@@ -276,17 +260,14 @@ export class MessageService {
       throw new NotFoundError('Message not found');
     }
 
-    // Verifica se o usuário é o dono da mensagem
     if (message.user_id !== userId) {
       throw new Error('You can only edit your own messages');
     }
 
-    // Verifica se a mensagem foi deletada
     if (message.status === 'DELETED') {
       throw new Error('Cannot edit deleted message');
     }
 
-    // Atualiza a mensagem e marca como editada
     const updatedMessage = await prisma.message.update({
       where: { id: messageId },
       data: { 
@@ -304,7 +285,6 @@ export class MessageService {
       },
     });
    
-    // Emite para toda a sala com os dados atualizados
     io.to(message.room_id).emit('message_updated', { 
       messageId, 
       content,

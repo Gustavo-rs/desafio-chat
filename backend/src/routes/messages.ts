@@ -1,4 +1,4 @@
-import { Router, Request, Response, NextFunction } from "express";
+import { Router, Request, Response, NextFunction, RequestHandler } from "express";
 import { MessageService } from "../services/messageService";
 import { validate } from "../middlewares/validation";
 import { createMessageSchema } from "../schemas/validation";
@@ -9,14 +9,20 @@ import { uploadMultiple } from "../middlewares/upload";
 const router = Router();
 const messageService = new MessageService();
 
-router.get("/:roomId", async (req: Request, res: Response<MessageResponse | ErrorResponse>, next: NextFunction) => {
+const getMessages: RequestHandler<
+  { roomId: string },
+  MessageResponse | ErrorResponse,
+  {},
+  { page?: string; limit?: string }
+> = async (req, res, next) => {
   try {
     const { roomId } = req.params;
     const { page = "1", limit = "20" } = req.query;
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ message: "Você precisa estar logado para ver as mensagens" });
+      res.status(401).json({ message: "Você precisa estar logado para ver as mensagens" });
+      return;
     }
 
     const messages = await messageService.getMessages(roomId, userId, parseInt(page as string), parseInt(limit as string));
@@ -28,9 +34,14 @@ router.get("/:roomId", async (req: Request, res: Response<MessageResponse | Erro
       next(new AppError("Erro ao buscar mensagens", 500));
     }
   }
-});
+};
 
-router.post("/:roomId", uploadMultiple, validate(createMessageSchema), async (req: Request, res: Response, next: NextFunction) => {
+const createMessage: RequestHandler<
+  { roomId: string },
+  any | ErrorResponse,
+  { content?: string },
+  {}
+> = async (req, res, next) => {
   try {
     const { roomId } = req.params;
     const { content } = req.body;
@@ -38,12 +49,14 @@ router.post("/:roomId", uploadMultiple, validate(createMessageSchema), async (re
     const files = req.files as Express.Multer.File[];
 
     if (!userId) {
-      return res.status(401).json({ message: "Você precisa estar logado para enviar mensagens" });
+      res.status(401).json({ message: "Você precisa estar logado para enviar mensagens" });
+      return;
     }
 
     // Verifica se tem pelo menos conteúdo ou arquivo
     if (!content && (!files || files.length === 0)) {
-      return res.status(400).json({ message: "A mensagem deve conter texto ou pelo menos um arquivo" });
+      res.status(400).json({ message: "A mensagem deve conter texto ou pelo menos um arquivo" });
+      return;
     }
 
     // Processa múltiplos arquivos
@@ -68,14 +81,20 @@ router.post("/:roomId", uploadMultiple, validate(createMessageSchema), async (re
       next(new AppError("Erro ao enviar mensagem", 500));
     }
   }
-});
+};
 
-router.get("/unread/count", async (req: Request, res: Response<UnreadCountResponse | ErrorResponse>, next: NextFunction) => {
+const getUnreadCount: RequestHandler<
+  {},
+  UnreadCountResponse | ErrorResponse,
+  {},
+  {}
+> = async (req, res, next) => {
   try {
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ message: "Você precisa estar logado para ver mensagens não lidas" });
+      res.status(401).json({ message: "Você precisa estar logado para ver mensagens não lidas" });
+      return;
     }
 
     const unreadCounts = await messageService.getUnreadCounts(userId);
@@ -87,15 +106,21 @@ router.get("/unread/count", async (req: Request, res: Response<UnreadCountRespon
       next(new AppError("Erro ao buscar mensagens não lidas", 500));
     }
   }
-});
+};
 
-router.delete("/:messageId", async (req: Request, res: Response, next: NextFunction) => {
+const deleteMessage: RequestHandler<
+  { messageId: string },
+  { message: string } | ErrorResponse,
+  {},
+  {}
+> = async (req, res, next) => {
   try {
     const { messageId } = req.params;
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ message: "Você precisa estar logado para deletar mensagens" });
+      res.status(401).json({ message: "Você precisa estar logado para deletar mensagens" });
+      return;
     }
 
     await messageService.deleteMessage(messageId, userId);
@@ -107,20 +132,27 @@ router.delete("/:messageId", async (req: Request, res: Response, next: NextFunct
       next(new AppError("Erro ao deletar mensagem", 500));
     }
   }
-});
+};
 
-router.put("/:messageId", async (req: Request, res: Response, next: NextFunction) => {
+const updateMessage: RequestHandler<
+  { messageId: string },
+  { message: string } | ErrorResponse,
+  { content: string },
+  {}
+> = async (req, res, next) => {
   try {
     const { messageId } = req.params;
     const { content } = req.body;
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ message: "Você precisa estar logado para editar mensagens" });
+      res.status(401).json({ message: "Você precisa estar logado para editar mensagens" });
+      return;
     }
 
     if (!content || !content.trim()) {
-      return res.status(400).json({ message: "O conteúdo da mensagem é obrigatório" });
+      res.status(400).json({ message: "O conteúdo da mensagem é obrigatório" });
+      return;
     }
 
     await messageService.updateMessage(messageId, content, userId);
@@ -132,6 +164,13 @@ router.put("/:messageId", async (req: Request, res: Response, next: NextFunction
       next(new AppError("Erro ao editar mensagem", 500));
     }
   }
-});
+};
+
+// Configuração das rotas
+router.get("/unread/count", getUnreadCount);
+router.get("/:roomId", getMessages);
+router.post("/:roomId", uploadMultiple, validate(createMessageSchema), createMessage);
+router.delete("/:messageId", deleteMessage);
+router.put("/:messageId", updateMessage);
 
 export default router;

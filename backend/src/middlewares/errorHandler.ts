@@ -10,40 +10,44 @@ export const errorHandler = (
   console.error('Error:', err);
 
   if (err instanceof AppError) {
-    return res.status(err.statusCode).json({
+    res.status(err.statusCode).json({
       status: 'error',
       message: err.message,
       ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
     });
+    return;
   }
 
   // Handle Prisma errors
   if (err.name === 'PrismaClientKnownRequestError') {
-    return res.status(400).json({
+    res.status(400).json({
       status: 'error',
       message: 'Database operation failed',
       ...(process.env.NODE_ENV === 'development' && { details: err.message }),
     });
+    return;
   }
 
   // Handle validation errors
   if (err.name === 'ValidationError') {
-    return res.status(400).json({
+    res.status(400).json({
       status: 'error',
       message: err.message,
     });
+    return;
   }
 
   // Handle JWT errors
   if (err.name === 'JsonWebTokenError') {
-    return res.status(401).json({
+    res.status(401).json({
       status: 'error',
       message: 'Invalid token',
     });
+    return;
   }
 
   // Default error
-  return res.status(500).json({
+  res.status(500).json({
     status: 'error',
     message: 'Internal server error',
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),

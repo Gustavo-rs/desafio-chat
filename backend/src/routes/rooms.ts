@@ -1,10 +1,12 @@
-import { Router, Request, Response, NextFunction } from "express";
+import { Router, Request, Response, NextFunction, RequestHandler } from "express";
 import { RoomService } from "../services/roomService";
 import { MessageService } from "../services/messageService";
 import { authenticate } from "../middlewares/auth";
 import { validate } from "../middlewares/validation";
 import { createRoomSchema, roomIdSchema } from "../schemas/validation";
 import { PrismaClient } from '@prisma/client';
+import { Room, RoomResponse } from "../models/room.model";
+import { UnreadCountResponse, ErrorResponse } from "../models/message.model";
 
 const router = Router();
 const roomService = new RoomService();
@@ -13,7 +15,12 @@ const prisma = new PrismaClient();
 
 router.use(authenticate);
 
-router.post("/", validate(createRoomSchema), async (req: Request, res: Response, next: NextFunction) => {
+const createRoom: RequestHandler<
+  {},
+  any | ErrorResponse,
+  { name: string },
+  {}
+> = async (req, res, next) => {
   try {
     const { name } = req.body;
     const userId = req.user!.userId;
@@ -22,9 +29,14 @@ router.post("/", validate(createRoomSchema), async (req: Request, res: Response,
   } catch (error) {
     next(error);
   }
-});
+};
 
-router.delete("/:id", validate(roomIdSchema), async (req: Request, res: Response, next: NextFunction) => {
+const deleteRoom: RequestHandler<
+  { id: string },
+  { message: string } | ErrorResponse,
+  {},
+  {}
+> = async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.user!.userId;
@@ -33,9 +45,14 @@ router.delete("/:id", validate(roomIdSchema), async (req: Request, res: Response
   } catch (error) {
     next(error);
   }
-});
+};
 
-router.get("/", async (req: Request, res: Response, next: NextFunction) => {
+const getRooms: RequestHandler<
+  {},
+  any[] | ErrorResponse,
+  {},
+  {}
+> = async (req, res, next) => {
   try {
     const userId = req.user!.userId;
     const rooms = await roomService.getRooms(userId);
@@ -43,9 +60,14 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   } catch (error) {
     next(error);
   }
-});
+};
 
-router.get("/:id/details", validate(roomIdSchema), async (req: Request, res: Response, next: NextFunction) => {
+const getRoomDetails: RequestHandler<
+  { id: string },
+  any | ErrorResponse,
+  {},
+  {}
+> = async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.user!.userId;
@@ -54,10 +76,14 @@ router.get("/:id/details", validate(roomIdSchema), async (req: Request, res: Res
   } catch (error) {
     next(error);
   }
-});
+};
 
-// Adicionar membro à sala
-router.post("/:id/members", validate(roomIdSchema), async (req: Request, res: Response, next: NextFunction) => {
+const addMemberToRoom: RequestHandler<
+  { id: string },
+  any | ErrorResponse,
+  { userIdToAdd: string },
+  {}
+> = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { userIdToAdd } = req.body;
@@ -67,10 +93,14 @@ router.post("/:id/members", validate(roomIdSchema), async (req: Request, res: Re
   } catch (error) {
     next(error);
   }
-});
+};
 
-// Remover membro da sala
-router.delete("/:id/members/:userId", validate(roomIdSchema), async (req: Request, res: Response, next: NextFunction) => {
+const removeMemberFromRoom: RequestHandler<
+  { id: string; userId: string },
+  any | ErrorResponse,
+  {},
+  {}
+> = async (req, res, next) => {
   try {
     const { id, userId } = req.params;
     const adminUserId = req.user!.userId;
@@ -79,10 +109,14 @@ router.delete("/:id/members/:userId", validate(roomIdSchema), async (req: Reques
   } catch (error) {
     next(error);
   }
-});
+};
 
-// Buscar usuários disponíveis para adicionar à sala
-router.get("/:id/available-users", validate(roomIdSchema), async (req: Request, res: Response, next: NextFunction) => {
+const getAvailableUsers: RequestHandler<
+  { id: string },
+  any[] | ErrorResponse,
+  {},
+  {}
+> = async (req, res, next) => {
   try {
     const { id } = req.params;
     const adminUserId = req.user!.userId;
@@ -91,10 +125,14 @@ router.get("/:id/available-users", validate(roomIdSchema), async (req: Request, 
   } catch (error) {
     next(error);
   }
-});
+};
 
-// Endpoint para buscar todos os usuários (para debug/teste)
-router.get("/:id/all-users", validate(roomIdSchema), async (req: Request, res: Response, next: NextFunction) => {
+const getAllUsers: RequestHandler<
+  { id: string },
+  any[] | ErrorResponse,
+  {},
+  {}
+> = async (req, res, next) => {
   try {
     const { id } = req.params;
     const adminUserId = req.user!.userId;
@@ -114,9 +152,14 @@ router.get("/:id/all-users", validate(roomIdSchema), async (req: Request, res: R
   } catch (error) {
     next(error);
   }
-});
+};
 
-router.get("/unread-counts", async (req: Request, res: Response, next: NextFunction) => {
+const getUnreadCounts: RequestHandler<
+  {},
+  { data: any[] } | ErrorResponse,
+  {},
+  {}
+> = async (req, res, next) => {
   try {
     const userId = req.user!.userId;
     const unreadCounts = await messageService.getUnreadCounts(userId);
@@ -124,6 +167,17 @@ router.get("/unread-counts", async (req: Request, res: Response, next: NextFunct
   } catch (error) {
     next(error);
   }
-});
+};
+
+// Configuração das rotas
+router.post("/", validate(createRoomSchema), createRoom);
+router.delete("/:id", validate(roomIdSchema), deleteRoom);
+router.get("/", getRooms);
+router.get("/:id/details", validate(roomIdSchema), getRoomDetails);
+router.post("/:id/members", validate(roomIdSchema), addMemberToRoom);
+router.delete("/:id/members/:userId", validate(roomIdSchema), removeMemberFromRoom);
+router.get("/:id/available-users", validate(roomIdSchema), getAvailableUsers);
+router.get("/:id/all-users", validate(roomIdSchema), getAllUsers);
+router.get("/unread-counts", getUnreadCounts);
 
 export default router;

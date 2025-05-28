@@ -56,7 +56,6 @@ router.post("/logout", (req: Request, res: Response) => {
 });
 
 router.get("/verify", authenticate, (req: Request, res: Response) => {
-  // Se chegou até aqui, o middleware authenticate passou, então o usuário está autenticado
   res.status(200).json({
     message: "authenticated",
     user: {
