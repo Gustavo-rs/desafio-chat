@@ -85,10 +85,9 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
       } else if (container) {
         container.scrollTo({
           top: container.scrollHeight,
-          behavior: "auto"
-        });
-      }
-      // Resetar flag quando fazemos scroll para baixo
+        behavior: "auto"
+      });
+    }
       userScrolledUp.current = false;
       lastScrollTop.current = container.scrollTop;
     };
@@ -487,4 +486,4 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
     stopTyping,
     handleImageLoad,
   };
-};
+}; 
