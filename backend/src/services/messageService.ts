@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { NotFoundError, ForbiddenError } from '../utils/errors';
 import { io, getActiveViewers } from '../server';
-import { MessageResponse, UnreadCount } from "../models/message.model";
+import { MessageResponse, UnreadCount } from "../models/messageModel";
 import { FileUtils } from '../utils/fileUtils';
 
 const prisma = new PrismaClient();

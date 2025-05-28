@@ -5,8 +5,8 @@ import { authenticate } from "../middlewares/auth";
 import { validate } from "../middlewares/validation";
 import { createRoomSchema, roomIdSchema } from "../schemas/validation";
 import { PrismaClient } from '@prisma/client';
-import { Room, RoomResponse } from "../models/room.model";
-import { UnreadCountResponse, ErrorResponse } from "../models/message.model";
+import { Room, RoomResponse } from "../models/roomModel";
+import { UnreadCountResponse, ErrorResponse } from "../models/messageModel";
 
 const router = Router();
 const roomService = new RoomService();

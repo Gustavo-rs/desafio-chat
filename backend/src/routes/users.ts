@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import { UserService } from "../services/userService";
 import { validate } from "../middlewares/validation";
 import { createUserSchema, loginSchema } from "../schemas/validation";
-import { UserResponse, LoginResponse } from "../models/user.model";
+import { UserResponse, LoginResponse } from "../models/userModel";
 import { AppError } from "../utils/errors";
 import { authenticate } from "../middlewares/auth";
 

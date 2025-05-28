@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction, RequestHandler } from "express
 import { MessageService } from "../services/messageService";
 import { validate } from "../middlewares/validation";
 import { createMessageSchema } from "../schemas/validation";
-import { MessageResponse, UnreadCountResponse, ErrorResponse } from "../models/message.model";
+import { MessageResponse, UnreadCountResponse, ErrorResponse } from "../models/messageModel";
 import { AppError } from "../utils/errors";
 import { uploadMultiple } from "../middlewares/upload";
 
