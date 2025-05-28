@@ -106,7 +106,7 @@ export const useSocketHomepage = ({
       }));
     };
 
-    const handleMemberAdded = ({ roomId, member }: { roomId: string; member: any }) => {
+    const handleMemberAdded = ({ member }: { member: any }) => {
       if (member.user.id === user?.user?.id) {
         handleRoomsRef.current();
         toast.success(`Você foi adicionado à sala "${member.room.name}"`);

@@ -46,7 +46,7 @@ export default function RoomMembersManager({
     
     setIsLoadingUsers(true);
     try {
-      const response = await roomsService.getAvailableUsers(roomId);
+      await roomsService.getAvailableUsers(roomId);
       
       const allUsersResponse = await roomsService.getAllUsers(roomId);
       const filteredUsers = allUsersResponse.data.filter(u => 
