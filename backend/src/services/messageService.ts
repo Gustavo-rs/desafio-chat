@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { NotFoundError, ForbiddenError } from '../utils/errors';
 import { io, getActiveViewers } from '../server';
 import { MessageResponse, UnreadCount } from "../models/message.model";
+import { FileUtils } from '../utils/fileUtils';
 
 const prisma = new PrismaClient();
 
@@ -210,7 +211,15 @@ export class MessageService {
   async deleteMessage(messageId: string, userId: string) {
     const message = await prisma.message.findUnique({
       where: { id: messageId },
-      select: { room_id: true, user_id: true, status: true }
+      include: {
+        files: true,
+        user: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
+      },
     });
 
     if (!message) {
@@ -223,6 +232,17 @@ export class MessageService {
 
     if (message.status === 'DELETED') {
       throw new Error('Message already deleted');
+    }
+
+    if (message.files && message.files.length > 0) {
+      const fileUrls = message.files.map(file => file.file_url);
+      const deleteResult = await FileUtils.deleteFiles(fileUrls);
+      
+      await prisma.message_file.deleteMany({
+        where: {
+          message_id: messageId,
+        },
+      });
     }
 
     const updatedMessage = await prisma.message.update({
