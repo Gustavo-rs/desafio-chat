@@ -13,7 +13,6 @@ interface MessageInputProps {
   userRemovedFromRoom: boolean;
 }
 
-// Função para obter o ícone baseado no tipo de arquivo
 const getFileIcon = (file: File) => {
   const type = file.type.toLowerCase();
   
@@ -30,7 +29,6 @@ const getFileIcon = (file: File) => {
   }
 };
 
-// Componente para prévia de arquivo individual
 const FilePreview: React.FC<{ file: File; index: number; onRemove: (index: number) => void }> = ({ 
   file, 
   index, 
@@ -43,7 +41,6 @@ const FilePreview: React.FC<{ file: File; index: number; onRemove: (index: numbe
       const url = URL.createObjectURL(file);
       setImageUrl(url);
       
-      // Cleanup
       return () => URL.revokeObjectURL(url);
     }
   }, [file]);
@@ -71,7 +68,6 @@ const FilePreview: React.FC<{ file: File; index: number; onRemove: (index: numbe
       
 
       
-      {/* Botão de remover */}
       <button
         onClick={() => onRemove(index)}
         className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shadow-lg"
@@ -80,7 +76,6 @@ const FilePreview: React.FC<{ file: File; index: number; onRemove: (index: numbe
         <X className="h-3 w-3" />
       </button>
       
-      {/* Nome do arquivo */}
       <div className="mt-1 text-xs text-violet-700 truncate w-20 text-center" title={file.name}>
         {file.name}
       </div>
@@ -105,7 +100,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     return null;
   }
 
-  // Função para processar arquivos (tanto do input quanto do drag and drop)
   const processFiles = (files: FileList) => {
     const event = {
       target: {
@@ -115,7 +109,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     handleFileSelect(event);
   };
 
-  // Handlers para drag and drop
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -128,7 +121,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     e.preventDefault();
     e.stopPropagation();
     
-    // Verifica se realmente saiu da área (não é um elemento filho)
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const x = e.clientX;
     const y = e.clientY;
@@ -153,23 +145,19 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
-  // Reset do estado quando a operação de drag termina globalmente
   React.useEffect(() => {
     const handleGlobalDragEnd = () => {
-      // Pequeno delay para permitir que o drop local seja processado primeiro
       setTimeout(() => {
         setIsDragOver(false);
       }, 100);
     };
 
     const handleGlobalDrop = (e: DragEvent) => {
-      // Se o drop não foi na nossa área, reset o estado
       if (!e.target || !(e.target as Element).closest('[data-drop-zone]')) {
         setIsDragOver(false);
       }
     };
 
-    // Apenas listeners essenciais para cleanup
     document.addEventListener('dragend', handleGlobalDragEnd);
     document.addEventListener('drop', handleGlobalDrop);
 
@@ -190,7 +178,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      {/* Overlay de drag and drop */}
       {isDragOver && (
         <div className="absolute inset-0 bg-gradient-to-br from-violet-50 to-violet-100 border-2 border-dashed border-violet-300 rounded-xl flex items-center justify-center z-10 backdrop-blur-sm">
           <div className="text-center p-6">
@@ -217,7 +204,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             </button>
           </div>
           
-          {/* Grid de prévias dos arquivos */}
           <div className="flex flex-wrap gap-3">
             {selectedFiles.map((file, index) => (
               <FilePreview

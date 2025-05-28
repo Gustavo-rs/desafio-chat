@@ -25,11 +25,11 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
     <div className="border-b pb-3 md:pb-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <h2 className="text-lg md:text-xl font-semibold text-gray-800">Chat</h2>
+          <h2 className="text-lg md:text-xl font-semibold text-gray-800 flex-shrink-0">Chat</h2>
           {roomName && (
             <>
-              <span className="text-gray-400">•</span>
-              <h3 className="text-base md:text-lg font-medium text-gray-600 truncate">{roomName}</h3>
+              <span className="text-gray-400 flex-shrink-0">•</span>
+              <h3 className="text-base md:text-lg font-medium text-gray-600 truncate min-w-0 max-w-[70%]">{roomName}</h3>
             </>
           )}
         </div>

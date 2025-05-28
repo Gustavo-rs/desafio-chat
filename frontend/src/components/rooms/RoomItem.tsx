@@ -62,7 +62,7 @@ export const RoomItem: React.FC<RoomItemProps> = ({
 
     return (
       <p className="text-xs text-gray-500 truncate flex items-center gap-1">
-        <strong>{lastMessage.user.username}</strong>
+        <strong className="max-w-[60px] truncate">{lastMessage.user.username}</strong>
         <span>:</span>{" "}
         {lastMessage.status === 'DELETED' ? (
           <>

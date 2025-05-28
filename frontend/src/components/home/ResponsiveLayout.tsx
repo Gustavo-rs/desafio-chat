@@ -48,17 +48,14 @@ export const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
 }) => {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
 
-  // Determinar quando mostrar o chat
   const shouldShowChat = selectedRoomId && (
-    isDesktop || // Desktop: sempre mostrar se há sala selecionada
-    (!isDesktop && activeTab === "chat") // Mobile: só mostrar na tab chat
+    isDesktop ||
+    (!isDesktop && activeTab === "chat")
   );
 
   return (
     <div className="h-full relative">
-      {/* Desktop Layout - 3 colunas lado a lado */}
       <div className="hidden lg:flex h-full gap-4 relative">
-        {/* Lista de salas (30%) */}
         <div className="w-[30%]">
           <RoomPage
             rooms={rooms}
@@ -77,7 +74,6 @@ export const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
           />
         </div>
 
-        {/* Área do chat (50%) */}
         <div className="w-[50%]">
           {shouldShowChat && isDesktop ? (
             <ChatPage roomId={selectedRoomId} roomName={selectedRoomName} />
@@ -89,7 +85,6 @@ export const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
           ) : null}
         </div>
 
-        {/* Área lateral direita (20%) - Detalhes */}
         <div className="w-[20%]">
           <RoomDetailsPage
             roomId={selectedRoomId || ""}
@@ -98,9 +93,7 @@ export const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
         </div>
       </div>
 
-      {/* Mobile Layout - Tabs */}
       <div className="lg:hidden flex flex-col h-full">
-        {/* Navigation Tabs */}
         <NavigationTabs
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -109,7 +102,6 @@ export const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
           formatUnreadCount={formatUnreadCount}
         />
 
-        {/* Tab Content */}
         <div className="flex-1 overflow-hidden">
           {activeTab === "rooms" && (
             <RoomPage

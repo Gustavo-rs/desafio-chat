@@ -29,7 +29,7 @@ const Home: React.FC = () => {
   } = useHomePageLogic();
 
   return (
-    <div className="h-[calc(100vh-8rem)] relative">
+    <div className="h-[calc(100vh-8rem)] relative overflow-hidden">
       <ResponsiveLayout
         rooms={rooms}
         selectedRoomId={selectedRoomId}

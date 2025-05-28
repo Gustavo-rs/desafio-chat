@@ -29,14 +29,12 @@ export const SharedFiles: React.FC<SharedFilesProps> = ({ roomDetails }) => {
         <div className="space-y-2 max-h-64 overflow-y-auto">
           {roomDetails.sharedFiles.map((file) => (
             <div key={file.id} className="flex items-center gap-2 p-3 bg-white rounded-lg border min-w-0">
-              {/* Ícone do arquivo - tamanho fixo */}
               {file.fileType.startsWith('image/') ? (
                 <Image size={20} className="text-green-600 flex-shrink-0" />
               ) : (
                 <File size={20} className="text-blue-600 flex-shrink-0" />
               )}
               
-              {/* Informações do arquivo - área flexível */}
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate" title={file.fileName}>
                   {file.fileName}
@@ -46,7 +44,6 @@ export const SharedFiles: React.FC<SharedFilesProps> = ({ roomDetails }) => {
                 </p>
               </div>
               
-              {/* Botão de download - tamanho fixo */}
               <div className="flex-shrink-0">
                 <Button
                   size="sm"

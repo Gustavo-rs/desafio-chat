@@ -49,7 +49,6 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     document.body.removeChild(link);
   };
 
-  // Renderização especial para mensagens do sistema
   if (msg.isSystemMessage) {
     return (
       <div className="flex justify-center my-1 md:my-2">
@@ -74,7 +73,6 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     );
   }
 
-  // Renderização normal para mensagens de usuário
   return (
     <div
       className={`p-1 md:p-2 rounded-md max-w-[95%] md:max-w-[80%] w-full ${
@@ -92,12 +90,11 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       } ${editingMessageId === msg.id ? "bg-violet-50 border-2 border-violet-200" : ""}`}>
         <div className="flex justify-between items-start">
           <div className="flex-1">
-            <div className="flex justify-between items-center mb-1 md:mb-2">
-              <span className="font-semibold text-xs md:text-sm truncate">
+            <div className="grid grid-cols-[1fr_auto] gap-2 items-center mb-1 md:mb-2">
+              <span className="font-semibold text-xs md:text-sm truncate" title={msg.user.id === currentUserId ? "Você" : msg.user.username}>
                 {msg.user.id === currentUserId ? "Você" : msg.user.username}
               </span>
-              <div className="flex items-center gap-2">
-                {/* Botões de ação para mensagens próprias - apenas se não for deletada */}
+              <div className="flex items-center gap-2 justify-end">
                 {msg.user.id === currentUserId && editingMessageId !== msg.id && msg.status !== 'DELETED' && (
                   <div className="flex gap-1 md:gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 ease-in-out">
                     <button
@@ -116,14 +113,13 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     </button>
                   </div>
                 )}
-                {/* Indicador de mensagem editada */}
                 {msg.status === 'EDITED' && (
                   <span className="text-xs text-gray-400 italic flex items-center gap-1" title={`Editada às ${msg.updated_at ? new Date(msg.updated_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}`}>
                     <Edit2 size={10} />
                     editada
                   </span>
                 )}
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-gray-500 whitespace-nowrap">
                   {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                 </span>
               </div>
@@ -180,18 +176,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
               <>
                 <ReactMarkdown 
                   components={{
-                    // Links abrem em nova aba
                     a: (props) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:text-violet-700 underline decoration-2 underline-offset-2 transition-colors duration-200" />,
-                    // Código inline com estilo
                     code: (props) => <code {...props} className="bg-violet-50 border border-violet-200 px-2 py-1 rounded-md text-sm font-mono text-violet-800" />,
-                    // Citações com estilo
                     blockquote: (props) => <blockquote {...props} className="border-l-4 border-violet-300 pl-4 my-2 italic text-gray-700 bg-violet-25 py-2 rounded-r-md" />,
-                    // Quebras de linha
                     p: (props) => <p {...props} className="mb-1 last:mb-0 leading-relaxed" />,
-                    // Listas
                     ul: (props) => <ul {...props} className="list-disc list-inside ml-2 space-y-1" />,
                     ol: (props) => <ol {...props} className="list-decimal list-inside ml-2 space-y-1" />,
-                    // Headers
                     h1: (props) => <h1 {...props} className="text-lg font-bold text-gray-800 mb-2" />,
                     h2: (props) => <h2 {...props} className="text-base font-semibold text-gray-800 mb-1" />,
                     h3: (props) => <h3 {...props} className="text-sm font-semibold text-gray-800 mb-1" />
@@ -200,7 +190,6 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                   {msg.content}
                 </ReactMarkdown>
 
-                {/* Renderizar previews de links */}
                 {linkPreviews.length > 0 && (
                   <div className="space-y-2 w-full overflow-hidden">
                     {linkPreviews.map((preview, index) => (
@@ -213,10 +202,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           </div>
         </div>
         
-        {/* Arquivos anexos - só mostrar se a mensagem não foi deletada */}
         {msg.status !== 'DELETED' && (
           <div className="mt-2">
-            {/* Múltiplos arquivos (novo formato) */}
             {msg.files && msg.files.length > 0 && (
               <div className="space-y-2">
                 {msg.files.map((file, index) => {
@@ -232,7 +219,6 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                             onError={(e) => console.error('Erro ao carregar imagem:', e.currentTarget.src)}
                             onLoad={() => console.log('Imagem carregada com sucesso:', file.file_name)}
                           />
-                          {/* Botão de download para imagem */}
                           <button
                             onClick={() => handleDownloadFile(file)}
                             className="absolute top-2 right-2 w-8 h-8 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shadow-lg"

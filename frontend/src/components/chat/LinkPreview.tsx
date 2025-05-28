@@ -41,7 +41,6 @@ export const LinkPreview: React.FC<LinkPreviewProps> = ({ preview }) => {
     window.open(preview.url, '_blank', 'noopener,noreferrer');
   };
 
-  // Determinar tipo de conteúdo
   const isVideo = preview.description?.includes('vídeo') || preview.siteName === 'YouTube';
   const isImage = preview.description?.includes('Imagem') || preview.image === preview.url;
 
@@ -61,7 +60,6 @@ export const LinkPreview: React.FC<LinkPreviewProps> = ({ preview }) => {
               }}
             />
           
-          {/* Overlay para vídeos */}
           {isVideo && (
             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 group-hover:bg-opacity-40 transition-colors">
               <div className="w-12 h-12 bg-white bg-opacity-90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -70,7 +68,6 @@ export const LinkPreview: React.FC<LinkPreviewProps> = ({ preview }) => {
             </div>
           )}
           
-          {/* Overlay para imagens */}
           {isImage && (
             <div className="absolute top-2 left-2 bg-black bg-opacity-50 rounded-md px-2 py-1">
               <div className="flex items-center gap-1 text-white text-xs">
@@ -81,7 +78,6 @@ export const LinkPreview: React.FC<LinkPreviewProps> = ({ preview }) => {
           )}
         </div>
       ) : !isImage && (
-        // Placeholder quando não há imagem mas não é uma imagem direta
         <div className="h-16 md:h-20 bg-gradient-to-r from-violet-100 to-purple-100 flex items-center justify-center">
           <div className="flex items-center gap-2 text-violet-600">
             <Globe className="h-5 w-5 md:h-6 md:w-6" />

@@ -20,7 +20,6 @@ export const RoomList: React.FC<RoomListProps> = ({
   formatUnreadCount,
   searchTerm,
 }) => {
-  // Filtrar salas baseado no termo de pesquisa
   const filteredRooms = rooms.filter(room =>
     room.name.toLowerCase().includes(searchTerm.toLowerCase())
   );

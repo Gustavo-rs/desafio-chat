@@ -9,7 +9,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-// Removed Select imports - using custom interface instead
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { UserPlus, UserMinus, Crown, User, Loader2, Search } from 'lucide-react';
@@ -47,11 +46,9 @@ export default function RoomMembersManager({
     
     setIsLoadingUsers(true);
     try {
-      // Buscar usuários disponíveis (que não são membros da sala)
       const response = await roomsService.getAvailableUsers(roomId);
       console.log('Usuários disponíveis:', response.data);
       
-      // Buscar todos os usuários para permitir busca por nome
       const allUsersResponse = await roomsService.getAllUsers(roomId);
       const filteredUsers = allUsersResponse.data.filter(u => 
         !members.some(member => member.user.id === u.id)
@@ -95,7 +92,6 @@ export default function RoomMembersManager({
     }
   };
 
-  // Filtrar usuários baseado na busca
   const filteredUsers = allUsers.filter(user =>
     user.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -149,7 +145,6 @@ export default function RoomMembersManager({
                   </div>
                 ) : (
                   <>
-                    {/* Campo de busca */}
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                       <Input
@@ -160,7 +155,6 @@ export default function RoomMembersManager({
                       />
                     </div>
 
-                    {/* Lista de usuários */}
                     {filteredUsers.length > 0 ? (
                       <div className="space-y-2 max-h-48 overflow-y-auto">
                         {filteredUsers.map((user) => (
@@ -171,21 +165,18 @@ export default function RoomMembersManager({
                             }`}
                             onClick={() => setSelectedUserId(user.id)}
                           >
-                            {/* Avatar */}
                             <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
                               <span className="text-gray-700 font-semibold text-xs">
                                 {user.username.charAt(0).toUpperCase()}
                               </span>
                             </div>
                             
-                            {/* Nome do usuário - área flexível */}
                             <div className="flex-1 min-w-0">
                               <span className="text-sm font-medium truncate block" title={user.username}>
                                 {user.username}
                               </span>
                             </div>
                             
-                            {/* Indicador de seleção - tamanho fixo */}
                             {selectedUserId === user.id && (
                               <div className="w-4 h-4 bg-violet-500 rounded-full flex items-center justify-center flex-shrink-0">
                                 <div className="w-2 h-2 bg-white rounded-full"></div>
@@ -239,14 +230,12 @@ export default function RoomMembersManager({
             key={member.id}
             className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg min-w-0"
           >
-            {/* Avatar */}
             <div className="w-6 h-6 bg-violet-100 rounded-full flex items-center justify-center flex-shrink-0">
               <span className="text-violet-700 font-semibold text-xs">
                 {member.user.username.charAt(0).toUpperCase()}
               </span>
             </div>
             
-            {/* Nome do usuário - área flexível que pode ser truncada */}
             <div className="flex-1 min-w-0">
               <p className="font-medium text-xs truncate" title={member.user.username}>
                 {member.user.username}
@@ -256,7 +245,6 @@ export default function RoomMembersManager({
               </p>
             </div>
             
-            {/* Badge do papel - tamanho fixo */}
             <div className="flex-shrink-0">
               {member.role === 'ADMIN' ? (
                 <Badge variant="outline" className="text-xs whitespace-nowrap">
@@ -271,7 +259,6 @@ export default function RoomMembersManager({
               )}
             </div>
             
-            {/* Botão de remover - tamanho fixo */}
             {isCurrentUserAdmin && 
              member.role !== 'ADMIN' && 
              member.user.id !== user?.user?.id && (
@@ -291,7 +278,6 @@ export default function RoomMembersManager({
         ))}
       </div>
 
-      {/* Dialog de confirmação para remover membro */}
       <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
