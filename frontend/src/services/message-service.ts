@@ -23,7 +23,6 @@ class MessageService extends BaseService<MessageResponse, APICreateMessage> {
     formData.append('content', content);
     formData.append('roomId', roomId);
     
-    // Adiciona múltiplos arquivos
     files.forEach(file => {
       formData.append('files', file);
     });

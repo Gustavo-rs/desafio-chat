@@ -27,20 +27,14 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
     loadingUsers,
     user,
     typingUsers,
-
-    // Refs
     fileInputRef,
     messagesContainerRef,
     bottomRef,
-
-    // Setters
     setInput,
     setEditingContent,
     setMessageToDelete,
     setDeleteDialogOpen,
     setShowOnlineUsers,
-
-    // Handlers
     handleFileSelect,
     removeSelectedFile,
     clearAllFiles,

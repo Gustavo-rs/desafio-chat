@@ -51,13 +51,11 @@ export default function RoomDetailsPage({ roomId }: RoomDetailsPageProps) {
       <RoomDetailsHeader roomId={roomId} />
       
       <div className="flex-1 overflow-y-auto space-y-3 md:space-y-4 min-h-0">
-        {/* Informações básicas */}
+
         <RoomInfo roomDetails={roomDetails} />
 
-        {/* Estatísticas */}
         <RoomStats roomDetails={roomDetails} />
 
-        {/* Gerenciador de Membros */}
         <div className="bg-gray-50 rounded-lg p-4">
           <RoomMembersManager
             roomId={roomId}
@@ -67,7 +65,6 @@ export default function RoomDetailsPage({ roomId }: RoomDetailsPageProps) {
           />
         </div>
 
-        {/* Arquivos compartilhados */}
         <SharedFiles roomDetails={roomDetails} />
       </div>
     </div>

@@ -63,37 +63,42 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
     };
   };
 
-  const scrollToBottom = (force = false) => {
+  const scrollToBottom = (instant = false) => {
+    if (!messagesContainerRef.current) return;
+
+    const container = messagesContainerRef.current;
+    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 50;
+    
+    if (!instant && isNearBottom) return;
+
     const performScroll = () => {
       if (bottomRef.current) {
-        bottomRef.current.scrollIntoView({ behavior: force ? "auto" : "smooth" });
-      }
-      else if (messagesContainerRef.current) {
-        messagesContainerRef.current.scrollTo({
-          top: messagesContainerRef.current.scrollHeight,
-          behavior: force ? "auto" : "smooth"
+        bottomRef.current.scrollIntoView({ behavior: "auto" });
+      } else if (container) {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: "auto"
         });
       }
     };
 
     performScroll();
     
-    if (force) {
-      setTimeout(performScroll, 50);
-      setTimeout(performScroll, 150);
+    if (instant) {
+      setTimeout(performScroll, 30);
     }
   };
 
   const handleImageLoad = useCallback(() => {
     if (!isLoadingOlderMessages.current) {
-      setTimeout(() => scrollToBottom(true), 50);
+      setTimeout(() => scrollToBottom(true), 30);
     }
   }, []);
 
   const callbacksRef = useRef({
     handleMessageReceived: (message: Message) => {
       setMessages((prev) => [...prev, message]);
-      setTimeout(() => scrollToBottom(true), 50);
+      setTimeout(() => scrollToBottom(true), 30);
     },
     handleMessageDeleted: (messageId: string, updatedMessage?: Message) => {
       if (updatedMessage) {
@@ -125,7 +130,7 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
       };
       
       setMessages((prev) => [...prev, systemMessage]);
-      setTimeout(() => scrollToBottom(true), 100);
+      setTimeout(() => scrollToBottom(true), 50);
     },
     handleUserLeft: (userId: string, username: string, _roomId: string) => {
       setMessages((prev) => {
@@ -145,7 +150,7 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
         
         return [...prev, systemMessage];
       });
-      setTimeout(() => scrollToBottom(true), 100);
+      setTimeout(() => scrollToBottom(true), 50);
     },
     handleMemberAdded: (_roomId: string, member: any) => {
       const systemMessage: Message = {
@@ -163,7 +168,7 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
       };
       
       setMessages((prev) => [...prev, systemMessage]);
-      setTimeout(() => scrollToBottom(true), 100);
+      setTimeout(() => scrollToBottom(true), 50);
     },
     handleMemberRemoved: (_roomId: string, removedUserId: string) => {
       if (removedUserId === user?.user?.id) {
@@ -192,7 +197,7 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
         
         return [...prev, systemMessage];
       });
-      setTimeout(() => scrollToBottom(true), 100);
+      setTimeout(() => scrollToBottom(true), 50);
     },
     handleRoomUsersUpdated: (_roomId: string, users: any[], _count: number) => {
       setOnlineUsers(users);
@@ -353,7 +358,7 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
         
         setTimeout(() => {
           scrollToBottom(true);
-        }, 100);
+        }, 50);
       } else {
         const normalizedMessages = response.data.messages.map(normalizeMessage);
         setMessages(prev => [...normalizedMessages, ...prev]);

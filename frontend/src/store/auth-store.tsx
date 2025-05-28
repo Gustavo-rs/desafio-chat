@@ -30,13 +30,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
 
-        // Verificar se o cookie ainda é válido fazendo uma requisição ao servidor
         const response = await authService.verify();
         setUser(response.data);
         setIsLoading(false);
       } catch (err) {
         console.error("Erro ao verificar autenticação:", err);
-        // Se a verificação falhar, limpar dados locais
         localStorage.removeItem("user");
         setUser(null);
         setIsLoading(false);
@@ -58,12 +56,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      // Fazer logout no servidor para limpar o cookie
       await authService.logout();
     } catch (err) {
       console.error("Erro ao fazer logout no servidor:", err);
     } finally {
-      // Sempre limpar dados locais, mesmo se o logout no servidor falhar
       localStorage.removeItem("user");
       setUser(null);
     }

@@ -1,7 +1,5 @@
 import type { APICreateRoom, APIRoom, UnreadCount, AvailableUser, RoomMember } from "../types/api";
 import { BaseService } from "./base-service";
-
-// Novos tipos para detalhes da sala
 interface RoomParticipant {
   userId: string;
   username: string;

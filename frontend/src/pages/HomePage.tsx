@@ -4,7 +4,6 @@ import { useHomePageLogic } from "@/hooks/useHomePageLogic";
 
 const Home: React.FC = () => {
   const {
-    // State
     rooms,
     isCreatingRoom,
     roomName,
@@ -15,14 +14,10 @@ const Home: React.FC = () => {
     open,
     activeTab,
     totalUnreadCount,
-    
-    // Setters
     setRoomName,
     setSearchTerm,
     setOpen,
     setActiveTab,
-    
-    // Handlers
     handleCreateRoom,
     handleRoomSelect,
     formatUnreadCount,

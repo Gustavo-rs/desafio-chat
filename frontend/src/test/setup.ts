@@ -1,7 +1,6 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
-// Mock do socket.io-client
 vi.mock('socket.io-client', () => ({
   io: vi.fn(() => ({
     connect: vi.fn(),
@@ -13,7 +12,6 @@ vi.mock('socket.io-client', () => ({
   })),
 }));
 
-// Mock do react-router-dom
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
@@ -24,7 +22,6 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-// Mock do axios
 vi.mock('axios', () => ({
   default: {
     create: vi.fn(() => ({
@@ -44,29 +41,26 @@ vi.mock('axios', () => ({
   },
 }));
 
-// Mock de window.matchMedia (necessário para alguns componentes Radix UI)
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: vi.fn().mockImplementation(query => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: vi.fn(), // deprecated
-    removeListener: vi.fn(), // deprecated
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
   })),
 });
 
-// Mock de IntersectionObserver
 global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
 }));
 
-// Mock de ResizeObserver
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
