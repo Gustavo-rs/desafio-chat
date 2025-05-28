@@ -1,38 +1,84 @@
 import Redis from 'ioredis';
 import { createAdapter } from '@socket.io/redis-adapter';
 
-const redisConfig = {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
-  password: process.env.REDIS_PASSWORD,
-  username: process.env.REDIS_USERNAME,
-  db: parseInt(process.env.REDIS_DB || '0'),
-  retryDelayOnFailover: 100,
-  enableReadyCheck: false,
-  maxRetriesPerRequest: 3,
-  connectTimeout: 10000,
-  commandTimeout: 5000,
-  lazyConnect: true,
-  keepAlive: 30000,
-  family: 4,
-  ...(process.env.REDIS_TLS === 'true' && {
-    tls: {
-      rejectUnauthorized: process.env.NODE_ENV === 'production'
-    }
-  })
-};
+const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
-export const pubClient = new Redis(redisConfig);
+export const pubClient = new Redis(redisUrl);
 export const subClient = pubClient.duplicate();
+export const redisClient = new Redis(redisUrl);
+
 export const redisAdapter = createAdapter(pubClient, subClient);
-export const redisClient = new Redis(redisConfig);
+
+pubClient.on('error', (err) => {
+  console.error('[Redis Pub Client] Connection error:', err.message);
+});
+
+subClient.on('error', (err) => {
+  console.error('[Redis Sub Client] Connection error:', err.message);
+});
+
+redisClient.on('error', (err) => {
+  console.error('[Redis Client] Connection error:', err.message);
+});
+
+pubClient.on('connect', () => {
+  console.log('[Redis Pub Client] Connected successfully');
+});
+
+pubClient.on('ready', () => {
+  console.log('[Redis Pub Client] Ready to accept commands');
+});
+
+pubClient.on('close', () => {
+  console.log('[Redis Pub Client] Connection closed');
+});
+
+pubClient.on('reconnecting', () => {
+  console.log('[Redis Pub Client] Reconnecting...');
+});
+
+subClient.on('connect', () => {
+  console.log('[Redis Sub Client] Connected successfully');
+});
+
+subClient.on('ready', () => {
+  console.log('[Redis Sub Client] Ready to accept commands');
+});
+
+subClient.on('close', () => {
+  console.log('[Redis Sub Client] Connection closed');
+});
+
+subClient.on('reconnecting', () => {
+  console.log('[Redis Sub Client] Reconnecting...');
+});
+
+redisClient.on('connect', () => {
+  console.log('[Redis Client] Connected successfully');
+});
+
+redisClient.on('ready', () => {
+  console.log('[Redis Client] Ready to accept commands');
+});
+
+redisClient.on('close', () => {
+  console.log('[Redis Client] Connection closed');
+});
+
+redisClient.on('reconnecting', () => {
+  console.log('[Redis Client] Reconnecting...');
+});
 
 process.on('SIGTERM', async () => {
-  await Promise.all([
-    pubClient.quit(),
-    subClient.quit(),
-    redisClient.quit()
-  ]);
+  try {
+    await Promise.all([
+      pubClient.quit(),
+      subClient.quit(),
+      redisClient.quit()
+    ]);
+  } catch (error) {
+    console.error('Error closing Redis connections:', error);
+  }
 });
 
 export default redisClient;
