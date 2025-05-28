@@ -63,22 +63,37 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
     };
   };
 
-  const scrollToBottom = () => {
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-    else if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTo({
-        top: messagesContainerRef.current.scrollHeight,
-        behavior: "auto"
-      });
+  const scrollToBottom = (force = false) => {
+    const performScroll = () => {
+      if (bottomRef.current) {
+        bottomRef.current.scrollIntoView({ behavior: force ? "auto" : "smooth" });
+      }
+      else if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTo({
+          top: messagesContainerRef.current.scrollHeight,
+          behavior: force ? "auto" : "smooth"
+        });
+      }
+    };
+
+    performScroll();
+    
+    if (force) {
+      setTimeout(performScroll, 50);
+      setTimeout(performScroll, 150);
     }
   };
+
+  const handleImageLoad = useCallback(() => {
+    if (!isLoadingOlderMessages.current) {
+      setTimeout(() => scrollToBottom(true), 50);
+    }
+  }, []);
 
   const callbacksRef = useRef({
     handleMessageReceived: (message: Message) => {
       setMessages((prev) => [...prev, message]);
-      scrollToBottom();
+      setTimeout(() => scrollToBottom(true), 50);
     },
     handleMessageDeleted: (messageId: string, updatedMessage?: Message) => {
       if (updatedMessage) {
@@ -110,7 +125,7 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
       };
       
       setMessages((prev) => [...prev, systemMessage]);
-      scrollToBottom();
+      setTimeout(() => scrollToBottom(true), 100);
     },
     handleUserLeft: (userId: string, username: string, _roomId: string) => {
       setMessages((prev) => {
@@ -130,7 +145,7 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
         
         return [...prev, systemMessage];
       });
-      scrollToBottom();
+      setTimeout(() => scrollToBottom(true), 100);
     },
     handleMemberAdded: (_roomId: string, member: any) => {
       const systemMessage: Message = {
@@ -148,7 +163,7 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
       };
       
       setMessages((prev) => [...prev, systemMessage]);
-      scrollToBottom();
+      setTimeout(() => scrollToBottom(true), 100);
     },
     handleMemberRemoved: (_roomId: string, removedUserId: string) => {
       if (removedUserId === user?.user?.id) {
@@ -177,7 +192,7 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
         
         return [...prev, systemMessage];
       });
-      scrollToBottom();
+      setTimeout(() => scrollToBottom(true), 100);
     },
     handleRoomUsersUpdated: (_roomId: string, users: any[], _count: number) => {
       setOnlineUsers(users);
@@ -322,6 +337,12 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
     setLoading(true);
     isLoadingOlderMessages.current = true;
 
+    // Salva a posição atual do scroll antes de carregar mensagens antigas
+    let previousScrollHeight = 0;
+    if (pageNumber > 1 && messagesContainerRef.current) {
+      previousScrollHeight = messagesContainerRef.current.scrollHeight;
+    }
+
     try {
       const response = await messageService.listMessagesFromRoom(roomId, pageNumber);
       
@@ -331,25 +352,27 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
         setInitialLoadDone(true);
         
         setTimeout(() => {
-          scrollToBottom();
+          scrollToBottom(true);
         }, 100);
       } else {
         const normalizedMessages = response.data.messages.map(normalizeMessage);
         setMessages(prev => [...normalizedMessages, ...prev]);
         
+        // Mantém a posição do scroll após carregar mensagens antigas
         setTimeout(() => {
           if (messagesContainerRef.current) {
             const container = messagesContainerRef.current;
-            const scrollHeight = container.scrollHeight;
-            const clientHeight = container.clientHeight;
-            container.scrollTop = scrollHeight - clientHeight - 100;
+            const newScrollHeight = container.scrollHeight;
+            const scrollDifference = newScrollHeight - previousScrollHeight;
+            container.scrollTop = scrollDifference;
           }
-        }, 100);
+        }, 50);
       }
 
       setHasMore(response.data.currentPage < response.data.pages);
     } finally {
       setLoading(false);
+      isLoadingOlderMessages.current = false;
     }
   };
 
@@ -416,5 +439,6 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
     handleScroll,
     handleTyping,
     stopTyping,
+    handleImageLoad,
   };
 };

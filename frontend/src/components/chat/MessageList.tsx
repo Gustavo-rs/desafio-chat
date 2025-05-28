@@ -21,6 +21,7 @@ interface MessageListProps {
   messagesContainerRef: React.RefObject<HTMLDivElement>;
   bottomRef: React.RefObject<HTMLDivElement>;
   handleScroll: () => void;
+  handleImageLoad: () => void;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({
@@ -41,6 +42,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   messagesContainerRef,
   bottomRef,
   handleScroll,
+  handleImageLoad,
 }) => {
   if (userRemovedFromRoom) {
     return (
@@ -92,6 +94,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             handleEditMessage={handleEditMessage}
             setMessageToDelete={setMessageToDelete}
             setDeleteDialogOpen={setDeleteDialogOpen}
+            handleImageLoad={handleImageLoad}
           />
         ))
       )}

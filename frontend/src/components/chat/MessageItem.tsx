@@ -17,6 +17,7 @@ interface MessageItemProps {
   handleEditMessage: (messageId: string) => void;
   setMessageToDelete: (messageId: string | null) => void;
   setDeleteDialogOpen: (open: boolean) => void;
+  handleImageLoad: () => void;
 }
 
 export const MessageItem: React.FC<MessageItemProps> = ({
@@ -31,6 +32,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   handleEditMessage,
   setMessageToDelete,
   setDeleteDialogOpen,
+  handleImageLoad,
 }) => {
   const linkPreviews = useLinkPreview(msg.content);
   const handleDeleteMessage = (messageId: string) => {
@@ -217,7 +219,10 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                             alt={file.file_name} 
                             className="max-w-full rounded-lg"
                             onError={(e) => console.error('Erro ao carregar imagem:', e.currentTarget.src)}
-                            onLoad={() => console.log('Imagem carregada com sucesso:', file.file_name)}
+                            onLoad={() => {
+                              console.log('Imagem carregada com sucesso:', file.file_name);
+                              handleImageLoad();
+                            }}
                           />
                           <button
                             onClick={() => handleDownloadFile(file)}

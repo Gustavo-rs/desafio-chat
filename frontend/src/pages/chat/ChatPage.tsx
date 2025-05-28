@@ -53,6 +53,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
     handleScroll,
     handleTyping,
     stopTyping,
+    handleImageLoad,
   } = useChatPageLogic({ roomId: roomId || "" });
 
   if (!roomId) {
@@ -98,6 +99,7 @@ export default function ChatPage({ roomId, roomName }: ChatPageProps) {
           messagesContainerRef={messagesContainerRef as React.RefObject<HTMLDivElement>}
           bottomRef={bottomRef as React.RefObject<HTMLDivElement>}
           handleScroll={handleScroll}
+          handleImageLoad={handleImageLoad}
         />
 
         <TypingIndicator typingUsers={typingUsers} />
