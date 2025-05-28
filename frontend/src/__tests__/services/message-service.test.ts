@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import MessageService from '../../services/message-service';
 
-// Mock simples do serviço
 vi.mock('../../services/http', () => ({
   default: {
     get: vi.fn(),

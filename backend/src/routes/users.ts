@@ -1,5 +1,5 @@
-import { Router, Request, Response, NextFunction } from "express";
-import { UserService } from "../services/userService";
+import { Router, Request, Response, NextFunction, RequestHandler } from "express";
+import { UserService } from "../services/user/UserService";
 import { validate } from "../middlewares/validation";
 import { createUserSchema, loginSchema } from "../schemas/validation";
 import { UserResponse, LoginResponse } from "../models/userModel";

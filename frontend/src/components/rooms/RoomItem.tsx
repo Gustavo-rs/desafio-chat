@@ -119,7 +119,7 @@ export const RoomItem: React.FC<RoomItemProps> = ({
           </>
         ) : (
           <>
-            <span className="sm:inline">
+            <span className="hidden sm:inline">
               <CompactMarkdown content={lastMessage.content} maxLength={30} />
             </span>
             <span className="sm:hidden">

@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction, RequestHandler } from "express";
-import { MessageService } from "../services/messageService";
+import { MessageService } from "../services/message/MessageService";
 import { validate } from "../middlewares/validation";
 import { createMessageSchema } from "../schemas/validation";
 import { MessageResponse, UnreadCountResponse, ErrorResponse } from "../models/messageModel";

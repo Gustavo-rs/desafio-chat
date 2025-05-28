@@ -23,6 +23,8 @@ export const createRoomSchema = z.object({
 export const createMessageSchema = z.object({
   body: z.object({
     content: z.string().max(1000).optional(),
+  }),
+  params: z.object({
     roomId: z.string().uuid(),
   }),
 });

@@ -32,20 +32,39 @@ const storage = multer.diskStorage({
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const allowedMimeTypes = [
     'image/jpeg',
+    'image/jpg', 
     'image/png',
     'image/gif',
+    'image/webp',
+    'image/bmp',
+    'image/tiff',
     'application/pdf',
+    'text/plain',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/vnd.ms-excel',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'text/plain'
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/zip',
+    'application/x-zip-compressed',
+    'application/x-rar-compressed',
+    'application/x-7z-compressed',
+    'application/xml',
+    'text/xml',
+    'application/json',
+    'text/csv',
+    'application/rtf',
+    'audio/mpeg',
+    'audio/wav',
+    'video/mp4',
+    'video/avi'
   ];
 
   if (allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Only images and documents are allowed.'));
+    cb(new Error(`Tipo de arquivo não permitido: ${file.mimetype}. Apenas imagens, documentos, planilhas, PDFs, arquivos compactados e outros formatos comuns são aceitos.`));
   }
 };
 
@@ -53,7 +72,7 @@ export const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024,
+    fileSize: 10 * 1024 * 1024,
     files: 10,
   }
 });

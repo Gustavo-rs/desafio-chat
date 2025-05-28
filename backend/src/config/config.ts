@@ -14,10 +14,10 @@ export const config = {
     url: process.env.DATABASE_URL
   },
   rateLimit: {
-    windowMs: 5 * 60 * 1000, // 5 minutes
-    max: 1000, // limit each IP to 1000 requests per windowMs
-    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    trustProxy: true, // Trust proxy headers
+    windowMs: 5 * 60 * 1000,
+    max: 1000,
+    standardHeaders: true,
+    legacyHeaders: false,
+    trustProxy: true,
   }
 }; 

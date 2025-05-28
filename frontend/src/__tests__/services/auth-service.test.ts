@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import AuthService from '../../services/auth-service';
 
-// Mock simples do serviço
 vi.mock('../../services/http', () => ({
   default: {
     post: vi.fn(),

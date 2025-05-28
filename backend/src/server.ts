@@ -14,7 +14,7 @@ import roomsRoutes from "./routes/rooms";
 import usersRoutes from "./routes/users";
 import messagesRoutes from "./routes/messages";
 import monitoringRoutes from "./routes/monitoring";
-import { MessageService } from "./services/messageService";
+import { MessageService } from "./services/message/MessageService";
 import { redisAdapter } from "./config/redis";
 import { ScalingService } from "./services/scalingService";
 

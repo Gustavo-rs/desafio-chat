@@ -104,14 +104,12 @@ describe('useMediaQuery', () => {
 
     expect(result.current).toBe(false);
 
-    // Simula mudança na media query
     act(() => {
       changeListener({ matches: true } as MediaQueryListEvent);
     });
 
     expect(result.current).toBe(true);
 
-    // Simula outra mudança
     act(() => {
       changeListener({ matches: false } as MediaQueryListEvent);
     });

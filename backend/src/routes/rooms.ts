@@ -1,17 +1,16 @@
 import { Router, Request, Response, NextFunction, RequestHandler } from "express";
-import { RoomService } from "../services/roomService";
-import { MessageService } from "../services/messageService";
+import { RoomService } from "../services/room/RoomService";
+import { MessageService } from "../services/message/MessageService";
 import { authenticate } from "../middlewares/auth";
 import { validate } from "../middlewares/validation";
 import { createRoomSchema, roomIdSchema } from "../schemas/validation";
-import { PrismaClient } from '@prisma/client';
+import { prisma } from "../config/database";
 import { Room, RoomResponse } from "../models/roomModel";
 import { UnreadCountResponse, ErrorResponse } from "../models/messageModel";
 
 const router = Router();
 const roomService = new RoomService();
 const messageService = new MessageService();
-const prisma = new PrismaClient();
 
 router.use(authenticate);
 

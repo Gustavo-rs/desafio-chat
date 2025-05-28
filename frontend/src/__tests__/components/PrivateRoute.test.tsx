@@ -3,13 +3,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { PrivateRoute } from '../../components/PrivateRoute';
 
-// Mock do store de autenticação
 const mockUseUser = vi.fn();
 vi.mock('@/store/auth-store', () => ({
   useUser: () => mockUseUser(),
 }));
 
-// Mock do Navigate
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');

@@ -1,4 +1,3 @@
-// src/store/AuthContext.tsx
 import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { APIUser } from "../types/api";
