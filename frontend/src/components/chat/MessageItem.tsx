@@ -209,7 +209,6 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             {msg.files && msg.files.length > 0 && (
               <div className="space-y-2">
                 {msg.files.map((file, index) => {
-                  console.log('Arquivo:', file, 'URL completa:', `${import.meta.env.VITE_API_URL}${file.file_url}`);
                   return (
                     <div key={file.id || index} className="relative group">
                       {file.file_type?.startsWith('image/') ? (
@@ -218,11 +217,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                             src={`${import.meta.env.VITE_API_URL}${file.file_url}`} 
                             alt={file.file_name} 
                             className="max-w-full rounded-lg"
-                            onError={(e) => console.error('Erro ao carregar imagem:', e.currentTarget.src)}
-                            onLoad={() => {
-                              console.log('Imagem carregada com sucesso:', file.file_name);
-                              handleImageLoad();
-                            }}
+                            onLoad={() => handleImageLoad()}
                           />
                           <button
                             onClick={() => handleDownloadFile(file)}

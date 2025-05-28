@@ -10,14 +10,9 @@ interface TypingIndicatorProps {
 }
 
 export const TypingIndicator: React.FC<TypingIndicatorProps> = ({ typingUsers }) => {
-  console.log('👥 TypingIndicator render - users count:', typingUsers.length, 'users:', typingUsers.map(u => u.username));
-  
   if (typingUsers.length === 0) {
-    console.log('👥 No users typing, hiding indicator');
     return null;
   }
-  
-  console.log('👥 Showing typing indicator for:', typingUsers.map(u => u.username).join(', '));
 
   const getTypingText = () => {
     if (typingUsers.length === 1) {

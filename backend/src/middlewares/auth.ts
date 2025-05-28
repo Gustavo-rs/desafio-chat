@@ -18,7 +18,6 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
   try {
     const token = req.cookies.token;
 
-    console.log(req.cookies);
     if (!token) {
       throw new AuthenticationError('No token provided');
     }

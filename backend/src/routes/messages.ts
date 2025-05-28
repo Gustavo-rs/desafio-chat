@@ -53,13 +53,11 @@ const createMessage: RequestHandler<
       return;
     }
 
-    // Verifica se tem pelo menos conteúdo ou arquivo
     if (!content && (!files || files.length === 0)) {
       res.status(400).json({ message: "A mensagem deve conter texto ou pelo menos um arquivo" });
       return;
     }
 
-    // Processa múltiplos arquivos
     const fileInfos = files?.map(file => ({
       fileName: file.originalname,
       fileUrl: `/uploads/${file.path.replace(/\\/g, '/').replace('uploads/', '')}`,

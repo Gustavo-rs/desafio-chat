@@ -34,7 +34,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(response.data);
         setIsLoading(false);
       } catch (err) {
-        console.error("Erro ao verificar autenticação:", err);
         localStorage.removeItem("user");
         setUser(null);
         setIsLoading(false);
@@ -49,7 +48,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem("user", JSON.stringify(data.user));
       setUser(data);
     } catch (err) {
-      console.error("Erro ao salvar login:", err);
       logout();
     }
   };
@@ -58,7 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await authService.logout();
     } catch (err) {
-      console.error("Erro ao fazer logout no servidor:", err);
+      // Silently handle logout errors
     } finally {
       localStorage.removeItem("user");
       setUser(null);

@@ -421,8 +421,6 @@ export class RoomService {
   }
 
   async getAvailableUsers(roomId: string, adminUserId: string) {
-    console.log(`🔍 Buscando usuários disponíveis para sala ${roomId} pelo admin ${adminUserId}`);
-    
     const room = await prisma.room.findUnique({
       where: { id: roomId },
       include: {
@@ -437,7 +435,6 @@ export class RoomService {
     }
 
     const adminMembership = room.members.find((member: { user_id: string; role: string }) => member.user_id === adminUserId);
-    console.log(`👤 Admin membership:`, adminMembership);
     
     if (!adminMembership || adminMembership.role !== 'ADMIN') {
       throw new ForbiddenError('Only room admins can view available users');
@@ -459,7 +456,6 @@ export class RoomService {
       },
     });
 
-    console.log(`✅ Usuários disponíveis encontrados:`, availableUsers);
     return availableUsers;
   }
 } 

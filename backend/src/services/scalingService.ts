@@ -35,7 +35,6 @@ export class ScalingService {
       
       await redisClient.expire(key, 86400);
     } catch (error) {
-      console.error('Error adding user to room:', error);
       throw error;
     }
   }
@@ -49,7 +48,6 @@ export class ScalingService {
       const key = `room:${this.sanitizeKey(roomId)}:users`;
       await redisClient.hdel(key, this.sanitizeKey(userId));
     } catch (error) {
-      console.error('Error removing user from room:', error);
       throw error;
     }
   }
@@ -71,7 +69,6 @@ export class ScalingService {
         }
       }).filter(Boolean);
     } catch (error) {
-      console.error('Error getting room users:', error);
       return [];
     }
   }
@@ -85,7 +82,6 @@ export class ScalingService {
       const key = `room:${this.sanitizeKey(roomId)}:users`;
       return await redisClient.hlen(key);
     } catch (error) {
-      console.error('Error getting user room count:', error);
       return 0;
     }
   }
@@ -100,7 +96,6 @@ export class ScalingService {
       await redisClient.sadd(key, this.sanitizeKey(userId));
       await redisClient.expire(key, 3600);
     } catch (error) {
-      console.error('Error adding active viewer:', error);
       throw error;
     }
   }
@@ -114,7 +109,6 @@ export class ScalingService {
       const key = `room:${this.sanitizeKey(roomId)}:viewers`;
       await redisClient.srem(key, this.sanitizeKey(userId));
     } catch (error) {
-      console.error('Error removing active viewer:', error);
       throw error;
     }
   }
@@ -128,7 +122,6 @@ export class ScalingService {
       const key = `room:${this.sanitizeKey(roomId)}:viewers`;
       return await redisClient.smembers(key);
     } catch (error) {
-      console.error('Error getting active viewers:', error);
       return [];
     }
   }
@@ -142,7 +135,6 @@ export class ScalingService {
       const key = `room:${this.sanitizeKey(roomId)}:viewers`;
       return (await redisClient.sismember(key, this.sanitizeKey(userId))) === 1;
     } catch (error) {
-      console.error('Error checking active viewer:', error);
       return false;
     }
   }
@@ -163,7 +155,6 @@ export class ScalingService {
       
       await redisClient.expire(key, 10);
     } catch (error) {
-      console.error('Error setting user typing:', error);
       throw error;
     }
   }
@@ -177,7 +168,6 @@ export class ScalingService {
       const key = `room:${this.sanitizeKey(roomId)}:typing`;
       await redisClient.hdel(key, this.sanitizeKey(userId));
     } catch (error) {
-      console.error('Error removing user typing:', error);
       throw error;
     }
   }
@@ -199,7 +189,6 @@ export class ScalingService {
         }
       }).filter(Boolean);
     } catch (error) {
-      console.error('Error getting typing users:', error);
       return [];
     }
   }
@@ -210,7 +199,6 @@ export class ScalingService {
       const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
       
       const typingKeys = await redisClient.keys('room:*:typing');
-      
       const limitedKeys = typingKeys.slice(0, 100);
       
       for (const key of limitedKeys) {
@@ -230,7 +218,6 @@ export class ScalingService {
         }
       }
     } catch (error) {
-      console.error('Error cleaning up expired data:', error);
       throw error;
     }
   }
@@ -332,7 +319,6 @@ export class ScalingService {
       
       return current <= limit;
     } catch (error) {
-      console.error('Error checking rate limit:', error);
       return false;
     }
   }
@@ -346,7 +332,6 @@ export class ScalingService {
       const key = `room:${this.sanitizeKey(roomId)}:recent_messages`;
       await redisClient.setex(key, 300, JSON.stringify(messages));
     } catch (error) {
-      console.error('Error caching recent messages:', error);
       throw error;
     }
   }
@@ -361,7 +346,6 @@ export class ScalingService {
       const cached = await redisClient.get(key);
       return cached ? JSON.parse(cached) : null;
     } catch (error) {
-      console.error('Error getting cached messages:', error);
       return null;
     }
   }

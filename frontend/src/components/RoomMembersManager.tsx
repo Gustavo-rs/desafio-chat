@@ -47,17 +47,14 @@ export default function RoomMembersManager({
     setIsLoadingUsers(true);
     try {
       const response = await roomsService.getAvailableUsers(roomId);
-      console.log('Usuários disponíveis:', response.data);
       
       const allUsersResponse = await roomsService.getAllUsers(roomId);
       const filteredUsers = allUsersResponse.data.filter(u => 
         !members.some(member => member.user.id === u.id)
       );
       setAllUsers(filteredUsers);
-      console.log('Todos os usuários (filtrados):', filteredUsers);
       
     } catch (error) {
-      console.error('Erro ao buscar usuários disponíveis:', error);
       toast.error('Erro ao carregar usuários disponíveis');
     } finally {
       setIsLoadingUsers(false);
@@ -85,7 +82,6 @@ export default function RoomMembersManager({
       setSearchTerm('');
       onMembersUpdate();
     } catch (error: any) {
-      console.error('Erro ao adicionar membro:', error);
       toast.error(error.response?.data?.message || 'Erro ao adicionar usuário');
     } finally {
       setIsLoading(false);
@@ -109,7 +105,6 @@ export default function RoomMembersManager({
       toast.success(`${userToRemove.username} foi removido da sala`);
       onMembersUpdate();
     } catch (error: any) {
-      console.error('Erro ao remover membro:', error);
       toast.error(error.response?.data?.message || 'Erro ao remover usuário');
     } finally {
       setIsConfirmDialogOpen(false);

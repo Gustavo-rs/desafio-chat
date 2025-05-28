@@ -27,18 +27,6 @@ export const subClient = pubClient.duplicate();
 export const redisAdapter = createAdapter(pubClient, subClient);
 export const redisClient = new Redis(redisConfig);
 
-pubClient.on('error', (err: any) => {
-  console.error('Redis Pub Client Error:', err.message);
-});
-
-subClient.on('error', (err: any) => {
-  console.error('Redis Sub Client Error:', err.message);
-});
-
-redisClient.on('error', (err: any) => {
-  console.error('Redis Client Error:', err.message);
-});
-
 process.on('SIGTERM', async () => {
   await Promise.all([
     pubClient.quit(),

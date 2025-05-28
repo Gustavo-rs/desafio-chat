@@ -8,9 +8,8 @@ import { DeleteMessageDialog } from "@/components/chat/DeleteMessageDialog";
 import { useChatPageLogic } from "@/hooks/useChatPageLogic";
 import type { ChatPageProps } from "@/types/api";
 
-export default function ChatPage({ roomId, roomName }: ChatPageProps) {
+export default function ChatPage({ roomId = "", roomName = "" }: ChatPageProps) {
   const {
-    // State
     messages,
     input, 
     selectedFiles,

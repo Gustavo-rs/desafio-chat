@@ -229,7 +229,7 @@ io.on("connection", (socket) => {
 app.use(errorHandler);
 
 server.listen(config.port, () => {
-  console.log(`Server running on port ${config.port}`);
+  // Server started silently
 });
 
 export const getActiveViewers = (roomId: string): Set<string> => {

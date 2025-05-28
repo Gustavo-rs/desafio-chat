@@ -31,7 +31,6 @@ export class MessageService {
       throw new ForbiddenError('You are not a member of this room');
     }
 
-    // Create message with files
     const message = await prisma.message.create({
       data: {
         content,
@@ -73,7 +72,6 @@ export class MessageService {
 
     for (const member of roomMembers) {
       if (activeViewers.has(member.user.id)) {
-        console.log(`⏭️ Skipping notification for ${member.user.username} - actively viewing room ${roomId}`);
         continue;
       }
 

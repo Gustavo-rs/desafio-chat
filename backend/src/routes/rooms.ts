@@ -137,10 +137,8 @@ const getAllUsers: RequestHandler<
     const { id } = req.params;
     const adminUserId = req.user!.userId;
     
-    // Verificar se o usuário é ADMIN da sala
     const room = await roomService.getRoomById(id, adminUserId);
     
-    // Buscar todos os usuários do sistema
     const allUsers = await prisma.user.findMany({
       select: {
         id: true,
@@ -169,7 +167,6 @@ const getUnreadCounts: RequestHandler<
   }
 };
 
-// Configuração das rotas
 router.post("/", validate(createRoomSchema), createRoom);
 router.delete("/:id", validate(roomIdSchema), deleteRoom);
 router.get("/", getRooms);

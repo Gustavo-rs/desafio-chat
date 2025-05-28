@@ -21,7 +21,6 @@ const storage = multer.diskStorage({
     // Create directory structure if it doesn't exist
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
-      console.log(`📁 Created upload directory: ${uploadDir}`);
     }
     
     // Store the hash in the request for use in filename generation
@@ -33,7 +32,6 @@ const storage = multer.diskStorage({
     // Use the same hash from destination
     const hash = (req as any).uploadHash;
     const filename = `file-${hash}${path.extname(file.originalname)}`;
-    console.log(`📄 Saving file as: ${filename}`);
     cb(null, filename);
   }
 });

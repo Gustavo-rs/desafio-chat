@@ -4,6 +4,7 @@ import { useSocketMessages } from "@/hooks/useSocketMessages";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 import messageService from "@/services/message-service";
 import type { Message, OnlineUser } from "@/types/api";
+import { toast } from "sonner";
 
 interface UseChatPageLogicProps {
   roomId: string;
@@ -307,7 +308,7 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
       setInput("");
       clearAllFiles();
     } catch (error) {
-      console.error("Erro ao enviar mensagem:", error);
+      toast.error("Erro ao enviar mensagem");
     }
   };
 
@@ -325,7 +326,7 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
       setDeleteDialogOpen(false);
       setMessageToDelete(null);
     } catch (error) {
-      console.error("Erro ao deletar mensagem:", error);
+      toast.error("Erro ao deletar mensagem");
     } finally {
       setDeletingMessage(false);
     }
@@ -345,7 +346,7 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
       setEditingMessageId(null);
       setEditingContent("");
     } catch (error) {
-      console.error("Erro ao editar mensagem:", error);
+      toast.error("Erro ao editar mensagem");
     } finally {
       setEditingMessage(false);
     }
