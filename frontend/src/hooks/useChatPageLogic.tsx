@@ -32,6 +32,8 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const userScrolledUp = useRef(false);
+  const lastScrollTop = useRef(0);
   const { user } = useUser();
 
   const { typingUsers, handleTyping, stopTyping } = useTypingIndicator({
@@ -63,11 +65,16 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
     };
   };
 
-  const scrollToBottom = (instant = false) => {
+  const scrollToBottom = (instant = false, force = false) => {
     if (!messagesContainerRef.current) return;
 
     const container = messagesContainerRef.current;
     const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 50;
+    
+    // Se o usuário scrollou para cima intencionalmente e não é forçado, não faz scroll
+    if (!force && userScrolledUp.current && !isNearBottom) {
+      return;
+    }
     
     if (!instant && isNearBottom) return;
 
@@ -80,6 +87,9 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
           behavior: "auto"
         });
       }
+      // Resetar flag quando fazemos scroll para baixo
+      userScrolledUp.current = false;
+      lastScrollTop.current = container.scrollTop;
     };
 
     performScroll();
@@ -90,7 +100,7 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
   };
 
   const handleImageLoad = useCallback(() => {
-    if (!isLoadingOlderMessages.current) {
+    if (!isLoadingOlderMessages.current && !userScrolledUp.current) {
       setTimeout(() => scrollToBottom(true), 30);
     }
   }, []);
@@ -98,7 +108,10 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
   const callbacksRef = useRef({
     handleMessageReceived: (message: Message) => {
       setMessages((prev) => [...prev, message]);
-      setTimeout(() => scrollToBottom(true), 30);
+      // Só faz scroll se o usuário não está navegando para cima
+      if (!userScrolledUp.current) {
+        setTimeout(() => scrollToBottom(true), 30);
+      }
     },
     handleMessageDeleted: (messageId: string, updatedMessage?: Message) => {
       if (updatedMessage) {
@@ -130,7 +143,10 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
       };
       
       setMessages((prev) => [...prev, systemMessage]);
-      setTimeout(() => scrollToBottom(true), 50);
+      // Mensagens do sistema só fazem scroll se o usuário não está navegando para cima
+      if (!userScrolledUp.current) {
+        setTimeout(() => scrollToBottom(true), 50);
+      }
     },
     handleUserLeft: (userId: string, username: string, _roomId: string) => {
       setMessages((prev) => {
@@ -150,7 +166,10 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
         
         return [...prev, systemMessage];
       });
-      setTimeout(() => scrollToBottom(true), 50);
+      // Mensagens do sistema só fazem scroll se o usuário não está navegando para cima
+      if (!userScrolledUp.current) {
+        setTimeout(() => scrollToBottom(true), 50);
+      }
     },
     handleMemberAdded: (_roomId: string, member: any) => {
       const systemMessage: Message = {
@@ -168,7 +187,10 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
       };
       
       setMessages((prev) => [...prev, systemMessage]);
-      setTimeout(() => scrollToBottom(true), 50);
+      // Mensagens do sistema só fazem scroll se o usuário não está navegando para cima
+      if (!userScrolledUp.current) {
+        setTimeout(() => scrollToBottom(true), 50);
+      }
     },
     handleMemberRemoved: (_roomId: string, removedUserId: string) => {
       if (removedUserId === user?.user?.id) {
@@ -197,7 +219,10 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
         
         return [...prev, systemMessage];
       });
-      setTimeout(() => scrollToBottom(true), 50);
+      // Mensagens do sistema só fazem scroll se o usuário não está navegando para cima
+      if (!userScrolledUp.current) {
+        setTimeout(() => scrollToBottom(true), 50);
+      }
     },
     handleRoomUsersUpdated: (_roomId: string, users: any[], _count: number) => {
       setOnlineUsers(users);
@@ -357,7 +382,7 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
         setInitialLoadDone(true);
         
         setTimeout(() => {
-          scrollToBottom(true);
+          scrollToBottom(true, true); // force = true para carregamento inicial
         }, 50);
       } else {
         const normalizedMessages = response.data.messages.map(normalizeMessage);
@@ -384,7 +409,19 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
   const handleScroll = () => {
     if (!messagesContainerRef.current || loading || !hasMore) return;
 
-    const { scrollTop } = messagesContainerRef.current;
+    const container = messagesContainerRef.current;
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    
+    // Detectar se o usuário está scrollando para cima
+    if (scrollTop < lastScrollTop.current) {
+      userScrolledUp.current = true;
+    } else if (scrollHeight - scrollTop - clientHeight < 50) {
+      // Se chegou próximo do final, resetar flag
+      userScrolledUp.current = false;
+    }
+    
+    lastScrollTop.current = scrollTop;
+
     if (scrollTop === 0) {
       const nextPage = page + 1;
       setPage(nextPage);
@@ -399,6 +436,9 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
       setHasMore(true);
       setInitialLoadDone(false);
       setUserRemovedFromRoom(false);
+      // Resetar flags de scroll quando muda de sala
+      userScrolledUp.current = false;
+      lastScrollTop.current = 0;
       listMessagesFromRoom(1);
     }
   }, [roomId]);
