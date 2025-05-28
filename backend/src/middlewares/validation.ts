@@ -8,7 +8,6 @@ type ErrorMessageType = {
   maxLength?: string;
 };
 
-// Mapeamento de mensagens de erro em português
 const errorMessages: Record<string, ErrorMessageType> = {
   username: {
     required: 'Nome de usuário é obrigatório',
@@ -25,7 +24,6 @@ const errorMessages: Record<string, ErrorMessageType> = {
   }
 };
 
-// Função para obter mensagem de erro traduzida
 const getTranslatedErrorMessage = (field: string, message: string): string => {
   const fieldMessages = errorMessages[field];
   

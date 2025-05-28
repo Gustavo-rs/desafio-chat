@@ -53,13 +53,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
+    localStorage.removeItem("user");
+    setUser(null);
+    
     try {
       await authService.logout();
     } catch (err) {
-      // Silently handle logout errors
-    } finally {
-      localStorage.removeItem("user");
-      setUser(null);
     }
   };
 

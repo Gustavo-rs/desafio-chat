@@ -22,6 +22,10 @@ export const useHomePageLogic = () => {
   const { socket, stopViewingRoom } = useSocket();
 
   const handleRooms = async () => {
+    if (!user?.user?.id) {
+      return;
+    }
+    
     setLoading(true);
     try {
       const response = await roomsService.list();
@@ -94,8 +98,10 @@ export const useHomePageLogic = () => {
   });
 
   useEffect(() => {
-    handleRooms();
-  }, []);
+    if (user?.user?.id) {
+      handleRooms();
+    }
+  }, [user?.user?.id]);
 
   return {
     rooms,

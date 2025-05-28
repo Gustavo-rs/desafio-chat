@@ -72,7 +72,6 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
     const container = messagesContainerRef.current;
     const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 50;
     
-    // Se o usuário scrollou para cima intencionalmente e não é forçado, não faz scroll
     if (!force && userScrolledUp.current && !isNearBottom) {
       return;
     }
@@ -108,7 +107,6 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
   const callbacksRef = useRef({
     handleMessageReceived: (message: Message) => {
       setMessages((prev) => [...prev, message]);
-      // Só faz scroll se o usuário não está navegando para cima
       if (!userScrolledUp.current) {
         setTimeout(() => scrollToBottom(true), 30);
       }
@@ -143,7 +141,6 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
       };
       
       setMessages((prev) => [...prev, systemMessage]);
-      // Mensagens do sistema só fazem scroll se o usuário não está navegando para cima
       if (!userScrolledUp.current) {
         setTimeout(() => scrollToBottom(true), 50);
       }
@@ -166,7 +163,6 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
         
         return [...prev, systemMessage];
       });
-      // Mensagens do sistema só fazem scroll se o usuário não está navegando para cima
       if (!userScrolledUp.current) {
         setTimeout(() => scrollToBottom(true), 50);
       }
@@ -187,7 +183,6 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
       };
       
       setMessages((prev) => [...prev, systemMessage]);
-      // Mensagens do sistema só fazem scroll se o usuário não está navegando para cima
       if (!userScrolledUp.current) {
         setTimeout(() => scrollToBottom(true), 50);
       }
@@ -219,7 +214,6 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
         
         return [...prev, systemMessage];
       });
-      // Mensagens do sistema só fazem scroll se o usuário não está navegando para cima
       if (!userScrolledUp.current) {
         setTimeout(() => scrollToBottom(true), 50);
       }
@@ -367,7 +361,6 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
     setLoading(true);
     isLoadingOlderMessages.current = true;
 
-    // Salva a posição atual do scroll antes de carregar mensagens antigas
     let previousScrollHeight = 0;
     if (pageNumber > 1 && messagesContainerRef.current) {
       previousScrollHeight = messagesContainerRef.current.scrollHeight;
@@ -382,13 +375,12 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
         setInitialLoadDone(true);
         
         setTimeout(() => {
-          scrollToBottom(true, true); // force = true para carregamento inicial
+          scrollToBottom(true, true);
         }, 50);
       } else {
         const normalizedMessages = response.data.messages.map(normalizeMessage);
         setMessages(prev => [...normalizedMessages, ...prev]);
         
-        // Mantém a posição do scroll após carregar mensagens antigas
         setTimeout(() => {
           if (messagesContainerRef.current) {
             const container = messagesContainerRef.current;
@@ -412,11 +404,9 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
     const container = messagesContainerRef.current;
     const { scrollTop, scrollHeight, clientHeight } = container;
     
-    // Detectar se o usuário está scrollando para cima
     if (scrollTop < lastScrollTop.current) {
       userScrolledUp.current = true;
     } else if (scrollHeight - scrollTop - clientHeight < 50) {
-      // Se chegou próximo do final, resetar flag
       userScrolledUp.current = false;
     }
     
@@ -436,7 +426,6 @@ export const useChatPageLogic = ({ roomId }: UseChatPageLogicProps) => {
       setHasMore(true);
       setInitialLoadDone(false);
       setUserRemovedFromRoom(false);
-      // Resetar flags de scroll quando muda de sala
       userScrolledUp.current = false;
       lastScrollTop.current = 0;
       listMessagesFromRoom(1);

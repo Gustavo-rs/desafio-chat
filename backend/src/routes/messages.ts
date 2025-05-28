@@ -164,7 +164,6 @@ const updateMessage: RequestHandler<
   }
 };
 
-// Configuração das rotas
 router.get("/unread/count", getUnreadCount);
 router.get("/:roomId", getMessages);
 router.post("/:roomId", uploadMultiple, validate(createMessageSchema), createMessage);

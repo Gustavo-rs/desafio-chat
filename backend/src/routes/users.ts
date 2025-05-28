@@ -39,7 +39,7 @@ router.post("/login", validate(loginSchema), async (req: Request, res: Response<
         id: user.id,
         username: user.username,
       },
-      token: token // Incluir token no response como backup
+      token: token 
     });
   } catch (error) {
     if (error instanceof AppError) {
