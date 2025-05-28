@@ -6,6 +6,12 @@ Uma aplicação de chat moderna e responsiva construída com React, Node.js, Soc
 
 **Desenvolvido por:** [Gustavo](https://github.com/Gustavo-rs)
 
+## 🌐 Demo Online
+
+🚀 **Acesse a aplicação:** [https://desafio-chat-psi.vercel.app/](https://desafio-chat-psi.vercel.app/)
+
+> A aplicação está hospedada na Vercel e pode ser testada diretamente no navegador.
+
 ## 🚀 Funcionalidades
 
 ### Chat em Tempo Real
@@ -421,6 +427,8 @@ Este projeto foi desenvolvido como um desafio técnico fullstack, priorizando:
 
 O sistema demonstra competência em desenvolvimento fullstack moderno, com foco em comunicação em tempo real, escalabilidade e boas práticas de desenvolvimento.
 
+**🌐 Aplicação em produção:** [https://desafio-chat-psi.vercel.app/](https://desafio-chat-psi.vercel.app/)
+
 ---
 
 **Desenvolvido com ❤️ por [Gustavo](https://github.com/Gustavo-rs)**
@@ -431,7 +439,7 @@ O sistema demonstra competência em desenvolvimento fullstack moderno, com foco 
 
 **Gustavo**
 - GitHub: [@Gustavo-rs](https://github.com/Gustavo-rs)
-- LinkedIn: [Seu LinkedIn](https://www.linkedin.com/in/gustavo-ribeiro-da-silva-042604222/)
+- LinkedIn: [Gustavo](https://www.linkedin.com/in/gustavo-ribeiro-da-silva-042604222/)
 
 ---
 
