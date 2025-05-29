@@ -3,9 +3,6 @@ import { BaseService } from '../shared/BaseService';
 
 export class RoomMembershipService extends BaseService {
 
-  /**
-   * Adiciona membro à sala
-   */
   async addMemberToRoom(roomId: string, userIdToAdd: string, adminUserId: string) {
     try {
       this.validateId(roomId, 'ID da sala');
@@ -82,9 +79,6 @@ export class RoomMembershipService extends BaseService {
     }
   }
 
-  /**
-   * Remove membro da sala
-   */
   async removeMemberFromRoom(roomId: string, userIdToRemove: string, adminUserId: string) {
     try {
       this.validateId(roomId, 'ID da sala');
@@ -133,9 +127,6 @@ export class RoomMembershipService extends BaseService {
     }
   }
 
-  /**
-   * Lista usuários disponíveis para adicionar à sala
-   */
   async getAvailableUsers(roomId: string, adminUserId: string) {
     try {
       this.validateId(roomId, 'ID da sala');
@@ -225,9 +216,6 @@ export class RoomMembershipService extends BaseService {
     }
   }
 
-  /**
-   * Verifica se usuário é membro da sala
-   */
   async isRoomMember(roomId: string, userId: string): Promise<boolean> {
     try {
       this.validateId(roomId, 'ID da sala');

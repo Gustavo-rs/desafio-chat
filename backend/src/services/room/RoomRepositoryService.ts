@@ -3,9 +3,6 @@ import { BaseService } from '../shared/BaseService';
 
 export class RoomRepositoryService extends BaseService {
 
-  /**
-   * Cria uma nova sala
-   */
   async createRoom(name: string, creatorId: string) {
     try {
       this.validateId(creatorId, 'ID do criador');
@@ -61,9 +58,6 @@ export class RoomRepositoryService extends BaseService {
     }
   }
 
-  /**
-   * Deleta uma sala
-   */
   async deleteRoom(id: string, userId: string) {
     try {
       this.validateId(id, 'ID da sala');
@@ -98,9 +92,6 @@ export class RoomRepositoryService extends BaseService {
     }
   }
 
-  /**
-   * Busca sala por ID
-   */
   async getRoomById(id: string, userId: string) {
     try {
       this.validateId(id, 'ID da sala');
@@ -144,9 +135,6 @@ export class RoomRepositoryService extends BaseService {
     }
   }
 
-  /**
-   * Lista salas do usuário
-   */
   async getRooms(userId: string) {
     try {
       this.validateId(userId, 'ID do usuário');
@@ -228,9 +216,6 @@ export class RoomRepositoryService extends BaseService {
     }
   }
 
-  /**
-   * Verifica se sala existe
-   */
   async roomExists(id: string): Promise<boolean> {
     try {
       this.validateId(id, 'ID da sala');

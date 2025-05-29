@@ -3,9 +3,6 @@ import { BaseService } from '../shared/BaseService';
 
 export class UserRepositoryService extends BaseService {
 
-  /**
-   * Busca usuário por ID
-   */
   async getUserById(id: string) {
     try {
       this.validateId(id, 'ID do usuário');
@@ -38,9 +35,6 @@ export class UserRepositoryService extends BaseService {
     }
   }
 
-  /**
-   * Lista todos os usuários
-   */
   async getUsers() {
     try {
       return await this.db.user.findMany({
@@ -56,9 +50,6 @@ export class UserRepositoryService extends BaseService {
     }
   }
 
-  /**
-   * Busca usuário por username
-   */
   async getUserByUsername(username: string) {
     try {
       if (!username || username.trim().length === 0) {
@@ -75,9 +66,6 @@ export class UserRepositoryService extends BaseService {
     }
   }
 
-  /**
-   * Verifica se usuário existe
-   */
   async userExists(id: string): Promise<boolean> {
     try {
       this.validateId(id, 'ID do usuário');

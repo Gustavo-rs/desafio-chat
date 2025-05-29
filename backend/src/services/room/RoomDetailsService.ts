@@ -3,9 +3,6 @@ import { BaseService } from '../shared/BaseService';
 
 export class RoomDetailsService extends BaseService {
 
-  /**
-   * Busca detalhes completos da sala
-   */
   async getRoomDetails(roomId: string, userId: string) {
     try {
       this.validateId(roomId, 'ID da sala');
@@ -120,9 +117,6 @@ export class RoomDetailsService extends BaseService {
     }
   }
 
-  /**
-   * Busca participantes da sala com estatísticas
-   */
   async getRoomParticipants(roomId: string, userId: string) {
     try {
       this.validateId(roomId, 'ID da sala');

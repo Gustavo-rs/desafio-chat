@@ -3,9 +3,6 @@ import { UnreadCount } from '../../models/messageModel';
 
 export class MessageUnreadService extends BaseService {
 
-  /**
-   * Marca mensagens como lidas
-   */
   async markMessagesAsRead(userId: string, roomId: string) {
     try {
       this.validateId(userId, 'ID do usuário');

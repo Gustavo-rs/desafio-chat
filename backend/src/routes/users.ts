@@ -12,7 +12,7 @@ const userService = new UserService();
 router.post("/register", validate(createUserSchema), async (req: Request, res: Response<UserResponse>, next: NextFunction) => {
   try {
     const { username, password } = req.body;
-    const { user, token } = await userService.createUser(username, password, res);
+    const { user } = await userService.createUser(username, password, res);
     
     res.status(201).json({
       id: user.id,
@@ -28,18 +28,17 @@ router.post("/register", validate(createUserSchema), async (req: Request, res: R
   }
 });
 
-router.post("/login", validate(loginSchema), async (req: Request, res: Response<LoginResponse>, next: NextFunction) => {
+router.post("/login", validate(loginSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { username, password } = req.body;
-    const { user, token } = await userService.login(username, password, res);
+    const { user } = await userService.login(username, password, res);
 
     res.status(200).json({
       message: "Login successful",
       user: {
         id: user.id,
         username: user.username,
-      },
-      token: token 
+      }
     });
   } catch (error) {
     if (error instanceof AppError) {

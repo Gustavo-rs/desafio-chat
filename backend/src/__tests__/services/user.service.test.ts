@@ -3,7 +3,6 @@ import { mockPrisma } from '../setup';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-// Mock das dependências
 jest.mock('bcrypt');
 jest.mock('jsonwebtoken');
 
@@ -20,7 +19,7 @@ describe('UserService', () => {
 
   describe('getUserById', () => {
     it('should return user when found', async () => {
-      // Arrange
+      
       const userId = 'test-user-id';
       const mockUser = {
         id: userId,
@@ -37,10 +36,8 @@ describe('UserService', () => {
 
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
 
-      // Act
       const result = await userService.getUserById(userId);
 
-      // Assert
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: userId },
         select: {
@@ -60,33 +57,29 @@ describe('UserService', () => {
     });
 
     it('should throw error when user not found', async () => {
-      // Arrange
+
       const userId = 'non-existent-user';
       mockPrisma.user.findUnique.mockResolvedValue(null);
 
-      // Act & Assert
       await expect(userService.getUserById(userId)).rejects.toThrow('Usuário não encontrado');
     });
 
     it('should validate user ID format', async () => {
-      // Arrange
+
       const invalidId = '';
 
-      // Act & Assert
       await expect(userService.getUserById(invalidId)).rejects.toThrow('ID do usuário inválido');
     });
   });
 
   describe('userExists', () => {
     it('should return true when user exists', async () => {
-      // Arrange
+      
       const userId = 'existing-user-id';
       mockPrisma.user.findUnique.mockResolvedValue({ id: userId } as any);
 
-      // Act
       const result = await userService.userExists(userId);
 
-      // Assert
       expect(result).toBe(true);
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: userId },
@@ -95,21 +88,19 @@ describe('UserService', () => {
     });
 
     it('should return false when user does not exist', async () => {
-      // Arrange
+
       const userId = 'non-existent-user';
       mockPrisma.user.findUnique.mockResolvedValue(null);
 
-      // Act
       const result = await userService.userExists(userId);
 
-      // Assert
       expect(result).toBe(false);
     });
   });
 
   describe('getUsers', () => {
     it('should return list of users', async () => {
-      // Arrange
+
       const mockUsers = [
         { id: '1', username: 'user1' },
         { id: '2', username: 'user2' },
@@ -117,10 +108,8 @@ describe('UserService', () => {
 
       mockPrisma.user.findMany.mockResolvedValue(mockUsers);
 
-      // Act
       const result = await userService.getUsers();
 
-      // Assert
       expect(mockPrisma.user.findMany).toHaveBeenCalledWith({
         select: {
           id: true,

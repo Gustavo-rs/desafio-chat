@@ -7,9 +7,6 @@ import { BaseService } from '../shared/BaseService';
 
 export class AuthService extends BaseService {
   
-  /**
-   * Define cookie de autenticação
-   */
   private setAuthCookie(res: Response, userId: string, username: string): string {
     const token = jwt.sign({ userId, username }, config.jwtSecret!, { 
       expiresIn: "24h" 
@@ -26,9 +23,6 @@ export class AuthService extends BaseService {
     return token;
   }
 
-  /**
-   * Registra um novo usuário
-   */
   async register(username: string, password: string, res: Response) {
     try {
       this.validateCredentials(username, password);
@@ -58,9 +52,6 @@ export class AuthService extends BaseService {
     }
   }
 
-  /**
-   * Faz login do usuário
-   */
   async login(username: string, password: string, res: Response) {
     try {
       this.validateCredentials(username, password);
@@ -88,9 +79,6 @@ export class AuthService extends BaseService {
     }
   }
 
-  /**
-   * Verifica token JWT
-   */
   verifyToken(token: string) {
     try {
       return jwt.verify(token, config.jwtSecret!) as any;
@@ -99,9 +87,6 @@ export class AuthService extends BaseService {
     }
   }
 
-  /**
-   * Valida credenciais básicas
-   */
   private validateCredentials(username: string, password: string): void {
     if (!username || username.trim().length === 0) {
       throw new AppError("Nome de usuário é obrigatório", 400);
