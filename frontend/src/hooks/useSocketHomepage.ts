@@ -111,8 +111,28 @@ export const useSocketHomepage = ({
         if (!user?.user?.id) {
           return;
         }
-        handleRoomsRef.current();
+        handleRoomsRef.current().then(() => {
+          setRoomsRef.current(prev => {
+            const updatedRooms = [...prev];
+            const roomIndex = updatedRooms.findIndex(room => room.id === member.room.id);
+            if (roomIndex > -1) {
+              const [updatedRoom] = updatedRooms.splice(roomIndex, 1);
+              updatedRooms.unshift({ ...updatedRoom, newRoom: true });
+            }
+            return updatedRooms;
+          });
+        });
         toast.success(`Você foi adicionado à sala "${member.room.name}"`);
+      } else {
+        setRoomsRef.current(prev => {
+          const updatedRooms = [...prev];
+          const roomIndex = updatedRooms.findIndex(room => room.id === member.room.id);
+          if (roomIndex > -1) {
+            const [updatedRoom] = updatedRooms.splice(roomIndex, 1);
+            updatedRooms.unshift(updatedRoom);
+          }
+          return updatedRooms;
+        });
       }
     };
 
