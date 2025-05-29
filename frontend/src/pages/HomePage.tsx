@@ -1,5 +1,5 @@
 import React from "react";
-import { ResponsiveLayout } from "@/components/home/ResponsiveLayout";
+import { ResponsiveLayout } from "@/components/Pages/home/ResponsiveLayout";
 import { useHomePageLogic } from "@/hooks/useHomePageLogic";
 
 const Home: React.FC = () => {

@@ -2,7 +2,7 @@ import React from "react";
 import { Edit2, Trash2, Check, X, UserCheck, UserMinus, UserPlus, File, Download, Loader2 } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import type { Message } from "@/types/api";
-import { useLinkPreview } from "../../hooks/useLinkPreview";
+import { useLinkPreview } from "../../../hooks/useLinkPreview";
 import { LinkPreview } from "./LinkPreview";
 
 interface MessageItemProps {

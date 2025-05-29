@@ -1,10 +1,10 @@
 
 import { Loader2 } from "lucide-react";
-import { RoomDetailsHeader } from "@/components/room-details/RoomDetailsHeader";
-import { RoomInfo } from "@/components/room-details/RoomInfo";
-import { RoomStats } from "@/components/room-details/RoomStats";
-import { SharedFiles } from "@/components/room-details/SharedFiles";
-import RoomMembersManager from "@/components/RoomMembersManager";
+import { RoomDetailsHeader } from "@/components/Pages/room-details/RoomDetailsHeader";
+import { RoomInfo } from "@/components/Pages/room-details/RoomInfo";
+import { RoomStats } from "@/components/Pages/room-details/RoomStats";
+import { SharedFiles } from "@/components/Pages/room-details/SharedFiles";
+import RoomMembersManager from "@/components/Pages/room-details/RoomMembersManager";
 import { useRoomDetailsLogic } from "@/hooks/useRoomDetailsLogic";
 
 interface RoomDetailsPageProps {

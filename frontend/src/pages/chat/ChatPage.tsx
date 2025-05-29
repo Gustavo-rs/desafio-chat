@@ -1,10 +1,10 @@
 import React from "react";
 import { MessageSquare } from "lucide-react";
-import { ChatHeader } from "@/components/chat/ChatHeader";
-import { MessageList } from "@/components/chat/MessageList";
-import { MessageInput } from "@/components/chat/MessageInput";
-import { TypingIndicator } from "@/components/chat/TypingIndicator";
-import { DeleteMessageDialog } from "@/components/chat/DeleteMessageDialog";
+import { ChatHeader } from "@/components/Pages/chat/ChatHeader";
+import { MessageList } from "@/components/Pages/chat/MessageList";
+import { MessageInput } from "@/components/Pages/chat/MessageInput";
+import { TypingIndicator } from "@/components/Pages/chat/TypingIndicator";
+import { DeleteMessageDialog } from "@/components/Pages/chat/DeleteMessageDialog";
 import { useChatPageLogic } from "@/hooks/useChatPageLogic";
 import type { ChatPageProps } from "@/types/api";
 

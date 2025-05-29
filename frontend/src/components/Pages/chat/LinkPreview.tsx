@@ -1,6 +1,6 @@
 import React from 'react';
 import { ExternalLink, Globe, Loader2, AlertCircle, Play, Image as ImageIcon } from 'lucide-react';
-import type { LinkPreview as LinkPreviewType } from '../../hooks/useLinkPreview';
+import type { LinkPreview as LinkPreviewType } from '../../../hooks/useLinkPreview';
 
 interface LinkPreviewProps {
   preview: LinkPreviewType;

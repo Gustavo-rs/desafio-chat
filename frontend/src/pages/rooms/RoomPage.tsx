@@ -1,8 +1,8 @@
 
 import type { APIRoom } from "@/types/api";
-import { RoomHeader } from "@/components/rooms/RoomHeader";
-import { RoomSearch } from "@/components/rooms/RoomSearch";
-import { RoomList } from "@/components/rooms/RoomList";
+import { RoomHeader } from "@/components/Pages/rooms/RoomHeader";
+import { RoomSearch } from "@/components/Pages/rooms/RoomSearch";
+import { RoomList } from "@/components/Pages/rooms/RoomList";
 
 interface RoomPageProps {
   rooms: APIRoom[];
